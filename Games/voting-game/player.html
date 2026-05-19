@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Player Screen - The Voting Game</title>
+<script src="/socket.io/socket.io.js"></script>
+<style>
+  :root {
+    --bg-primary: #0a0e1a;
+    --bg-secondary: #111827;
+    --bg-tertiary: #1f2937;
+    --accent: #f59e0b;
+    --accent-hover: #fbbf24;
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --text-gold: #fbbf24;
+    --success: #22c55e;
+    --danger: #ef4444;
+    --border-subtle: rgba(55, 65, 81, 0.5);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    padding: 20px;
+  }
+
+  .container {
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  h1 {
+    font-size: 2rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    background: linear-gradient(135deg, #f59e0b, #fbbf24);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 20px rgba(245, 158, 11, 0.4));
+    margin-bottom: 8px;
+    text-align: center;
+  }
+
+  h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-gold);
+    margin-bottom: 16px;
+    text-align: center;
+  }
+
+  .status-message {
+    font-size: 1rem;
+    margin: 12px 0;
+    color: var(--text-secondary);
+    text-align: center;
+  }
+
+  .panel {
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-subtle);
+    border-radius: 16px;
+    padding: 24px;
+    margin: 16px 0;
+  }
+
+  input[type="text"] {
+    width: 100%;
+    font-size: 1.1rem;
+    padding: 14px 16px;
+    margin: 8px auto 16px;
+    border: 2px solid var(--border-subtle);
+    border-radius: 12px;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    text-align: center;
+    text-transform: uppercase;
+    transition: border-color 0.3s;
+  }
+
+  input[type="text"]:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  input[type="text"]::placeholder {
+    color: var(--text-secondary);
+    text-transform: none;
+  }
+
+  select {
+    width: 100%;
+    padding: 14px 16px;
+    font-size: 1rem;
+    border-radius: 12px;
+    border: 2px solid var(--border-subtle);
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: border-color 0.3s;
+    margin-bottom: 16px;
+  }
+
+  select:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  .button {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #000;
+    font-weight: 700;
+    font-size: 1rem;
+    padding: 14px 24px;
+    margin: 8px auto;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    display: block;
+    width: 100%;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    transition: all 0.3s ease;
+  }
+
+  .button:hover:not(:disabled) {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(245, 158, 11, 0.4);
+  }
+
+  .button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .player-button {
+    font-size: 1.1rem;
+    padding: 16px;
+    margin: 10px auto;
+    border: 2px solid var(--border-subtle);
+    border-radius: 12px;
+    font-weight: 700;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    cursor: pointer;
+    width: 100%;
+    transition: all 0.3s ease;
+  }
+
+  .player-button:hover:not(:disabled) {
+    border-color: var(--accent);
+    background: rgba(245, 158, 11, 0.1);
+    transform: translateY(-2px);
+  }
+
+  .player-button:active:not(:disabled) {
+    transform: translateY(0);
+    background: rgba(245, 158, 11, 0.2);
+  }
+
+  .player-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  #voteQuestion {
+    font-weight: 700;
+    font-size: 1.3rem;
+    margin-bottom: 20px;
+    color: var(--text-gold);
+    line-height: 1.4;
+  }
+
+  .hidden { display: none !important; }
+
+  #timerDisplay {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: var(--text-gold);
+    margin-top: 16px;
+    padding: 12px;
+    background: var(--bg-tertiary);
+    border: 2px solid rgba(245, 158, 11, 0.3);
+    border-radius: 10px;
+  }
+
+  /* Rename Button */
+  #btnRename {
+    background: var(--bg-tertiary) !important;
+    color: var(--text-secondary) !important;
+    font-size: 0.85rem !important;
+    padding: 8px 16px !important;
+    margin-bottom: 16px !important;
+    border: 2px solid var(--border-subtle) !important;
+    width: auto !important;
+    display: inline-block !important;
+  }
+
+  #btnRename:hover {
+    border-color: var(--accent) !important;
+    color: var(--accent) !important;
+  }
+
+  /* Welcome Name */
+  #welcomeName {
+    color: var(--text-gold);
+    font-size: 1.5rem;
+    margin-bottom: 8px;
+  }
+
+  /* Intro Styles */
+  #introScreen {
+    display: none;
+  }
+
+  #introScreen.active {
+    display: block;
+  }
+
+  .intro-content {
+    text-align: left;
+    padding: 10px 0;
+  }
+
+  .intro-content h3 {
+    color: var(--text-gold);
+    margin: 20px 0 8px 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+  }
+
+  .intro-content h3:first-child {
+    margin-top: 0;
+  }
+
+  .intro-content p {
+    font-size: 1rem;
+    line-height: 1.6;
+    margin: 0;
+    color: var(--text-secondary);
+  }
+
+  .intro-waiting {
+    margin-top: 24px;
+    color: var(--accent);
+    font-weight: 600;
+    text-align: center;
+    padding: 12px;
+    background: var(--bg-tertiary);
+    border-radius: 10px;
+  }
+
+  .playerStatusCircle {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+
+  .playerStatusCircle.online {
+    background: var(--success);
+  }
+
+  .playerStatusCircle.offline {
+    background: transparent;
+    border: 2px solid #6b7280;
+  }
+
+  /* Voting Area */
+  #votingArea {
+    text-align: center;
+  }
+
+  #voteButtons {
+    margin: 16px 0;
+  }
+
+  #voteButtons p {
+    color: var(--text-secondary);
+    font-size: 1rem;
+  }
+
+  #voteStatus {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    margin-top: 12px;
+  }
+
+  /* Global Status */
+  #globalStatus {
+    color: var(--text-secondary);
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>THE VOTING GAME</h1>
+  <p class="status-message" id="globalStatus">Connecting to game...</p>
+
+  <div id="joinScreen" class="panel">
+    <h2>Join via Launcher</h2>
+    <p style="text-align:center;color:#aaa;margin:16px 0;">Players must join through the main launcher.</p>
+    <a href="/" class="button" style="display:inline-block;text-align:center;text-decoration:none;">Go to Launcher</a>
+    <!-- Hidden elements kept for auto-reconnect JS compatibility -->
+    <div id="customNameSection" style="display:none;">
+      <input type="hidden" id="playerName" />
+    </div>
+    <div id="presetNameSection" style="display:none;">
+      <select id="playerNameSelect" style="display:none;">
+        <option value="">-- Select your name --</option>
+      </select>
+    </div>
+    <button id="btnJoin" style="display:none;">Join</button>
+  </div>
+
+  <!-- Intro Screen -->
+  <div id="introScreen" class="panel">
+    <h2>How to Play</h2>
+    <div class="intro-content" id="introContent">
+      <!-- Populated by JavaScript -->
+    </div>
+    <p class="intro-waiting">Waiting for host to start the game...</p>
+  </div>
+
+  <div id="gameScreen" class="hidden panel">
+    <h2 id="welcomeName"></h2>
+    <button class="button" id="btnRename" style="font-size:12px; padding:6px 12px; margin-bottom:10px; background:rgba(255,255,255,0.1); color:#fff;">Rename</button>
+    <div id="votingArea">
+      <p id="voteQuestion">Waiting for the Host to start the game and load a question...</p>
+      <div id="voteButtons">
+        <p>Your voting buttons will appear here.</p>
+      </div>
+      <p class="status-message" id="voteStatus"></p>
+      <p class="status-message hidden" id="timerDisplay">Next round in: <span id="countdown">...</span></p>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ---------- Storage Manager (Private Browsing Support) ----------
+  const StorageManager = {
+    _memoryStore: {},
+    _useMemory: false,
+    init() {
+      try {
+        localStorage.setItem('_test', '1');
+        localStorage.removeItem('_test');
+        this._useMemory = false;
+      } catch (e) {
+        console.warn('localStorage unavailable (private browsing?), using in-memory storage');
+        this._useMemory = true;
+      }
+    },
+    setItem(key, value) {
+      if (this._useMemory) {
+        this._memoryStore[key] = value;
+      } else {
+        try { localStorage.setItem(key, value); }
+        catch (e) { this._memoryStore[key] = value; }
+      }
+    },
+    getItem(key) {
+      if (this._useMemory) {
+        return this._memoryStore[key] || null;
+      } else {
+        try { return localStorage.getItem(key); }
+        catch (e) { return this._memoryStore[key] || null; }
+      }
+    },
+    removeItem(key) {
+      if (this._useMemory) {
+        delete this._memoryStore[key];
+      } else {
+        try { localStorage.removeItem(key); }
+        catch (e) { delete this._memoryStore[key]; }
+      }
+    }
+  };
+  StorageManager.init();
+
+  const LS_KEY = 'voting_game_playerKey_v1';
+  const LS_NAME = 'voting_game_playerName_v1';
+
+  // Check for launcher credentials in URL params
+  const urlParams = new URLSearchParams(window.location.search);
+  const launcherKey = urlParams.get("launcherKey");
+  const launcherName = urlParams.get("launcherName");
+
+  function genKey(){
+    try{
+      const bytes = new Uint8Array(16);
+      window.crypto.getRandomValues(bytes);
+      return Array.from(bytes).map(b=>b.toString(16).padStart(2,'0')).join('');
+    }catch(e){
+      return 'k_' + Math.random().toString(16).slice(2) + Date.now().toString(16);
+    }
+  }
+
+  let wasEverConnected = false;
+
+  // Connect to game-specific namespace
+  const pathParts = window.location.pathname.split('/');
+  const gameId = pathParts[2]; // e.g., "voting-game"
+  const socket = io(gameId ? `/game/${gameId}` : '/', {
+    transports: ["websocket", "polling"],
+    reconnection: true,
+    reconnectionAttempts: 3,
+    reconnectionDelay: 500,
+    reconnectionDelayMax: 1000,
+    timeout: 20000
+  });
+
+  // Redirect to launcher if game server is unreachable after all reconnection attempts
+  socket.io.on("reconnect_failed", () => {
+    if (typeof toast === "function") {
+      toast("warn", "Game Ended", "Returning to lobby...");
+    }
+    setTimeout(() => {
+      const launcherUrl = window.location.protocol + "//" + window.location.host + "/players";
+      window.location.href = launcherUrl;
+    }, 1500);
+  });
+
+  // Immediate redirect if game server is unreachable on initial connection
+  socket.io.on("error", () => {
+    if (!wasEverConnected) {
+      console.log("Game server unreachable, returning to launcher...");
+      const launcherUrl = window.location.protocol + "//" + window.location.host + "/players";
+      window.location.href = launcherUrl;
+    }
+  });
+
+  let playerName = '';
+  // Use launcher key if coming from master menu, otherwise use stored or generate new
+  let playerKey = launcherKey || StorageManager.getItem(LS_KEY) || genKey();
+  let hasVoted = false;
+  let joined = false;
+
+  // Preset names state
+  let usePresetNames = false;
+  let presetNames = [];
+  let takenNames = [];
+
+  StorageManager.setItem(LS_KEY, playerKey);
+
+  // If coming from launcher with a name, store it for auto-join
+  if (launcherName) {
+    StorageManager.setItem(LS_NAME, launcherName.toUpperCase());
+  }
+
+  // Elements
+  const globalStatus = document.getElementById('globalStatus');
+  const joinScreen = document.getElementById('joinScreen');
+  const playerNameInput = document.getElementById('playerName');
+  const btnJoin = document.getElementById('btnJoin');
+  const btnRename = document.getElementById('btnRename');
+  const customNameSection = document.getElementById('customNameSection');
+  const presetNameSection = document.getElementById('presetNameSection');
+  const playerNameSelect = document.getElementById('playerNameSelect');
+
+  const gameScreen = document.getElementById('gameScreen');
+  const welcomeName = document.getElementById('welcomeName');
+  const voteQuestion = document.getElementById('voteQuestion');
+  const voteButtons = document.getElementById('voteButtons');
+  const voteStatus = document.getElementById('voteStatus');
+
+  const timerDisplay = document.getElementById('timerDisplay');
+  const countdownEl = document.getElementById('countdown');
+
+  function attemptAutoJoin(){
+    const savedName = StorageManager.getItem(LS_NAME);
+    if (savedName) {
+      const isFromLauncher = launcherKey && launcherName;
+      globalStatus.textContent = isFromLauncher ? 'Joining game...' : 'Reconnecting...';
+      socket.emit('joinGame', { name: savedName, playerKey });
+    }
+  }
+
+  socket.on('connect', () => {
+    wasEverConnected = true;
+    globalStatus.textContent = 'Connected.';
+    // On every connect/reconnect, try to reattach to server using stored key
+    attemptAutoJoin();
+  });
+
+  // Allow enter key to join
+  playerNameInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') btnJoin.click();
+  });
+
+  btnJoin.addEventListener('click', () => {
+    let name = '';
+    if (usePresetNames && presetNames.length > 0) {
+      name = playerNameSelect.value;
+    } else {
+      name = playerNameInput.value.trim();
+    }
+
+    if (!name) {
+      alert('Please enter or select a name.');
+      return;
+    }
+
+    if (name.length > 15) {
+      alert('Name is too long (max 15 characters).');
+      return;
+    }
+
+    // Persist for auto-rejoin
+    StorageManager.setItem(LS_NAME, name.toUpperCase());
+
+    globalStatus.textContent = 'Joining...';
+    socket.emit('joinGame', { name: name.toUpperCase(), playerKey });
+  });
+
+  // Rename button handler
+  btnRename.addEventListener('click', () => {
+    // Show join screen again for renaming
+    joined = false;
+    playerName = '';
+    StorageManager.removeItem(LS_NAME);
+    joinScreen.classList.remove('hidden');
+    gameScreen.classList.add('hidden');
+    globalStatus.textContent = 'Select a new name.';
+    updateNameInputUI();
+  });
+
+  // Update name input UI based on preset mode
+  function updateNameInputUI() {
+    if (usePresetNames && presetNames.length > 0) {
+      customNameSection.style.display = 'none';
+      presetNameSection.style.display = 'block';
+
+      // Populate dropdown
+      const currentVal = playerNameSelect.value;
+      playerNameSelect.innerHTML = '<option value="">-- Select your name --</option>';
+
+      presetNames.forEach(name => {
+        const opt = document.createElement('option');
+        opt.value = name;
+        const isTaken = takenNames.includes(name.toUpperCase());
+        const isCurrentPlayer = name.toUpperCase() === playerName.toUpperCase();
+        opt.textContent = isTaken && !isCurrentPlayer ? `${name} (taken)` : name;
+        opt.disabled = isTaken && !isCurrentPlayer;
+        if (isTaken && !isCurrentPlayer) {
+          opt.style.color = '#888';
+        }
+        playerNameSelect.appendChild(opt);
+      });
+
+      // Restore selection if valid
+      if (currentVal && presetNames.some(n => n.toUpperCase() === currentVal.toUpperCase())) {
+        playerNameSelect.value = currentVal;
+      }
+    } else {
+      customNameSection.style.display = 'block';
+      presetNameSection.style.display = 'none';
+    }
+  }
+
+  // Listen for preset names updates from server
+  socket.on('presetNamesUpdate', (data) => {
+    usePresetNames = data.usePresetNames;
+    presetNames = data.presetNames || [];
+    updateNameInputUI();
+  });
+
+  // Listen for player list to get taken names
+  socket.on('playerListUpdate', (playersPayload) => {
+    const list = Array.isArray(playersPayload) ? playersPayload : [];
+    const normalized = list.map(p => (typeof p === 'string') ? ({ name: p, connected: true }) : p);
+    takenNames = normalized.map(p => (p.name || '').toUpperCase());
+    updateNameInputUI();
+  });
+
+  // Force reselect when host switches to preset mode
+  socket.on('forceReselect', (data) => {
+    joined = false;
+    playerName = '';
+    StorageManager.removeItem(LS_NAME);
+    joinScreen.classList.remove('hidden');
+    gameScreen.classList.add('hidden');
+    globalStatus.textContent = data?.reason || 'Please select a name from the preset list.';
+    updateNameInputUI();
+  });
+
+  socket.on('joinSuccess', (payload) => {
+    const name = (typeof payload === 'string') ? payload : payload?.name;
+    const key = (typeof payload === 'object' && payload?.playerKey) ? payload.playerKey : playerKey;
+
+    if (key) {
+      playerKey = key;
+      StorageManager.setItem(LS_KEY, playerKey);
+    }
+
+    playerName = (name || StorageManager.getItem(LS_NAME) || '').toUpperCase();
+    joined = true;
+
+    joinScreen.classList.add('hidden');
+    gameScreen.classList.remove('hidden');
+    welcomeName.textContent = `Hello, ${playerName}!`;
+    globalStatus.textContent = 'Waiting for the Host...';
+  });
+
+  socket.on('joinError', (msg) => {
+    joined = false;
+    alert(msg);
+    globalStatus.textContent = 'Could not join. Try a different name.';
+    joinScreen.classList.remove('hidden');
+    gameScreen.classList.add('hidden');
+    timerDisplay.classList.add('hidden');
+  });
+
+  // Error handlers for name validation (consistent with Mafia)
+  socket.on('player_error', (msg) => {
+    globalStatus.textContent = msg || 'An error occurred.';
+  });
+
+  socket.on('join_rejected', ({ reason }) => {
+    joined = false;
+    globalStatus.textContent = reason || 'Join was rejected.';
+    joinScreen.classList.remove('hidden');
+    gameScreen.classList.add('hidden');
+  });
+
+  // --- Game State Updates ---
+  socket.on('newRoundPlayer', (data) => {
+    globalStatus.textContent = 'A new question has started!';
+    voteStatus.textContent = 'Time to vote!';
+    voteQuestion.textContent = data.question;
+    hasVoted = false;
+    renderVoteButtons(data.playersToVote);
+    timerDisplay.classList.add('hidden');
+  });
+
+  socket.on('timerUpdate', (timeLeft) => {
+      timerDisplay.classList.remove('hidden');
+      countdownEl.textContent = timeLeft;
+      voteStatus.textContent = 'Results shown. Get ready for the next question!';
+      voteButtons.innerHTML = 'Waiting for the next question...';
+  });
+
+  // Fisher-Yates shuffle for unbiased randomization
+  function shuffle(array) {
+    const arr = [...array];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  function renderVoteButtons(players) {
+    voteButtons.innerHTML = '';
+    if (!players || !players.length) {
+      voteButtons.innerHTML = 'Waiting for the next question...';
+      return;
+    }
+    const shuffledPlayers = shuffle(players);
+
+    shuffledPlayers.forEach(player => {
+      const btn = document.createElement('button');
+      btn.className = 'player-button';
+      btn.textContent = player;
+      btn.addEventListener('click', () => castVote(player));
+      voteButtons.appendChild(btn);
+    });
+  }
+
+  function castVote(player) {
+    if (hasVoted) return;
+    socket.emit('castVote', player);
+  }
+
+  socket.on('voteCastSuccess', (votedName) => {
+    hasVoted = true;
+    voteStatus.textContent = `You voted for ${votedName}! Waiting for other players...`;
+    document.querySelectorAll('.player-button').forEach(btn => btn.disabled = true);
+  });
+
+  socket.on('voteCastError', (msg) => {
+    voteStatus.textContent = msg || 'Error casting vote.';
+  });
+
+  socket.on('roundResults', (data) => {
+    const winnerText = data.roundWinner ? data.roundWinner : 'TIE';
+    globalStatus.textContent = `Round Winner: ${winnerText}!`;
+    voteStatus.textContent = 'Results are in! Waiting for the next question...';
+    voteButtons.innerHTML = 'Waiting for the next question...';
+    if (!data.gameWinner) {
+        document.querySelectorAll('.player-button').forEach(btn => btn.disabled = false);
+    }
+  });
+
+  socket.on('gameOver', (data) => {
+    globalStatus.textContent = `GAME OVER! Winner: ${data.winner || 'Tie'}!`;
+    voteStatus.textContent = 'Thank you for playing. Wait for the host to restart.';
+    voteButtons.innerHTML = 'Game Over. Wait for the host.';
+    timerDisplay.classList.add('hidden');
+  });
+
+  socket.on('gameResetKeepPlayer', () => {
+    globalStatus.textContent = 'Host is setting up the next game...';
+    voteStatus.textContent = 'Waiting for the Host to start the game.';
+    voteQuestion.textContent = 'Waiting for the Host to start the game.';
+    voteButtons.innerHTML = 'Your voting buttons will appear here.';
+    hasVoted = false;
+    timerDisplay.classList.add('hidden');
+    joinScreen.classList.add('hidden');
+    gameScreen.classList.remove('hidden');
+  });
+
+  socket.on('gameReset', () => {
+    // host fully reset; keep local key/name so reconnect is easy
+    globalStatus.textContent = 'Game reset. Waiting for host...';
+    voteStatus.textContent = '';
+    timerDisplay.classList.add('hidden');
+    // show join screen so they can rejoin when host comes back
+    joinScreen.classList.remove('hidden');
+    gameScreen.classList.add('hidden');
+    document.getElementById('introScreen').classList.remove('active');
+  });
+
+  // --- Intro Phase Handler ---
+  const introScreen = document.getElementById('introScreen');
+  const introContent = document.getElementById('introContent');
+
+  socket.on('introPhase', (data) => {
+    // Hide other screens, show intro
+    joinScreen.classList.add('hidden');
+    gameScreen.classList.add('hidden');
+    introScreen.classList.add('active');
+    globalStatus.textContent = 'Game starting...';
+
+    // Populate intro content
+    let html = '';
+    data.slides.forEach(slide => {
+      html += `<h3>${slide.title}</h3><p>${slide.content}</p>`;
+    });
+    introContent.innerHTML = html;
+  });
+
+  // When game starts, hide intro and show game screen
+  socket.on('newRoundPlayer', (data) => {
+    introScreen.classList.remove('active');
+    gameScreen.classList.remove('hidden');
+    // Existing handler will populate the game
+  });
+
+  socket.on('disconnect', () => {
+    globalStatus.textContent = 'Disconnected. Reconnecting...';
+    // Keep the player on the game screen; socket.io will reconnect and auto-join
+    timerDisplay.classList.add('hidden');
+  });
+
+  socket.on('kicked', ({ message }) => {
+    // Reset player completely
+    StorageManager.removeItem(LS_KEY);
+    StorageManager.removeItem(LS_NAME);
+    joined = false;
+    playerName = '';
+    joinScreen.classList.remove('hidden');
+    gameScreen.classList.add('hidden');
+    globalStatus.textContent = message || 'You have been removed from the game by the host.';
+    globalStatus.style.color = '#ff8a80';
+    updateNameInputUI();
+  });
+
+  // FIX 7: Send acknowledgment before redirecting to ensure graceful shutdown
+  socket.on('returned_to_menu', (data) => {
+    if (data && data.shutdownId) {
+      socket.emit('player_ack_return_to_menu', { shutdownId: data.shutdownId });
+    }
+    // Small delay to ensure ack is sent before disconnect
+    setTimeout(() => {
+      socket.disconnect();
+      const masterUrl = window.location.protocol + '//' + window.location.host + '/players';
+      window.location.href = masterUrl;
+    }, 50);
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+{
+  "name": "poker-betting-no-cards",
+  "version": "1.0.0",
+  "private": true,
+  "description": "LAN Poker betting tracker (no cards) - host + players",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "socket.io": "^4.8.1"
+  }
+}

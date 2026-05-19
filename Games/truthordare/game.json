@@ -1,0 +1,8 @@
+{
+  "id": "truthordare",
+  "name": "Truth or Dare",
+  "minPlayers": 2,
+  "maxPlayers": 20,
+  "description": "The classic party game with custom content and bottle spins",
+  "icon": "icon.png"
+}

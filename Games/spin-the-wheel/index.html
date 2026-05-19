@@ -1,0 +1,2301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>SPIN THE WHEEL</title>
+  <style>
+    :root {
+      /* Wheel of Fortune Gold Theme */
+      --accent: #fbbf24;
+      --accent-hover: #f59e0b;
+      --accent-glow: rgba(251, 191, 36, 0.4);
+      --bg-primary: #0a0e1a;
+      --bg-secondary: #111827;
+      --bg-tertiary: #1f2937;
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --text-gold: #fbbf24;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --border-subtle: rgba(55, 65, 81, 0.5);
+
+      --wheel-red: #ef4444;
+      --wheel-orange: #f59e0b;
+      --wheel-yellow: #eab308;
+      --wheel-green: #22c55e;
+      --wheel-blue: #3b82f6;
+      --wheel-purple: #a855f7;
+      --wheel-pink: #ec4899;
+      --wheel-teal: #14b8a6;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      min-height: -webkit-fill-available;
+      min-height: 100dvh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 24px;
+      background: var(--bg-secondary);
+      border-bottom: 2px solid var(--border-subtle);
+    }
+
+    .game-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+      color: #000;
+      box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px var(--accent-glow);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      border: 2px solid var(--border-subtle);
+    }
+
+    .btn-secondary:hover {
+      background: var(--bg-secondary);
+      border-color: var(--accent);
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+    }
+
+    .btn-icon {
+      padding: 10px;
+      background: transparent;
+      border: 2px solid var(--border-subtle);
+      color: var(--text-secondary);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn-icon:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* Container */
+    .container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      padding: 24px;
+    }
+
+    /* Screen Management */
+    .screen {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+    }
+
+    .screen.active {
+      display: flex;
+    }
+
+    /* Lobby Screen */
+    .lobby-content {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 24px;
+      flex: 1;
+    }
+
+    .panel {
+      background: var(--bg-secondary);
+      border: 2px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .panel-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .player-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .player-item {
+      padding: 12px;
+      background: var(--bg-tertiary);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .player-status {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+    }
+
+    .player-status.offline {
+      background: var(--danger);
+    }
+
+    .btn-kick {
+      width: 24px;
+      height: 24px;
+      padding: 0;
+      margin-left: auto;
+      background: var(--danger);
+      border: none;
+      border-radius: 4px;
+      color: white;
+      cursor: pointer;
+      font-size: 1rem;
+      display: none;
+      line-height: 1;
+      transition: opacity 0.2s;
+    }
+
+    .player-item:hover .btn-kick {
+      display: block;
+    }
+
+    .btn-kick:hover {
+      opacity: 0.8;
+    }
+
+    /* Hide kick button when not in lobby phase */
+    #mainGameScreen .btn-kick,
+    #introScreen .btn-kick,
+    #gameOverScreen .btn-kick {
+      display: none !important;
+    }
+
+    /* Selectable player items (choose next spinner) */
+    .player-item.selectable {
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .player-item.selectable:hover {
+      border-color: var(--accent);
+      background: rgba(251, 191, 36, 0.1);
+    }
+
+    .select-spinner-banner {
+      display: none;
+      padding: 8px 12px;
+      background: rgba(251, 191, 36, 0.15);
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      color: var(--accent);
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-align: center;
+      margin-bottom: 8px;
+      animation: blink 1.5s infinite;
+    }
+
+    .select-spinner-banner.active {
+      display: block;
+    }
+
+    .preset-selector {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .preset-dropdown {
+      width: 100%;
+      padding: 12px;
+      background: var(--bg-tertiary);
+      border: 2px solid var(--border-subtle);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    .preset-info {
+      padding: 16px;
+      background: var(--bg-tertiary);
+      border-radius: 8px;
+      border-left: 4px solid var(--accent);
+    }
+
+    .preset-info-row {
+      display: flex;
+      justify-content: space-between;
+      margin: 4px 0;
+    }
+
+    /* Preset Word List */
+    .preset-word-list-container {
+      margin-top: 12px;
+      background: var(--bg-tertiary);
+      border-radius: 8px;
+      border: 1px solid var(--border-subtle);
+      overflow: hidden;
+    }
+
+    .preset-word-list-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 14px;
+      background: rgba(251, 191, 36, 0.08);
+      border-bottom: 1px solid var(--border-subtle);
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .preset-word-list-scroll {
+      max-height: 250px;
+      overflow-y: auto;
+      padding: 6px;
+    }
+
+    .preset-word-list-scroll::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .preset-word-list-scroll::-webkit-scrollbar-track {
+      background: var(--bg-secondary);
+    }
+
+    .preset-word-list-scroll::-webkit-scrollbar-thumb {
+      background: var(--border-subtle);
+      border-radius: 3px;
+    }
+
+    .preset-word-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px;
+      border-radius: 6px;
+      transition: background 0.2s;
+    }
+
+    .preset-word-item:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .preset-word-item .word-index {
+      color: var(--text-secondary);
+      font-size: 0.8rem;
+      min-width: 24px;
+      text-align: right;
+    }
+
+    .preset-word-item .word-text-input {
+      flex: 1;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      padding: 6px 10px;
+      color: var(--text-primary);
+      font-size: 0.9rem;
+    }
+
+    .preset-word-item .word-text-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .preset-word-item .word-weight-input {
+      width: 70px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      padding: 6px 8px;
+      color: var(--text-primary);
+      font-size: 0.9rem;
+      text-align: center;
+    }
+
+    .preset-word-item .word-weight-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .preset-word-item .word-pct {
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+    }
+
+    .preset-word-item .btn-remove-word {
+      background: none;
+      border: none;
+      color: var(--danger);
+      cursor: pointer;
+      font-size: 1.1rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      opacity: 0.6;
+      transition: opacity 0.2s;
+    }
+
+    .preset-word-item .btn-remove-word:hover {
+      opacity: 1;
+      background: rgba(239, 68, 68, 0.1);
+    }
+
+    .preset-word-actions {
+      display: flex;
+      gap: 8px;
+      padding: 10px 14px;
+      border-top: 1px solid var(--border-subtle);
+      flex-wrap: wrap;
+    }
+
+    .preset-word-actions .btn-sm {
+      padding: 6px 12px;
+      font-size: 0.8rem;
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .preset-word-actions .btn-sm:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .preset-word-actions .btn-save-changes {
+      margin-left: auto;
+      background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+      color: #000;
+      border: none;
+      font-weight: 600;
+    }
+
+    .preset-word-actions .btn-save-changes:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .preset-word-actions .btn-save-changes:hover:not(:disabled) {
+      box-shadow: 0 2px 8px rgba(251, 191, 36, 0.3);
+    }
+
+    .preset-weight-summary {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 14px;
+      font-size: 0.85rem;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .preset-weight-summary .weight-total {
+      font-weight: 600;
+    }
+
+    .preset-weight-summary .weight-total.valid {
+      color: var(--success);
+    }
+
+    .preset-weight-summary .weight-total.invalid {
+      color: var(--danger);
+    }
+
+    .preset-save-feedback {
+      padding: 8px 14px;
+      font-size: 0.85rem;
+      color: var(--success);
+      text-align: center;
+      display: none;
+    }
+
+    /* Intro Screen */
+    .intro-track {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      flex: 1;
+      align-content: center;
+      padding: 24px;
+    }
+
+    .intro-card {
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+      background: var(--bg-secondary);
+      border: 2px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 32px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 16px;
+    }
+
+    .intro-card.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .intro-icon {
+      font-size: 4rem;
+    }
+
+    .intro-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .intro-text {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .intro-dots {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      padding: 24px;
+    }
+
+    .intro-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--border-subtle);
+      transition: all 0.3s;
+    }
+
+    .intro-dot.active {
+      background: var(--accent);
+      transform: scale(1.3);
+    }
+
+    .intro-actions {
+      display: flex;
+      justify-content: flex-end;
+      padding: 0 24px 24px;
+    }
+
+    /* Main Game Screen */
+    .game-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex: 1;
+      justify-content: center;
+      gap: 24px;
+    }
+
+    .current-word-display {
+      font-size: 3rem;
+      font-weight: 700;
+      color: var(--text-gold);
+      text-align: center;
+      min-height: 4rem;
+      text-shadow: 0 0 20px var(--accent-glow);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.8; }
+    }
+
+    .wheel-container {
+      position: relative;
+      width: 600px;
+      height: 600px;
+    }
+
+    #wheelCanvas {
+      border-radius: 50%;
+      box-shadow: 0 0 40px var(--accent-glow);
+    }
+
+    .btn-spin {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+      border: 4px solid var(--bg-primary);
+      color: var(--bg-primary);
+      font-size: 1.5rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 0 30px var(--accent-glow);
+      transition: all 0.3s;
+      z-index: 10;
+      text-transform: uppercase;
+    }
+
+    .btn-spin:hover:not(:disabled) {
+      transform: translate(-50%, -50%) scale(1.05);
+      box-shadow: 0 0 40px var(--accent-glow);
+    }
+
+    .btn-spin:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .turn-info {
+      padding: 16px 32px;
+      background: var(--bg-secondary);
+      border: 2px solid var(--border-subtle);
+      border-radius: 12px;
+      text-align: center;
+    }
+
+    .turn-info.waiting {
+      border-color: var(--danger);
+      animation: blink 1.5s infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    .turn-label {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+
+    .turn-player {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .game-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .history-panel {
+      width: 100%;
+      max-width: 400px;
+      background: var(--bg-secondary);
+      border: 2px solid var(--border-subtle);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 16px;
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      font-weight: 600;
+      user-select: none;
+      transition: color 0.2s;
+    }
+
+    .history-header:hover {
+      color: var(--text-primary);
+    }
+
+    .history-header .toggle-icon {
+      transition: transform 0.2s;
+    }
+
+    .history-panel.collapsed .history-list {
+      display: none;
+    }
+
+    .history-panel.collapsed .toggle-icon {
+      transform: rotate(-90deg);
+    }
+
+    .history-list {
+      list-style: none;
+      max-height: 160px;
+      overflow-y: auto;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .history-list li {
+      padding: 6px 16px;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .history-list li:nth-child(odd) {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .history-list li .history-word {
+      color: var(--text-gold);
+      font-weight: 600;
+    }
+
+    .history-list li .history-spinner {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .history-empty {
+      padding: 12px 16px;
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      text-align: center;
+      font-style: italic;
+    }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: var(--bg-secondary);
+      border: 2px solid var(--accent);
+      border-radius: 16px;
+      padding: 32px;
+      max-width: 600px;
+      width: 100%;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .modal-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .modal-close {
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    .modal-close:hover {
+      color: var(--accent);
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 12px;
+      background: var(--bg-tertiary);
+      border: 2px solid var(--border-subtle);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-size: 1rem;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .radio-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .radio-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px;
+      background: var(--bg-tertiary);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .radio-option:hover {
+      background: var(--bg-primary);
+    }
+
+    .radio-option input {
+      cursor: pointer;
+    }
+
+    .checkbox-option {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: var(--bg-tertiary);
+      border-radius: 8px;
+    }
+
+    .word-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 300px;
+      overflow-y: auto;
+      margin-bottom: 12px;
+    }
+
+    .word-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: var(--bg-tertiary);
+      border-radius: 8px;
+    }
+
+    .word-text-input {
+      flex: 1;
+      padding: 8px;
+      background: var(--bg-primary);
+      border: 1px solid var(--border-subtle);
+      border-radius: 4px;
+      color: var(--text-primary);
+    }
+
+    .word-weight-input {
+      width: 80px;
+      padding: 8px;
+      background: var(--bg-primary);
+      border: 1px solid var(--border-subtle);
+      border-radius: 4px;
+      color: var(--text-primary);
+      text-align: center;
+    }
+
+    .btn-remove {
+      padding: 8px 12px;
+      background: var(--danger);
+      border: none;
+      border-radius: 4px;
+      color: white;
+      cursor: pointer;
+    }
+
+    .weight-total {
+      text-align: center;
+      padding: 12px;
+      background: var(--bg-tertiary);
+      border-radius: 8px;
+      margin-bottom: 12px;
+      font-weight: 700;
+    }
+
+    .weight-total.valid {
+      color: var(--success);
+    }
+
+    .weight-total.invalid {
+      color: var(--danger);
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .error-message {
+      padding: 12px;
+      background: rgba(239, 68, 68, 0.2);
+      border: 1px solid var(--danger);
+      border-radius: 8px;
+      color: var(--danger);
+      margin-bottom: 16px;
+    }
+
+    /* Game Over Overlay */
+    .game-over-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.9);
+      z-index: 500;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .game-over-overlay.active {
+      display: flex;
+    }
+
+    .game-over-content {
+      background: var(--bg-secondary);
+      border: 4px solid var(--accent);
+      border-radius: 24px;
+      padding: 48px;
+      text-align: center;
+      animation: slideIn 0.5s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-50px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .game-over-title {
+      font-size: 3rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 24px;
+    }
+
+    .game-over-subtitle {
+      font-size: 1.5rem;
+      color: var(--text-secondary);
+      margin-bottom: 32px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .lobby-content {
+        grid-template-columns: 1fr;
+      }
+
+      .intro-track {
+        grid-template-columns: 1fr;
+      }
+
+      .wheel-container {
+        width: 400px;
+        height: 400px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <div class="header">
+    <h1 class="game-title">🎡 SPIN THE WHEEL</h1>
+    <div class="header-actions">
+      <button class="btn-icon" id="settingsBtn" title="Settings">⚙️</button>
+      <button class="btn-icon" id="exitBtn" title="Exit to Launcher">❌</button>
+    </div>
+  </div>
+
+  <!-- Container -->
+  <div class="container">
+    <!-- Lobby Screen -->
+    <div class="screen active" id="lobbyScreen">
+      <div class="lobby-content">
+        <!-- Player List -->
+        <div class="panel">
+          <div class="panel-title">Players</div>
+          <div class="select-spinner-banner" id="selectSpinnerBanner">Select next spinner</div>
+          <ul class="player-list" id="playerList">
+            <li style="color: var(--text-secondary); text-align: center; padding: 20px;">Waiting for players...</li>
+          </ul>
+        </div>
+
+        <!-- Presets Panel -->
+        <div class="panel">
+          <div class="panel-title">Presets</div>
+
+          <div class="preset-selector">
+            <select class="preset-dropdown" id="presetDropdown">
+              <option value="">Select a preset...</option>
+            </select>
+            <button class="btn btn-secondary" id="createPresetBtn">+ Create New Preset</button>
+            <button class="btn btn-secondary" id="deletePresetBtn" style="display: none; background: #dc2626; border-color: #dc2626;">Delete Preset</button>
+          </div>
+
+          <div class="preset-info" id="presetInfo" style="display: none;">
+            <div class="preset-info-row">
+              <strong>Current:</strong>
+              <span id="currentPresetName">-</span>
+            </div>
+            <div class="preset-info-row">
+              <strong>Words:</strong>
+              <span id="currentPresetWords">-</span>
+            </div>
+          </div>
+
+          <div class="preset-word-list-container" id="presetWordListContainer" style="display: none;">
+            <div class="preset-word-list-header">
+              <span>Word List</span>
+              <span id="lobbyWordCount">0 words</span>
+            </div>
+            <div class="preset-word-list-scroll" id="lobbyWordListScroll"></div>
+            <div class="preset-weight-summary">
+              <span>Total Weight:</span>
+              <span class="weight-total" id="lobbyWeightTotal">0%</span>
+            </div>
+            <div class="preset-word-actions">
+              <button class="btn-sm" id="lobbyAddWordBtn">+ Add Word</button>
+              <button class="btn-sm" id="lobbyAutoBalanceBtn">Auto-Balance</button>
+              <button class="btn-sm btn-save-changes" id="lobbySaveChangesBtn">Save Changes</button>
+            </div>
+            <div class="preset-save-feedback" id="lobbySaveFeedback">Changes saved!</div>
+          </div>
+
+          <button class="btn btn-primary" id="startGameBtn" disabled style="margin-top: auto;">START GAME</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Intro Screen -->
+    <div class="screen" id="introScreen">
+      <div class="intro-track">
+        <div class="intro-card" id="introCard0">
+          <div class="intro-icon">🎡</div>
+          <div class="intro-title">SPIN THE WHEEL</div>
+          <div class="intro-text">Select random words with weighted probabilities! Each word's size represents its chance of selection.</div>
+        </div>
+        <div class="intro-card" id="introCard1">
+          <div class="intro-icon">🎯</div>
+          <div class="intro-title">HOW TO PLAY</div>
+          <div class="intro-text">Click SPIN to rotate the wheel. The pointer at the top selects a word when the wheel stops spinning.</div>
+        </div>
+        <div class="intro-card" id="introCard2">
+          <div class="intro-icon">⚙️</div>
+          <div class="intro-title">GAME MODES</div>
+          <div class="intro-text">
+            • Host Only: Only host can spin<br>
+            • Players: Take turns spinning<br>
+            • Choice Elimination: Remove used words
+          </div>
+        </div>
+      </div>
+      <div class="intro-dots">
+        <div class="intro-dot" id="introDot0"></div>
+        <div class="intro-dot" id="introDot1"></div>
+        <div class="intro-dot" id="introDot2"></div>
+      </div>
+      <div class="intro-actions">
+        <button class="btn btn-primary" id="skipIntroBtn">Continue →</button>
+      </div>
+    </div>
+
+    <!-- Main Game Screen -->
+    <div class="screen" id="mainGameScreen">
+      <div class="game-content">
+        <div class="current-word-display" id="currentWordDisplay">-</div>
+
+        <div class="wheel-container">
+          <canvas id="wheelCanvas" width="600" height="600"></canvas>
+          <button class="btn-spin" id="spinBtn" disabled>SPIN</button>
+        </div>
+
+        <div class="turn-info" id="turnInfo">
+          <div class="turn-label">Current Turn</div>
+          <div class="turn-player" id="turnPlayer">-</div>
+          <div class="turn-label" id="remainingWords">-</div>
+        </div>
+
+        <div class="history-panel collapsed" id="historyPanel">
+          <div class="history-header" id="historyToggle">
+            <span>History <span id="historyCount">(0)</span></span>
+            <span class="toggle-icon">&#9660;</span>
+          </div>
+          <ul class="history-list" id="historyList">
+            <li class="history-empty">No spins yet</li>
+          </ul>
+        </div>
+
+        <div class="game-actions">
+          <button class="btn btn-secondary" id="forceSkipBtn">Force Skip</button>
+          <button class="btn btn-secondary" id="resetWheelBtn">Reset Wheel</button>
+          <button class="btn btn-secondary" id="mainMenuBtn">Main Menu</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="modal" id="settingsModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Game Settings</h2>
+        <button class="modal-close" id="closeSettingsModal">✕</button>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Choice Elimination</label>
+        <div class="checkbox-option">
+          <input type="checkbox" id="choiceEliminationCheckbox" checked>
+          <label for="choiceEliminationCheckbox">Remove words after selection (ends game when all words used)</label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Control Mode</label>
+        <div class="radio-group">
+          <label class="radio-option">
+            <input type="radio" name="controlMode" value="host" checked>
+            <span>Host Only - Only host can spin the wheel</span>
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="controlMode" value="host_and_players">
+            <span>Host + Players - Everyone takes turns</span>
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="controlMode" value="players">
+            <span>Players Only - Host watches, players spin</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Turn Selection</label>
+        <div class="checkbox-option">
+          <input type="checkbox" id="chooseNextSpinnerCheckbox">
+          <label for="chooseNextSpinnerCheckbox">Allow choosing the next spinner (instead of fixed turn order)</label>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-secondary" id="cancelSettingsBtn">Cancel</button>
+        <button class="btn btn-primary" id="saveSettingsBtn">Save Settings</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Preset Editor Modal -->
+  <div class="modal" id="presetEditorModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Edit Preset</h2>
+        <button class="modal-close" id="closePresetEditorModal">✕</button>
+      </div>
+
+      <div id="presetError" class="error-message hidden"></div>
+
+      <div class="form-group">
+        <label class="form-label">Preset Title</label>
+        <input type="text" class="form-input" id="presetTitleInput" placeholder="Enter preset title...">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Words (Total: <span id="totalWeight">0</span>%)</label>
+        <div class="weight-total" id="weightTotalDisplay">
+          Total Weight: <span id="weightTotalValue">0</span>%
+        </div>
+        <div class="word-list" id="wordList"></div>
+        <button class="btn btn-secondary" id="addWordBtn">+ Add Word</button>
+        <button class="btn btn-secondary" id="autoBalanceBtn" style="margin-left: 8px;">Auto-Balance</button>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-secondary" id="cancelPresetBtn">Cancel</button>
+        <button class="btn btn-primary" id="savePresetBtn">Save Preset</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Over Overlay -->
+  <div class="game-over-overlay" id="gameOverOverlay">
+    <div class="game-over-content">
+      <div class="game-over-title">OUT OF WORDS!</div>
+      <div class="game-over-subtitle">Last Word: <span id="lastWordDisplay">-</span></div>
+      <button class="btn btn-primary" id="returnToLobbyBtn">Return to Lobby</button>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    // Socket.IO connection
+    const pathParts = window.location.pathname.split('/');
+    const gameId = pathParts[2];
+    const socket = io(gameId ? `/game/${gameId}` : '/');
+
+    // Game state
+    let gameState = {
+      phase: 'LOBBY',
+      currentPreset: null,
+      availableWords: [],
+      settings: {
+        choiceElimination: true,
+        controlMode: 'host',
+        chooseNextSpinner: false
+      },
+      currentTurnKey: null,
+      isHost: false
+    };
+
+    let availablePresets = [];
+    let spinHistory = [];
+    let lastSpinnerName = 'Unknown';
+    let lobbyEditorWords = [];
+    let lobbyOriginalWords = [];
+
+    // Initialize
+    socket.on('connect', () => {
+      console.log('Connected to server');
+      socket.emit('registerHost');
+    });
+
+    socket.on('hostSetupSuccess', (data) => {
+      console.log('Host setup success', data);
+      gameState.isHost = true;
+      availablePresets = data.presets || [];
+      gameState.settings = data.settings || gameState.settings;
+      if (data.currentPreset) {
+        gameState.currentPreset = data.currentPreset;
+        gameState.availableWords = data.currentPreset.words;
+        updatePresetInfo();
+        document.getElementById('startGameBtn').disabled = false;
+      }
+      updatePresetDropdown();
+      // Select the current preset in the dropdown if one is loaded
+      if (data.currentPreset && data.currentPreset.filename) {
+        const dropdown = document.getElementById('presetDropdown');
+        if (dropdown.querySelector(`option[value="${data.currentPreset.filename}"]`)) {
+          dropdown.value = data.currentPreset.filename;
+        }
+        updateDeletePresetButton();
+      }
+      updateSettingsUI();
+    });
+
+    socket.on('playerListUpdate', (players) => {
+      updatePlayerList(players);
+    });
+
+    socket.on('gameState', (state) => {
+      console.log('Game state update', state);
+      gameState.phase = state.phase;
+      if (state.currentPreset) gameState.currentPreset = state.currentPreset;
+      if (state.availableWords) gameState.availableWords = state.availableWords;
+      if (state.settings) gameState.settings = state.settings;
+      if (state.currentTurnKey !== undefined) gameState.currentTurnKey = state.currentTurnKey;
+
+      updatePresetInfo();
+      updateSettingsUI();
+    });
+
+    socket.on('presetLoaded', (data) => {
+      gameState.currentPreset = data.preset;
+      gameState.availableWords = data.preset.words;
+      updatePresetInfo();
+      document.getElementById('startGameBtn').disabled = false;
+    });
+
+    socket.on('presetsUpdated', (data) => {
+      availablePresets = data.presets || [];
+      updatePresetDropdown();
+    });
+
+    socket.on('settingsUpdate', (settings) => {
+      gameState.settings = settings;
+      updateSettingsUI();
+    });
+
+    socket.on('introPhase', () => {
+      showScreen('intro');
+      startIntroAnimation();
+    });
+
+    socket.on('mainGamePhase', (data) => {
+      gameState.phase = 'MAIN_GAME';
+      gameState.availableWords = data.availableWords;
+      gameState.currentTurnKey = data.currentTurnKey;
+      gameState.turnOrder = data.turnOrder;
+      gameState.settings = data.settings;
+
+      showScreen('mainGame');
+      clearHistory();
+      initWheel();
+      updateTurnInfo({
+        playerName: data.playerName || 'Host',
+        isConnected: true
+      });
+      updateSpinButton();
+    });
+
+    socket.on('turnChange', (data) => {
+      gameState.currentTurnKey = data.currentTurnKey;
+      updateTurnInfo(data);
+      updateSpinButton();
+      exitSpinnerSelectionMode();
+    });
+
+    socket.on('chooseNextSpinner', (data) => {
+      // Host always gets to see the selection UI
+      enterSpinnerSelectionMode(data.eligiblePlayers);
+    });
+
+    socket.on('waitingForPlayer', (data) => {
+      showWaitingForPlayer(data);
+    });
+
+    socket.on('spinStart', (data) => {
+      document.getElementById('spinBtn').disabled = true;
+      lastSpinnerName = data.spinnerName || 'Unknown';
+      startWheelSpin(data.selectedWord);
+    });
+
+    socket.on('spinResult', (data) => {
+      gameState.availableWords = data.availableWords;
+      const activeCount = data.availableWords.filter(w => !w.disabled).length;
+      updateRemainingWords(activeCount);
+      // Ensure display shows the correct word from server
+      if (data.word && data.word.text) {
+        document.getElementById('currentWordDisplay').textContent = data.word.text;
+        // Add to history
+        spinHistory.push({ word: data.word.text, spinner: lastSpinnerName });
+        updateHistoryPanel();
+      }
+      // Redraw wheel with greyed-out segments
+      drawWheel(wheelRotation);
+    });
+
+    socket.on('gameOver', (data) => {
+      showGameOver(data);
+    });
+
+    socket.on('wheelReset', (data) => {
+      gameState.availableWords = data.availableWords;
+      gameState.phase = data.phase;
+      initWheel();
+      clearHistory();
+      hideGameOver();
+      exitSpinnerSelectionMode();
+    });
+
+    socket.on('lobbyPhase', (data) => {
+      gameState.phase = 'LOBBY';
+      // Clean up game state from previous round
+      if (lightsInterval) {
+        clearInterval(lightsInterval);
+        lightsInterval = null;
+      }
+      isAnimating = false;
+      hideGameOver();
+      exitSpinnerSelectionMode();
+      showScreen('lobby');
+      updatePlayerList(data.players);
+    });
+
+    socket.on('gameError', (message) => {
+      alert(message);
+    });
+
+    socket.on('returned_to_menu', (data) => {
+      if (data && data.shutdownId) {
+        socket.emit('player_ack_return_to_menu', { shutdownId: data.shutdownId });
+      }
+      setTimeout(() => {
+        socket.disconnect();
+        const masterUrl = window.location.protocol + "//" + window.location.host + "/";
+        window.location.href = masterUrl;
+      }, 50);
+    });
+
+    // UI Functions
+    function showScreen(screenName) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(screenName + 'Screen').classList.add('active');
+    }
+
+    function updatePlayerList(players) {
+      const listEl = document.getElementById('playerList');
+      if (!players || players.length === 0) {
+        listEl.innerHTML = '<li style="color: var(--text-secondary); text-align: center; padding: 20px;">Waiting for players...</li>';
+        return;
+      }
+
+      listEl.innerHTML = players.map(p => `
+        <li class="player-item">
+          <span class="player-status ${p.connected ? '' : 'offline'}"></span>
+          <span>${p.name}</span>
+          <button class="btn-kick" data-key="${p.key}" title="Kick player">×</button>
+        </li>
+      `).join('');
+    }
+
+    function updatePresetDropdown() {
+      const dropdown = document.getElementById('presetDropdown');
+      dropdown.innerHTML = '<option value="">Select a preset...</option>' +
+        availablePresets.map(p => `<option value="${p}">${p.replace('.json', '')}</option>`).join('');
+      updateDeletePresetButton();
+    }
+
+    function updateDeletePresetButton() {
+      const dropdown = document.getElementById('presetDropdown');
+      const deleteBtn = document.getElementById('deletePresetBtn');
+      const selectedFile = dropdown.value;
+      // Show delete button only if a preset is selected and it's not the default
+      deleteBtn.style.display = (selectedFile && selectedFile !== 'default.json') ? 'inline-block' : 'none';
+    }
+
+    function updatePresetInfo() {
+      const infoEl = document.getElementById('presetInfo');
+      if (!gameState.currentPreset) {
+        infoEl.style.display = 'none';
+        document.getElementById('presetWordListContainer').style.display = 'none';
+        return;
+      }
+
+      infoEl.style.display = 'block';
+      document.getElementById('currentPresetName').textContent = gameState.currentPreset.title;
+      document.getElementById('currentPresetWords').textContent = gameState.currentPreset.words.length;
+      renderLobbyWordList();
+    }
+
+    function renderLobbyWordList() {
+      const container = document.getElementById('presetWordListContainer');
+      const scrollEl = document.getElementById('lobbyWordListScroll');
+
+      if (!gameState.currentPreset) {
+        container.style.display = 'none';
+        return;
+      }
+
+      lobbyOriginalWords = JSON.parse(JSON.stringify(gameState.currentPreset.words));
+      lobbyEditorWords = JSON.parse(JSON.stringify(gameState.currentPreset.words));
+      container.style.display = 'block';
+      renderLobbyWordItems();
+      updateLobbyWeightTotal();
+    }
+
+    function renderLobbyWordItems() {
+      const scrollEl = document.getElementById('lobbyWordListScroll');
+      document.getElementById('lobbyWordCount').textContent = `${lobbyEditorWords.length} word${lobbyEditorWords.length !== 1 ? 's' : ''}`;
+
+      scrollEl.innerHTML = lobbyEditorWords.map((word, index) => `
+        <div class="preset-word-item">
+          <span class="word-index">${index + 1}.</span>
+          <input type="text" class="word-text-input" value="${word.text.replace(/"/g, '&quot;')}" data-index="${index}">
+          <input type="number" class="word-weight-input" value="${word.weight}" min="0" max="100" step="0.1" data-index="${index}">
+          <span class="word-pct">%</span>
+          <button class="btn-remove-word" data-index="${index}" title="Remove word">&times;</button>
+        </div>
+      `).join('');
+
+      // Attach event listeners
+      scrollEl.querySelectorAll('.word-text-input').forEach(input => {
+        input.addEventListener('input', (e) => {
+          lobbyEditorWords[parseInt(e.target.dataset.index)].text = e.target.value;
+          updateLobbyWeightTotal();
+        });
+      });
+
+      scrollEl.querySelectorAll('.word-weight-input').forEach(input => {
+        input.addEventListener('input', (e) => {
+          lobbyEditorWords[parseInt(e.target.dataset.index)].weight = parseFloat(e.target.value) || 0;
+          updateLobbyWeightTotal();
+        });
+      });
+
+      scrollEl.querySelectorAll('.btn-remove-word').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const index = parseInt(e.target.dataset.index);
+          if (lobbyEditorWords.length > 1) {
+            lobbyEditorWords.splice(index, 1);
+            renderLobbyWordItems();
+            updateLobbyWeightTotal();
+          } else {
+            alert('Must have at least one word');
+          }
+        });
+      });
+    }
+
+    function hasLobbyPresetChanges() {
+      if (lobbyEditorWords.length !== lobbyOriginalWords.length) return true;
+      return lobbyEditorWords.some((w, i) =>
+        w.text !== lobbyOriginalWords[i].text || w.weight !== lobbyOriginalWords[i].weight
+      );
+    }
+
+    function updateLobbyWeightTotal() {
+      const total = lobbyEditorWords.reduce((sum, w) => sum + (w.weight || 0), 0);
+      const totalEl = document.getElementById('lobbyWeightTotal');
+      const saveBtn = document.getElementById('lobbySaveChangesBtn');
+
+      totalEl.textContent = `${total.toFixed(1)}%`;
+
+      if (Math.abs(total - 100) < 0.1) {
+        totalEl.classList.remove('invalid');
+        totalEl.classList.add('valid');
+        saveBtn.disabled = !hasLobbyPresetChanges();
+      } else {
+        totalEl.classList.remove('valid');
+        totalEl.classList.add('invalid');
+        saveBtn.disabled = true;
+      }
+    }
+
+    document.getElementById('lobbyAddWordBtn').addEventListener('click', () => {
+      lobbyEditorWords.push({ text: `Word ${lobbyEditorWords.length + 1}`, weight: 0 });
+      renderLobbyWordItems();
+      updateLobbyWeightTotal();
+      // Scroll to bottom to show new word
+      const scrollEl = document.getElementById('lobbyWordListScroll');
+      scrollEl.scrollTop = scrollEl.scrollHeight;
+    });
+
+    document.getElementById('lobbyAutoBalanceBtn').addEventListener('click', () => {
+      const equalWeight = parseFloat((100 / lobbyEditorWords.length).toFixed(1));
+      lobbyEditorWords.forEach(word => { word.weight = equalWeight; });
+      // Adjust last word to ensure exact 100%
+      const currentTotal = lobbyEditorWords.reduce((sum, w) => sum + w.weight, 0);
+      if (Math.abs(currentTotal - 100) > 0.01) {
+        lobbyEditorWords[lobbyEditorWords.length - 1].weight = parseFloat((lobbyEditorWords[lobbyEditorWords.length - 1].weight + (100 - currentTotal)).toFixed(1));
+      }
+      renderLobbyWordItems();
+      updateLobbyWeightTotal();
+    });
+
+    document.getElementById('lobbySaveChangesBtn').addEventListener('click', () => {
+      const totalWeight = lobbyEditorWords.reduce((sum, w) => sum + (w.weight || 0), 0);
+      if (Math.abs(totalWeight - 100) > 0.1) {
+        alert(`Weights must total 100% (currently ${totalWeight.toFixed(1)}%)`);
+        return;
+      }
+
+      const preset = {
+        title: gameState.currentPreset.title,
+        words: lobbyEditorWords.map(w => ({
+          text: w.text.trim() || 'Word',
+          weight: parseFloat(w.weight) || 0
+        }))
+      };
+
+      socket.emit('savePreset', { preset }, (response) => {
+        if (response.success) {
+          // Show save feedback
+          const feedbackEl = document.getElementById('lobbySaveFeedback');
+          feedbackEl.style.display = 'block';
+          setTimeout(() => { feedbackEl.style.display = 'none'; }, 2000);
+
+          // Reload the preset to sync gameState
+          const dropdown = document.getElementById('presetDropdown');
+          if (dropdown.value) {
+            socket.emit('loadPreset', { filename: dropdown.value }, (loadResp) => {
+              if (!loadResp.success) {
+                console.error('Error reloading preset:', loadResp.error);
+              }
+            });
+          }
+        } else {
+          alert('Error saving: ' + response.error);
+        }
+      });
+    });
+
+    function updateSettingsUI() {
+      document.getElementById('choiceEliminationCheckbox').checked = gameState.settings.choiceElimination;
+      document.querySelector(`input[name="controlMode"][value="${gameState.settings.controlMode}"]`).checked = true;
+      document.getElementById('chooseNextSpinnerCheckbox').checked = gameState.settings.chooseNextSpinner || false;
+    }
+
+    function updateTurnInfo(data) {
+      const playerName = data?.playerName || 'Unknown';
+      const isConnected = data?.isConnected !== false;
+
+      document.getElementById('turnPlayer').textContent = playerName;
+      const turnInfoEl = document.getElementById('turnInfo');
+
+      if (!isConnected) {
+        turnInfoEl.classList.add('waiting');
+      } else {
+        turnInfoEl.classList.remove('waiting');
+      }
+    }
+
+    function updateSpinButton() {
+      const spinBtn = document.getElementById('spinBtn');
+      // Host can spin if in host mode or host_and_players mode
+      const canSpin = (gameState.settings.controlMode === 'host' ||
+                       gameState.settings.controlMode === 'host_and_players');
+      spinBtn.disabled = !canSpin;
+    }
+
+    function updateRemainingWords(count) {
+      document.getElementById('remainingWords').textContent = `Remaining: ${count} word${count !== 1 ? 's' : ''}`;
+    }
+
+    function updateHistoryPanel() {
+      const list = document.getElementById('historyList');
+      const count = document.getElementById('historyCount');
+      count.textContent = `(${spinHistory.length})`;
+
+      if (spinHistory.length === 0) {
+        list.innerHTML = '<li class="history-empty">No spins yet</li>';
+        return;
+      }
+
+      list.innerHTML = spinHistory.map((entry, i) =>
+        `<li><span class="history-word">${i + 1}. ${entry.word}</span><span class="history-spinner">${entry.spinner}</span></li>`
+      ).reverse().join('');
+
+      // Auto-expand when first entry is added
+      if (spinHistory.length === 1) {
+        document.getElementById('historyPanel').classList.remove('collapsed');
+      }
+    }
+
+    function clearHistory() {
+      spinHistory = [];
+      updateHistoryPanel();
+      document.getElementById('historyPanel').classList.add('collapsed');
+    }
+
+    let spinnerSelectionActive = false;
+
+    function enterSpinnerSelectionMode(eligiblePlayers) {
+      spinnerSelectionActive = true;
+      document.getElementById('selectSpinnerBanner').classList.add('active');
+      document.getElementById('spinBtn').disabled = true;
+
+      // Update player list to show selectable items
+      const listEl = document.getElementById('playerList');
+      listEl.innerHTML = eligiblePlayers.map(p => `
+        <li class="player-item selectable" data-key="${p.key}">
+          <span class="player-status ${p.connected ? '' : 'offline'}"></span>
+          <span>${p.name}</span>
+        </li>
+      `).join('');
+    }
+
+    function exitSpinnerSelectionMode() {
+      spinnerSelectionActive = false;
+      document.getElementById('selectSpinnerBanner').classList.remove('active');
+
+      // Remove selectable class from all player items
+      document.querySelectorAll('.player-item.selectable').forEach(el => {
+        el.classList.remove('selectable');
+      });
+    }
+
+    function showWaitingForPlayer(data) {
+      document.getElementById('turnPlayer').textContent = `${data.playerName} (Offline)`;
+      document.getElementById('turnInfo').classList.add('waiting');
+    }
+
+    function showGameOver(data) {
+      document.getElementById('lastWordDisplay').textContent = data.lastWord?.text || '-';
+      document.getElementById('gameOverOverlay').classList.add('active');
+    }
+
+    function hideGameOver() {
+      document.getElementById('gameOverOverlay').classList.remove('active');
+    }
+
+    // Intro Animation
+    function startIntroAnimation() {
+      // Reset all intro cards/dots so animations replay on subsequent game starts
+      for (let i = 0; i < 3; i++) {
+        document.getElementById('introCard' + i).classList.remove('visible');
+        document.getElementById('introDot' + i).classList.remove('active');
+      }
+
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        document.getElementById('introCard0').classList.add('visible');
+        document.getElementById('introDot0').classList.add('active');
+      }));
+
+      setTimeout(() => {
+        document.getElementById('introCard1').classList.add('visible');
+        document.getElementById('introDot1').classList.add('active');
+      }, 1000);
+
+      setTimeout(() => {
+        document.getElementById('introCard2').classList.add('visible');
+        document.getElementById('introDot2').classList.add('active');
+      }, 2000);
+    }
+
+    // Event Listeners
+    document.getElementById('presetDropdown').addEventListener('change', (e) => {
+      if (e.target.value) {
+        socket.emit('loadPreset', { filename: e.target.value }, (response) => {
+          if (!response.success) {
+            alert('Error loading preset: ' + response.error);
+          }
+        });
+      }
+      updateDeletePresetButton();
+    });
+
+    document.getElementById('deletePresetBtn').addEventListener('click', () => {
+      const dropdown = document.getElementById('presetDropdown');
+      const filename = dropdown.value;
+      if (!filename || filename === 'default.json') return;
+      if (confirm(`Are you sure you want to delete the preset "${filename.replace('.json', '')}"?`)) {
+        socket.emit('deletePreset', { filename }, (response) => {
+          if (!response.success) {
+            alert('Error deleting preset: ' + response.error);
+          } else {
+            // Reset to default preset
+            dropdown.value = 'default.json';
+            socket.emit('loadPreset', { filename: 'default.json' });
+            updateDeletePresetButton();
+          }
+        });
+      }
+    });
+
+    // Player list click: kick (lobby) or select next spinner (game)
+    document.getElementById('playerList').addEventListener('click', (e) => {
+      // Check for spinner selection first
+      if (spinnerSelectionActive) {
+        const playerItem = e.target.closest('.player-item.selectable');
+        if (playerItem && playerItem.dataset.key) {
+          socket.emit('selectNextSpinner', { selectedPlayerKey: playerItem.dataset.key });
+          return;
+        }
+      }
+
+      // Kick player
+      const kickBtn = e.target.closest('.btn-kick');
+      if (kickBtn && kickBtn.dataset.key) {
+        const playerKey = kickBtn.dataset.key;
+        if (confirm('Are you sure you want to kick this player?')) {
+          socket.emit('kickPlayer', { playerKey });
+        }
+      }
+    });
+
+    document.getElementById('startGameBtn').addEventListener('click', () => {
+      socket.emit('startGame');
+    });
+
+    document.getElementById('skipIntroBtn').addEventListener('click', () => {
+      socket.emit('skipIntro');
+    });
+
+    document.getElementById('spinBtn').addEventListener('click', () => {
+      socket.emit('requestSpin', { playerKey: '__HOST__' });
+    });
+
+    document.getElementById('forceSkipBtn').addEventListener('click', () => {
+      socket.emit('forceSkipTurn');
+    });
+
+    document.getElementById('resetWheelBtn').addEventListener('click', () => {
+      socket.emit('resetWheel');
+    });
+
+    document.getElementById('historyToggle').addEventListener('click', () => {
+      document.getElementById('historyPanel').classList.toggle('collapsed');
+    });
+
+    document.getElementById('mainMenuBtn').addEventListener('click', () => {
+      socket.emit('returnToLobby');
+    });
+
+    document.getElementById('returnToLobbyBtn').addEventListener('click', () => {
+      socket.emit('returnToLobby');
+    });
+
+    document.getElementById('settingsBtn').addEventListener('click', () => {
+      document.getElementById('settingsModal').classList.add('active');
+    });
+
+    document.getElementById('closeSettingsModal').addEventListener('click', () => {
+      document.getElementById('settingsModal').classList.remove('active');
+    });
+
+    document.getElementById('cancelSettingsBtn').addEventListener('click', () => {
+      document.getElementById('settingsModal').classList.remove('active');
+    });
+
+    document.getElementById('saveSettingsBtn').addEventListener('click', () => {
+      const choiceElimination = document.getElementById('choiceEliminationCheckbox').checked;
+      const controlMode = document.querySelector('input[name="controlMode"]:checked').value;
+      const chooseNextSpinner = document.getElementById('chooseNextSpinnerCheckbox').checked;
+
+      socket.emit('updateSettings', { choiceElimination, controlMode, chooseNextSpinner });
+      document.getElementById('settingsModal').classList.remove('active');
+    });
+
+    document.getElementById('createPresetBtn').addEventListener('click', () => {
+      openPresetEditor();
+    });
+
+    document.getElementById('exitBtn').addEventListener('click', () => {
+      document.getElementById('exitBtn').disabled = true;
+      socket.emit('host_return_to_menu');
+      setTimeout(() => { window.location.href = '/'; }, 100);
+    });
+
+    // Wheel rendering implementation
+    const canvas = document.getElementById('wheelCanvas');
+    const ctx = canvas ? canvas.getContext('2d') : null;
+    const canvasSize = 600;
+    const centerX = canvasSize / 2;
+    const centerY = canvasSize / 2;
+    const wheelRadius = 260;
+
+    // Animation state
+    let wheelRotation = 0;
+    let targetRotation = 0;
+    let spinStartRotation = 0;
+    let isAnimating = false;
+    let animationStartTime = null;
+    const animationDuration = 3000;
+    let lightsInterval = null;
+    let wheelCacheCanvas = null;
+    let wheelCacheKey = '';
+    let lastDisplayedWordText = null;
+
+    // Color palette for wheel slices
+    const WHEEL_COLORS = [
+      '#ef4444', // red
+      '#f59e0b', // orange
+      '#eab308', // yellow
+      '#22c55e', // green
+      '#3b82f6', // blue
+      '#a855f7', // purple
+      '#ec4899', // pink
+      '#14b8a6'  // teal
+    ];
+
+    function getSliceColor(index) {
+      return WHEEL_COLORS[index % WHEEL_COLORS.length];
+    }
+
+    function getWheelCacheKey() {
+      if (!gameState.availableWords || gameState.availableWords.length === 0) return '';
+      return gameState.availableWords
+        .map(word => `${word.text}|${word.weight}|${word.disabled ? 1 : 0}`)
+        .join('::');
+    }
+
+    // Draw a wheel slice
+    function drawWheelSlice(drawCtx, startAngle, endAngle, color) {
+      if (!drawCtx) return;
+      drawCtx.beginPath();
+      drawCtx.moveTo(centerX, centerY);
+      drawCtx.arc(centerX, centerY, wheelRadius, startAngle, endAngle);
+      drawCtx.closePath();
+      drawCtx.fillStyle = color;
+      drawCtx.fill();
+      drawCtx.strokeStyle = '#14151b';
+      drawCtx.lineWidth = 3;
+      drawCtx.stroke();
+    }
+
+    // Draw text on a wheel slice
+    function drawWheelText(drawCtx, text, angle, radius, disabled = false) {
+      if (!drawCtx) return;
+      drawCtx.save();
+      drawCtx.translate(centerX, centerY);
+      drawCtx.rotate(angle);
+      drawCtx.textAlign = 'right';
+      drawCtx.fillStyle = disabled ? '#9ca3af' : '#ffffff';
+      drawCtx.font = 'bold 18px "Segoe UI"';
+      drawCtx.shadowColor = 'rgba(0,0,0,0.8)';
+      drawCtx.shadowBlur = 4;
+
+      // Auto-size text to fit
+      let fontSize = 18;
+      const maxWidth = wheelRadius * 0.4;
+      drawCtx.font = `bold ${fontSize}px "Segoe UI"`;
+      while (drawCtx.measureText(text).width > maxWidth && fontSize > 10) {
+        fontSize--;
+        drawCtx.font = `bold ${fontSize}px "Segoe UI"`;
+      }
+
+      drawCtx.fillText(text, radius - 30, 5);
+      drawCtx.restore();
+    }
+
+    function rebuildWheelCache() {
+      const cacheKey = getWheelCacheKey();
+      if (!cacheKey) {
+        wheelCacheCanvas = null;
+        wheelCacheKey = '';
+        return null;
+      }
+
+      if (wheelCacheCanvas && wheelCacheKey === cacheKey) {
+        return wheelCacheCanvas;
+      }
+
+      const offscreen = document.createElement('canvas');
+      offscreen.width = canvasSize;
+      offscreen.height = canvasSize;
+      const offCtx = offscreen.getContext('2d');
+
+      let currentAngle = 0;
+      for (let i = 0; i < gameState.availableWords.length; i++) {
+        const word = gameState.availableWords[i];
+        const sliceAngle = (word.weight / 100) * (2 * Math.PI);
+
+        const sliceColor = word.disabled ? '#4b5563' : getSliceColor(i);
+        drawWheelSlice(offCtx, currentAngle, currentAngle + sliceAngle, sliceColor);
+        drawWheelText(offCtx, word.text, currentAngle + sliceAngle / 2, wheelRadius * 0.7, word.disabled);
+
+        currentAngle += sliceAngle;
+      }
+
+      wheelCacheCanvas = offscreen;
+      wheelCacheKey = cacheKey;
+      return wheelCacheCanvas;
+    }
+
+    // Draw pointer at top
+    function drawPointer() {
+      if (!ctx) return;
+      ctx.save();
+      ctx.translate(centerX, centerY);
+
+      // Triangle pointer pointing down
+      ctx.beginPath();
+      ctx.moveTo(0, -wheelRadius - 10);
+      ctx.lineTo(-20, -wheelRadius - 40);
+      ctx.lineTo(20, -wheelRadius - 40);
+      ctx.closePath();
+      ctx.fillStyle = '#fbbf24';
+      ctx.fill();
+      ctx.strokeStyle = '#14151b';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    // Draw flashing lights around wheel
+    function drawWheelLights(rotation) {
+      if (!ctx) return;
+      const numLights = 40;
+      const lightRadius = wheelRadius + 35;
+      const time = Date.now();
+
+      for (let i = 0; i < numLights; i++) {
+        const angle = (i / numLights) * (2 * Math.PI) - rotation / 10;
+        const x = centerX + Math.cos(angle) * lightRadius;
+        const y = centerY + Math.sin(angle) * lightRadius;
+
+        // Alternating chase pattern
+        const isOn = Math.floor((time / 100 + i) % 10) < 5;
+
+        ctx.beginPath();
+        ctx.arc(x, y, 6, 0, 2 * Math.PI);
+        ctx.fillStyle = isOn ? '#fbbf24' : '#374151';
+        ctx.fill();
+        ctx.strokeStyle = '#14151b';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+    }
+
+    // Main wheel drawing function
+    function drawWheel(rotation = 0) {
+      if (!ctx || !gameState.availableWords || gameState.availableWords.length === 0) return;
+
+      ctx.clearRect(0, 0, canvasSize, canvasSize);
+
+      const cachedWheel = rebuildWheelCache();
+      if (cachedWheel) {
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.rotate(-rotation);
+        ctx.drawImage(cachedWheel, -centerX, -centerY);
+        ctx.restore();
+      }
+
+      drawWheelLights(rotation);
+      drawPointer();
+
+      // Update current word display
+      updateCurrentWordFromRotation(rotation);
+    }
+
+    // Get word currently pointed at by pointer
+    function getCurrentPointedWord(rotation) {
+      if (!gameState.availableWords || gameState.availableWords.length === 0) return null;
+
+      const pointerAngle = ((rotation - Math.PI / 2) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
+
+      let cumulativeAngle = 0;
+      for (const word of gameState.availableWords) {
+        const sliceAngle = (word.weight / 100) * (2 * Math.PI);
+        if (pointerAngle >= cumulativeAngle && pointerAngle < cumulativeAngle + sliceAngle) {
+          return word.disabled ? null : word;
+        }
+        cumulativeAngle += sliceAngle;
+      }
+
+      const activeWords = gameState.availableWords.filter(w => !w.disabled);
+      return activeWords.length > 0 ? activeWords[0] : null;
+    }
+
+    function updateCurrentWordFromRotation(rotation) {
+      const word = getCurrentPointedWord(rotation);
+      if (word && word.text !== lastDisplayedWordText) {
+        lastDisplayedWordText = word.text;
+        document.getElementById('currentWordDisplay').textContent = word.text;
+      }
+    }
+
+    // Easing function
+    function easeInOutCubic(t) {
+      if (t < 0.5) {
+        return 4 * t * t * t;
+      } else {
+        return 1 - Math.pow(-2 * t + 2, 3) / 2;
+      }
+    }
+
+    // Calculate target rotation to land on selected word
+    function calculateTargetRotation(selectedWord) {
+      if (!gameState.availableWords || gameState.availableWords.length === 0) {
+        return 2 * Math.PI * 3;
+      }
+
+      // Find the word's position in current wheel
+      let cumulativeAngle = 0;
+      let targetAngle = 0;
+
+      for (const word of gameState.availableWords) {
+        const sliceAngle = (word.weight / 100) * (2 * Math.PI);
+        if (word.text === selectedWord.text) {
+          targetAngle = cumulativeAngle + sliceAngle / 2;
+          break;
+        }
+        cumulativeAngle += sliceAngle;
+      }
+
+      // Pointer is at top (-Math.PI / 2 in canvas coords, equivalent to 3*PI/2)
+      // For the target word center at angle targetAngle to align with the pointer:
+      // We need: -rotation + targetAngle = -PI/2 (mod 2*PI), so rotation = targetAngle + PI/2
+      const desiredAbsoluteRotation = targetAngle + Math.PI / 2;
+
+      // Calculate how much additional rotation is needed from current position
+      const currentNormalized = spinStartRotation % (2 * Math.PI);
+      let delta = desiredAbsoluteRotation - currentNormalized;
+      // Normalize delta to positive
+      while (delta < 0) delta += 2 * Math.PI;
+
+      // Add 3-5 full rotations for effect
+      const fullRotations = 3 + Math.floor(Math.random() * 3);
+      const baseRotation = fullRotations * 2 * Math.PI;
+
+      return baseRotation + delta;
+    }
+
+    // Animation loop
+    function animateWheel(timestamp) {
+      if (!animationStartTime) animationStartTime = timestamp;
+
+      const elapsed = timestamp - animationStartTime;
+      const progress = Math.min(elapsed / animationDuration, 1);
+      const easedProgress = easeInOutCubic(progress);
+
+      wheelRotation = spinStartRotation + easedProgress * targetRotation;
+      drawWheel(wheelRotation);
+
+      if (progress < 1) {
+        requestAnimationFrame(animateWheel);
+      } else {
+        isAnimating = false;
+        updateSpinButton();
+        console.log('Spin animation complete');
+      }
+    }
+
+    function initWheel() {
+      console.log('Initializing wheel with', gameState.availableWords.length, 'words');
+      wheelRotation = 0;
+      lastDisplayedWordText = null;
+      drawWheel(0);
+      updateRemainingWords(gameState.availableWords.length);
+
+      // Start lights animation
+      if (lightsInterval) clearInterval(lightsInterval);
+      lightsInterval = setInterval(() => {
+        if (!isAnimating && gameState.phase === 'MAIN_GAME') {
+          drawWheel(wheelRotation);
+        }
+      }, 100);
+    }
+
+    function startWheelSpin(selectedWord) {
+      console.log('Starting spin animation for:', selectedWord);
+      if (isAnimating) return;
+
+      // Normalize current rotation to avoid growing infinitely
+      spinStartRotation = wheelRotation % (2 * Math.PI);
+      wheelRotation = spinStartRotation;
+      targetRotation = calculateTargetRotation(selectedWord);
+      animationStartTime = null;
+      isAnimating = true;
+
+      requestAnimationFrame(animateWheel);
+    }
+
+    // Preset Editor implementation
+    let editorWords = [];
+
+    function openPresetEditor(preset) {
+      document.getElementById('presetError').classList.add('hidden');
+
+      if (preset) {
+        document.getElementById('presetTitleInput').value = preset.title;
+        editorWords = JSON.parse(JSON.stringify(preset.words));
+      } else {
+        document.getElementById('presetTitleInput').value = '';
+        editorWords = [
+          { text: 'Word 1', weight: 50 },
+          { text: 'Word 2', weight: 50 }
+        ];
+      }
+
+      renderWordList();
+      updateWeightTotal();
+      document.getElementById('presetEditorModal').classList.add('active');
+    }
+
+    function renderWordList() {
+      const listEl = document.getElementById('wordList');
+      listEl.innerHTML = editorWords.map((word, index) => `
+        <div class="word-item">
+          <input type="text" class="word-text-input" value="${word.text}" data-index="${index}">
+          <input type="number" class="word-weight-input" value="${word.weight}" min="0" max="100" data-index="${index}">
+          <span>%</span>
+          <button class="btn-remove" data-index="${index}">Remove</button>
+        </div>
+      `).join('');
+
+      // Attach event listeners
+      listEl.querySelectorAll('.word-text-input').forEach(input => {
+        input.addEventListener('input', (e) => {
+          const index = parseInt(e.target.dataset.index);
+          editorWords[index].text = e.target.value;
+        });
+      });
+
+      listEl.querySelectorAll('.word-weight-input').forEach(input => {
+        input.addEventListener('input', (e) => {
+          const index = parseInt(e.target.dataset.index);
+          editorWords[index].weight = parseFloat(e.target.value) || 0;
+          updateWeightTotal();
+        });
+      });
+
+      listEl.querySelectorAll('.btn-remove').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const index = parseInt(e.target.dataset.index);
+          if (editorWords.length > 1) {
+            editorWords.splice(index, 1);
+            renderWordList();
+            updateWeightTotal();
+          } else {
+            alert('Must have at least one word');
+          }
+        });
+      });
+    }
+
+    function updateWeightTotal() {
+      const total = editorWords.reduce((sum, w) => sum + (w.weight || 0), 0);
+      const totalEl = document.getElementById('weightTotalValue');
+      const displayEl = document.getElementById('weightTotalDisplay');
+
+      totalEl.textContent = total.toFixed(1);
+      document.getElementById('totalWeight').textContent = total.toFixed(1);
+
+      if (Math.abs(total - 100) < 0.1) {
+        displayEl.classList.remove('invalid');
+        displayEl.classList.add('valid');
+      } else {
+        displayEl.classList.remove('valid');
+        displayEl.classList.add('invalid');
+      }
+    }
+
+    function autoBalanceWeights() {
+      const equalWeight = 100 / editorWords.length;
+      editorWords.forEach(word => {
+        word.weight = equalWeight;
+      });
+      renderWordList();
+      updateWeightTotal();
+    }
+
+    // Preset Editor Event Listeners
+    document.getElementById('addWordBtn').addEventListener('click', () => {
+      editorWords.push({ text: `Word ${editorWords.length + 1}`, weight: 0 });
+      renderWordList();
+      updateWeightTotal();
+    });
+
+    document.getElementById('autoBalanceBtn').addEventListener('click', () => {
+      autoBalanceWeights();
+    });
+
+    document.getElementById('closePresetEditorModal').addEventListener('click', () => {
+      document.getElementById('presetEditorModal').classList.remove('active');
+    });
+
+    document.getElementById('cancelPresetBtn').addEventListener('click', () => {
+      document.getElementById('presetEditorModal').classList.remove('active');
+    });
+
+    document.getElementById('savePresetBtn').addEventListener('click', () => {
+      const title = document.getElementById('presetTitleInput').value.trim();
+      const errorEl = document.getElementById('presetError');
+
+      if (!title) {
+        errorEl.textContent = 'Preset title is required';
+        errorEl.classList.remove('hidden');
+        return;
+      }
+
+      const totalWeight = editorWords.reduce((sum, w) => sum + (w.weight || 0), 0);
+      if (Math.abs(totalWeight - 100) > 0.1) {
+        errorEl.textContent = `Weights must total 100% (currently ${totalWeight.toFixed(1)}%)`;
+        errorEl.classList.remove('hidden');
+        return;
+      }
+
+      const preset = {
+        title,
+        words: editorWords.map(w => ({
+          text: w.text.trim() || 'Word',
+          weight: parseFloat(w.weight) || 0
+        }))
+      };
+
+      socket.emit('savePreset', { preset }, (response) => {
+        if (response.success) {
+          document.getElementById('presetEditorModal').classList.remove('active');
+          alert('Preset saved successfully!');
+        } else {
+          errorEl.textContent = response.error;
+          errorEl.classList.remove('hidden');
+        }
+      });
+    });
+  </script>
+</body>
+</html>

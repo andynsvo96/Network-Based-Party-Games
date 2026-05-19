@@ -1,0 +1,15 @@
+{
+  "title": "Test Words",
+  "words": [
+    { "text": "Jump", "weight": 20 },
+    { "text": "Sing", "weight": 20 },
+    { "text": "Dance", "weight": 15 },
+    { "text": "Run", "weight": 15 },
+    { "text": "Swim", "weight": 10 },
+    { "text": "Fly", "weight": 10 },
+    { "text": "Crawl", "weight": 5 },
+    { "text": "Spin", "weight": 5 }
+  ],
+  "createdAt": "2026-02-10T00:00:00.000Z",
+  "lastModified": "2026-02-10T00:00:00.000Z"
+}

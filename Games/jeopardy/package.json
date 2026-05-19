@@ -1,0 +1,21 @@
+{
+  "name": "jeopardy-multiplayer-server",
+  "version": "1.0.0",
+  "description": "Local IP Multiplayer Jeopardy Buzzer",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [
+    "socket.io",
+    "express",
+    "jeopardy",
+    "game"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.22.1",
+    "socket.io": "^4.8.1"
+  }
+}

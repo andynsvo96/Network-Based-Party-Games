@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Host Screen - The Voting Game</title>
+<script src="/socket.io/socket.io.js"></script>
+<style>
+  :root {
+    --bg-primary: #0a0e1a;
+    --bg-secondary: #111827;
+    --bg-tertiary: #1f2937;
+    --accent: #f59e0b;
+    --accent-hover: #fbbf24;
+    --accent-glow: rgba(245, 158, 11, 0.4);
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --text-gold: #fbbf24;
+    --success: #22c55e;
+    --danger: #ef4444;
+    --border-subtle: rgba(55, 65, 81, 0.5);
+    --border-card: rgba(245, 158, 11, 0.3);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    padding: 20px;
+  }
+
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  h1 {
+    font-size: clamp(2.5rem, 5vw, 3.5rem);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    background: linear-gradient(135deg, #f59e0b, #fbbf24);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: none;
+    filter: drop-shadow(0 0 30px rgba(245, 158, 11, 0.5));
+    margin-bottom: 8px;
+    text-align: center;
+  }
+
+  .subtitle {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    margin-bottom: 24px;
+    text-align: center;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-gold);
+    margin-bottom: 16px;
+    text-align: center;
+  }
+
+  h3 {
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--text-gold);
+    margin-bottom: 16px;
+  }
+
+  .panel {
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-subtle);
+    border-radius: 16px;
+    padding: 24px;
+    margin: 16px 0;
+  }
+
+  .button {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #000;
+    font-weight: 700;
+    padding: 14px 28px;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin: 6px;
+  }
+
+  .button:hover:not(:disabled) {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(245, 158, 11, 0.4);
+  }
+
+  .button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    text-align: left;
+    max-height: 380px;
+    overflow-y: auto;
+  }
+
+  li {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    border-radius: 8px;
+    background: var(--bg-tertiary);
+    margin-bottom: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  #questionDisplay {
+    font-weight: 800;
+    margin-top: 20px;
+    line-height: 1.1;
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    min-height: 1.2em;
+    color: var(--text-gold);
+    text-align: center;
+  }
+
+  .winner {
+    font-size: clamp(2rem, 5.5vw, 3.5rem);
+    font-weight: 800;
+    background: linear-gradient(135deg, #f59e0b, #fbbf24);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: pulse 1s infinite alternate;
+  }
+
+  @keyframes pulse {
+    0% { opacity: 1; transform: scale(1); }
+    100% { opacity: 0.8; transform: scale(1.02); }
+  }
+
+  .first-place {
+    font-weight: 900;
+    color: var(--success);
+  }
+
+  .round-winner-display {
+    font-weight: 900;
+    color: var(--text-gold);
+    font-size: 1.5rem;
+    margin-top: 10px;
+  }
+
+  .hidden { display: none !important; }
+
+  /* Join Info Section */
+  #joinInfo {
+    background: var(--bg-tertiary);
+    padding: 20px;
+    border-radius: 12px;
+    margin: 20px 0;
+    border: 1px solid var(--border-subtle);
+  }
+
+  #joinInfo p {
+    font-size: 1rem;
+    margin: 8px 0;
+    color: var(--text-secondary);
+  }
+
+  #joinInfo span {
+    color: var(--text-gold);
+    font-family: monospace;
+    font-size: 1.1rem;
+  }
+
+  /* Host Timer Display */
+  #hostTimerDisplay {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--text-gold);
+    padding: 16px;
+    background: var(--bg-tertiary);
+    border: 2px solid var(--border-card);
+    border-radius: 12px;
+    margin: 16px 0;
+    text-align: center;
+  }
+
+  #hostTimerDisplay.hidden { display: none; }
+
+  /* Connection indicator in player list */
+  .p-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 12px;
+    vertical-align: middle;
+    background: transparent;
+    border: 2px solid #6b7280;
+    flex-shrink: 0;
+  }
+
+  .p-dot.on {
+    background: var(--success);
+    border: none;
+  }
+
+  .p-offline {
+    opacity: 0.6;
+  }
+
+  /* Form Elements */
+  input[type="number"],
+  input[type="text"] {
+    padding: 10px 14px;
+    background: var(--bg-tertiary);
+    border: 2px solid var(--border-subtle);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 1rem;
+    transition: border-color 0.3s;
+  }
+
+  input[type="number"]:focus,
+  input[type="text"]:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  input[type="checkbox"],
+  input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+
+  label {
+    color: var(--text-primary);
+    cursor: pointer;
+  }
+
+  /* Intro Animation Styles */
+  #introSection {
+    display: none;
+  }
+
+  #introSection.active {
+    display: block;
+  }
+
+  .intro-track {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin: 30px 0;
+  }
+
+  @media (max-width: 768px) {
+    .intro-track {
+      grid-template-columns: 1fr;
+    }
+    .grid-2 {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .intro-card {
+    background: var(--bg-tertiary);
+    border: 2px solid var(--border-subtle);
+    border-radius: 16px;
+    padding: 24px;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+
+  .intro-card.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .intro-card h3 {
+    color: var(--text-gold);
+    font-size: 1.25rem;
+    margin: 0 0 12px 0;
+    text-transform: none;
+    letter-spacing: normal;
+  }
+
+  .intro-card p {
+    font-size: 1rem;
+    line-height: 1.6;
+    margin: 0;
+    color: var(--text-secondary);
+  }
+
+  .intro-footer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    margin-top: 24px;
+    flex-wrap: wrap;
+  }
+
+  .intro-dots {
+    display: flex;
+    gap: 10px;
+  }
+
+  .intro-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--border-subtle);
+    transition: all 0.3s ease;
+  }
+
+  .intro-dot.active {
+    background: var(--accent);
+    transform: scale(1.2);
+  }
+
+  .playerStatusCircle {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+
+  .playerStatusCircle.online {
+    background: var(--success);
+  }
+
+  .playerStatusCircle.offline {
+    background: transparent;
+    border: 2px solid #6b7280;
+  }
+
+  /* Player List Panel */
+  #playerListPanel {
+    background: var(--bg-tertiary);
+    border-radius: 12px;
+    padding: 16px;
+  }
+
+  /* Preset Names Section */
+  #presetNamesSection {
+    background: var(--bg-tertiary);
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 12px;
+  }
+
+  /* Game Section Panels */
+  #gameSection .panel {
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-subtle);
+  }
+
+  /* Votes Cast List */
+  #votesCastList li {
+    background: var(--bg-tertiary);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 6px;
+    font-size: 0.95rem;
+  }
+
+  /* Final Results */
+  #finalResults {
+    text-align: center;
+  }
+
+  #leaderboardFinal ul {
+    text-align: left;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+
+  #leaderboardFinal li {
+    background: var(--bg-tertiary);
+    border-radius: 8px;
+    padding: 12px 16px;
+  }
+
+  /* Copy Button Styling */
+  #copyJoinLinkBtn {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 2px solid var(--border-subtle);
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    transition: all 0.3s;
+  }
+
+  #copyJoinLinkBtn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    transform: translateY(-1px);
+  }
+
+  /* Danger Button Styling */
+  #btnEndGame,
+  #returnToLauncherBtn,
+  #btnEndIntro {
+    background: var(--danger) !important;
+    color: white !important;
+  }
+
+  #btnEndGame:hover:not(:disabled),
+  #returnToLauncherBtn:hover,
+  #btnEndIntro:hover {
+    background: #dc2626 !important;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4);
+  }
+
+  /* Kick Button */
+  li button {
+    background: var(--danger);
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-left: auto;
+  }
+
+  li button:hover {
+    background: #dc2626;
+    transform: scale(1.05);
+  }
+
+  /* Section Paragraphs */
+  .panel p {
+    color: var(--text-secondary);
+    margin: 8px 0;
+  }
+
+  /* Radio/Checkbox Labels */
+  .panel label {
+    color: var(--text-primary);
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1 id="game-title">THE VOTING GAME</h1>
+  <div class="subtitle">Host Screen - Connect your devices to get started!</div>
+
+  <div id="setupHost" class="panel">
+    <h2>Host Setup</h2>
+    <p id="hostStatus">Loading questions...</p>
+    <div id="joinInfo">
+      <!-- Players join through the main launcher only -->
+      <span id="localIp" style="display:none;"></span><span id="localPort" style="display:none;"></span>
+      <button id="copyJoinLinkBtn" style="display:none;"></button>
+      <p>Current Players: <span id="playerCount">0</span></p>
+    </div>
+
+    <div class="grid-2">
+      <div>
+        <h3>Game Rules</h3>
+        <p>Questions loaded: <span id="qCountDisplay">0</span></p>
+        <p>Max Votes to Win: <input type="number" id="maxVotes" value="5" min="1" style="width:100px; padding:5px;" /></p>
+        <p>Anonymous Votes: <input type="checkbox" id="isAnonymous" checked /> (Votes will not be revealed)</p>
+
+        <h3 style="margin-top:20px;">Round Advance</h3>
+        <p>
+            <input type="radio" name="advanceMode" id="autoAdvanceInput" value="auto" checked> 
+            <label for="autoAdvanceInput">Automatic (</label>
+            <input type="number" id="advanceDelayInput" value="5" min="2" style="width:50px; padding:5px;" />
+            <label for="advanceDelayInput">seconds delay)</label>
+        </p>
+        <p>
+            <input type="radio" name="advanceMode" id="manualAdvanceInput" value="manual">
+            <label for="manualAdvanceInput">Manual</label>
+        </p>
+
+        <h3 style="margin-top:20px;">Player Names</h3>
+        <p>
+          <input type="checkbox" id="usePresetNamesInput">
+          <label for="usePresetNamesInput">Use preset names</label>
+        </p>
+        <div id="presetNamesSection" style="display:none; margin-top:10px;">
+          <div style="display:flex; gap:8px; margin-bottom:8px;">
+            <input type="text" id="presetNameInput" placeholder="Enter a name" style="flex:1; padding:8px; border-radius:8px; border:1px solid rgba(255,255,255,0.2); background:rgba(0,0,0,0.3); color:#fff;" />
+            <button class="button" id="addPresetNameBtn" type="button" style="padding:8px 14px; font-size:14px;">Add</button>
+          </div>
+          <div id="presetNamesError" style="color:#ff5555; font-size:14px; min-height:18px;"></div>
+          <div id="presetNamesList" style="margin-top:8px;"></div>
+        </div>
+        </div>
+      <div id="playerListPanel">
+        <h3>Players</h3>
+        <ul id="playerList"></ul>
+      </div>
+    </div>
+    <button class="button" id="btnStart" disabled>Start Game (Need 2+ Connected Players)</button>
+  </div>
+
+  <div id="gameSection" class="hidden">
+    <div class="panel">
+      <div id="questionDisplay">Waiting for Host to start...</div>
+    </div>
+
+    <div id="hostTimerDisplay" class="hidden">Next question in: <span id="countdown">...</span></div>
+
+    <div class="grid-2" style="margin-top:16px">
+      <div class="panel">
+        <h3>Current Leaderboard</h3>
+        <ul id="leaderboardLive"></ul>
+      </div>
+      <div class="panel">
+        <h3>Votes Cast (<span id="votesCastCount">0</span>/<span id="totalPlayers">0</span>)</h3>
+        <ul id="votesCastList"></ul>
+        <div id="roundResultsArea">
+            <button class="button hidden" id="btnNextQuestion">Next Question</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <button class="button" id="btnEndGame" type="button" style="background:#ff5555; color:white; margin-top:20px;" disabled>End Game Now</button>
+  <button class="button" id="returnToLauncherBtn" type="button" style="background:#ef4444; color:white; margin-top:10px;">Exit to Launcher</button>
+
+  <div id="finalResults" class="hidden panel">
+    <h2>Game Over</h2>
+    <p class="winner" id="winnerDisplay"></p>
+    <div id="leaderboardFinal"></div>
+    <button class="button" id="btnPlayAgain" type="button">Play Again (Keep Players)</button>
+  </div>
+
+  <!-- Intro Section -->
+  <div id="introSection" class="panel">
+    <h2>How to Play</h2>
+    <div class="intro-track">
+      <div class="intro-card" id="introCard1">
+        <h3 id="introTitle1">Loading...</h3>
+        <p id="introContent1"></p>
+      </div>
+      <div class="intro-card" id="introCard2">
+        <h3 id="introTitle2">Loading...</h3>
+        <p id="introContent2"></p>
+      </div>
+      <div class="intro-card" id="introCard3">
+        <h3 id="introTitle3">Loading...</h3>
+        <p id="introContent3"></p>
+      </div>
+    </div>
+    <div class="intro-footer">
+      <div class="intro-dots">
+        <div class="intro-dot" id="introDot1"></div>
+        <div class="intro-dot" id="introDot2"></div>
+        <div class="intro-dot" id="introDot3"></div>
+      </div>
+      <button class="button" id="btnStartGame" type="button">Start Game</button>
+      <button class="button" id="btnEndIntro" type="button" style="background:#ff5555; color:white;">End Game</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Connect to game-specific namespace
+  const pathParts = window.location.pathname.split('/');
+  const gameId = pathParts[2]; // e.g., "voting-game"
+  const socket = io(gameId ? `/game/${gameId}` : '/', {
+    reconnection: true,
+    reconnectionAttempts: Infinity,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 5000,
+    timeout: 20000
+  });
+
+  let maxVotes = 5;
+  let isAnonymous = true;
+  let autoAdvance = true; 
+  let advanceDelay = 5; 
+
+  // Elements
+  const setupHost = document.getElementById('setupHost');
+  const hostStatus = document.getElementById('hostStatus');
+  const qCountDisplay = document.getElementById('qCountDisplay');
+  const playerCountEl = document.getElementById('playerCount');
+  const maxVotesInput = document.getElementById('maxVotes');
+  const isAnonymousInput = document.getElementById('isAnonymous');
+  const playerList = document.getElementById('playerList');
+  const btnStart = document.getElementById('btnStart');
+
+  const gameSection = document.getElementById('gameSection');
+  const questionDisplay = document.getElementById('questionDisplay');
+  const leaderboardLive = document.getElementById('leaderboardLive');
+  const votesCastCount = document.getElementById('votesCastCount');
+  const totalPlayersEl = document.getElementById('totalPlayers');
+  const votesCastList = document.getElementById('votesCastList');
+  const roundResultsArea = document.getElementById('roundResultsArea');
+
+  const finalResults = document.getElementById('finalResults');
+  const winnerDisplay = document.getElementById('winnerDisplay');
+  const leaderboardFinal = document.getElementById('leaderboardFinal');
+  const btnPlayAgain = document.getElementById('btnPlayAgain');
+
+  const autoAdvanceInput = document.getElementById('autoAdvanceInput');
+  const manualAdvanceInput = document.getElementById('manualAdvanceInput');
+  const advanceDelayInput = document.getElementById('advanceDelayInput');
+  const btnNextQuestion = document.getElementById('btnNextQuestion');
+  const btnEndGame = document.getElementById('btnEndGame');
+  const hostTimerDisplay = document.getElementById('hostTimerDisplay');
+  const countdownEl = document.getElementById('countdown');
+
+  socket.on('connect', () => {
+    document.getElementById('localPort').textContent = window.location.port || '3000';
+    // Re-register as host on every connect/reconnect to handle race conditions
+    socket.emit('registerHost');
+  });
+
+  // Fetch join info from main server
+  fetch('/host-info')
+    .then(r => r.json())
+    .then(data => {
+      document.getElementById('localIp').textContent = data.ip;
+      document.getElementById('localPort').textContent = data.port;
+    })
+    .catch(() => {
+      // Fallback to hostname if fetch fails
+      document.getElementById('localIp').textContent = window.location.hostname;
+    });
+
+  // Copy-to-clipboard for the player join link
+  const copyJoinLinkBtn = document.getElementById('copyJoinLinkBtn');
+  function buildJoinUrl() {
+    const ip = (document.getElementById('localIp')?.textContent || '').trim() || window.location.hostname || 'localhost';
+    const port = (document.getElementById('localPort')?.textContent || '').trim() || window.location.port || '3000';
+    const proto = window.location.protocol || 'http:';
+    const includePort = port && !['80','443'].includes(port);
+    return `${proto}//${ip}${includePort ? ':' + port : ''}/players`;
+  }
+  async function copyTextToClipboard(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text);
+    }
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'absolute';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+  }
+  if (copyJoinLinkBtn) {
+    copyJoinLinkBtn.addEventListener('click', async () => {
+      const url = buildJoinUrl();
+      const original = copyJoinLinkBtn.textContent;
+      try {
+        await copyTextToClipboard(url);
+        copyJoinLinkBtn.textContent = 'Copied!';
+        setTimeout(() => (copyJoinLinkBtn.textContent = original), 1200);
+      } catch (e) {
+        copyJoinLinkBtn.textContent = 'Copy failed';
+        setTimeout(() => (copyJoinLinkBtn.textContent = original), 1500);
+      }
+    });
+  }
+socket.on('leaderboardUpdate', (leaderboard) => {
+      updateLeaderboard(leaderboard);
+  });
+
+  // --- Host Setup Events ---
+  socket.on('hostSetupSuccess', (data) => {
+    finalResults.classList.add('hidden');
+    gameSection.classList.add('hidden');
+    setupHost.classList.remove('hidden');
+
+    hostStatus.textContent = `Questions loaded successfully. Ready for players!`;
+    qCountDisplay.textContent = data.questionCount;
+    maxVotesInput.value = data.maxVotes;
+    isAnonymousInput.checked = data.isAnonymous;
+
+    maxVotes = data.maxVotes;
+    isAnonymous = data.isAnonymous;
+    autoAdvance = data.autoAdvance;
+    advanceDelay = data.advanceDelay;
+
+    advanceDelayInput.value = advanceDelay;
+    autoAdvanceInput.checked = autoAdvance;
+    manualAdvanceInput.checked = !autoAdvance;
+
+    if (data.localIp) {
+      document.getElementById('localIp').textContent = data.localIp;
+    }
+  });
+
+  socket.on('hostSetupError', (msg) => {
+    hostStatus.textContent = `Error: ${msg}`;
+    btnStart.disabled = true;
+  });
+
+  function updateAdvanceSettings() {
+    autoAdvance = autoAdvanceInput.checked;
+    advanceDelay = parseInt(advanceDelayInput.value, 10);
+    advanceDelay = Math.max(2, advanceDelay); 
+    advanceDelayInput.value = advanceDelay;
+
+    socket.emit('setAdvanceMode', { auto: autoAdvance, delay: advanceDelay });
+  }
+
+  maxVotesInput.addEventListener('change', () => {
+    maxVotes = parseInt(maxVotesInput.value, 10);
+    socket.emit('setMaxVotes', maxVotes);
+  });
+  isAnonymousInput.addEventListener('change', () => {
+    isAnonymous = isAnonymousInput.checked;
+    socket.emit('setAnonymous', isAnonymous);
+  });
+  autoAdvanceInput.addEventListener('change', updateAdvanceSettings);
+  manualAdvanceInput.addEventListener('change', updateAdvanceSettings);
+  advanceDelayInput.addEventListener('change', updateAdvanceSettings);
+
+  btnNextQuestion.addEventListener('click', () => {
+    btnNextQuestion.classList.add('hidden');
+    socket.emit('nextQuestion');
+  });
+
+  btnEndGame.addEventListener('click', () => {
+    if (confirm('Are you sure you want to end the current game immediately? The player with the most points will win.')) {
+        socket.emit('endGameManual');
+    }
+  });
+
+  // playerListUpdate handler is moved to the preset names section below
+
+  btnStart.addEventListener('click', () => {
+    autoAdvance = autoAdvanceInput.checked;
+    const finalAdvanceDelay = parseInt(advanceDelayInput.value, 10);
+
+    btnStart.disabled = true;
+    btnStart.textContent = 'Starting...';
+
+    socket.emit('startGame', {
+        maxVotes: maxVotesInput.value,
+        isAnonymous: isAnonymousInput.checked,
+        autoAdvance: autoAdvance,
+        advanceDelay: finalAdvanceDelay
+    });
+    btnEndGame.disabled = false;
+
+    // Re-enable after timeout if server doesn't respond
+    setTimeout(() => {
+      if (btnStart.textContent === 'Starting...') {
+        btnStart.disabled = false;
+        btnStart.textContent = 'Start Game';
+      }
+    }, 3000);
+  });
+
+  btnPlayAgain.addEventListener('click', () => {
+    socket.emit('playAgain');
+  });
+
+  // --- Game Round Events ---
+  socket.on('newRoundHost', (data) => {
+    setupHost.classList.add('hidden');
+    finalResults.classList.add('hidden');
+    gameSection.classList.remove('hidden');
+
+    questionDisplay.textContent = data.question;
+    votesCastCount.textContent = '0';
+    totalPlayersEl.textContent = (data.totalEligible ?? data.total ?? (data.players || []).length);
+    votesCastList.innerHTML = '<li>Waiting for votes...</li>';
+    roundResultsArea.innerHTML = '';
+
+    hostTimerDisplay.classList.add('hidden');
+    btnNextQuestion.classList.add('hidden');
+
+    updateLeaderboard(data.leaderboard || []); 
+  });
+
+  socket.on('updateHostVotes', (data) => {
+    votesCastCount.textContent = data.count;
+    totalPlayersEl.textContent = data.total;
+
+    const li = document.createElement('li');
+    li.innerHTML = `${data.voterName} has voted.`;
+
+    if (votesCastList.innerHTML === '<li>Waiting for votes...</li>') votesCastList.innerHTML = '';
+
+    if (votesCastList.firstChild) {
+        votesCastList.insertBefore(li, votesCastList.firstChild);
+    } else {
+        votesCastList.appendChild(li);
+    }
+  });
+
+  socket.on('roundResults', (data) => {
+    updateLeaderboard(data.leaderboard);
+
+    const roundWinnerEl = document.createElement('p');
+    roundWinnerEl.className = 'round-winner-display';
+
+    if (data.roundWinner) {
+        roundWinnerEl.innerHTML = `Round Winner: ${data.roundWinner} gets the point!`;
+    } else {
+        roundWinnerEl.innerHTML = `Round ended in a TIE or no votes. No point awarded.`;
+    }
+
+    roundResultsArea.innerHTML = ''; 
+    roundResultsArea.appendChild(roundWinnerEl);
+
+    if (!data.isAnonymous) {
+        let voteBreakdownHtml = '<h4>Vote Breakdown:</h4><ul>';
+        const finalVoteTally = {};
+        Object.values(data.allVotes).forEach(votedName => {
+            finalVoteTally[votedName] = (finalVoteTally[votedName] || 0) + 1;
+        });
+
+        Object.entries(finalVoteTally).forEach(([name, count]) => {
+            voteBreakdownHtml += `<li>${name} received ${count} vote(s)</li>`;
+        });
+        voteBreakdownHtml += '</ul>';
+        roundResultsArea.innerHTML += voteBreakdownHtml;
+    }
+
+    if (data.gameWinner) {
+      roundWinnerEl.innerHTML += `<br>The game is over! ${data.gameWinner} hit the max votes!`;
+    } else {
+        if (!data.autoAdvanceSetting) { 
+            roundResultsArea.appendChild(btnNextQuestion); 
+            btnNextQuestion.classList.remove('hidden');
+        }
+        hostTimerDisplay.classList.add('hidden');
+    }
+  });
+
+  socket.on('timerUpdate', (timeLeft) => {
+      countdownEl.textContent = timeLeft;
+      hostTimerDisplay.classList.remove('hidden'); 
+      btnNextQuestion.classList.add('hidden');
+  });
+
+  function updateLeaderboard(leaderboardData) {
+    leaderboardLive.innerHTML = '';
+    if (!leaderboardData || leaderboardData.length === 0) { 
+        leaderboardLive.innerHTML = '<li>No players yet.</li>';
+        return; 
+    }
+
+    const topVotes = leaderboardData[0]?.votes || 0;
+    leaderboardData.forEach(p => {
+      const li = document.createElement('li');
+      li.textContent = `${p.name}: ${p.votes} vote(s)`;
+      if (p.votes === topVotes && p.votes > 0) li.classList.add('first-place');
+      leaderboardLive.appendChild(li);
+    });
+  }
+
+  // --- Game Over Events ---
+  socket.on('gameOver', (data) => {
+    gameSection.classList.add('hidden');
+    finalResults.classList.remove('hidden');
+    btnEndGame.disabled = true;
+    hostTimerDisplay.classList.add('hidden');
+
+    winnerDisplay.textContent = data.winner ? `${data.winner} is the ULTIMATE WINNER!` : 'No winner determined.';
+
+    let html = '<h3>Final Leaderboard</h3><ul>';
+    data.leaderboard.forEach(p => { html += `<li>${p.name}: ${p.votes} vote(s)</li>`; });
+    html += '</ul>';
+    leaderboardFinal.innerHTML = html;
+  });
+
+  socket.on('hostError', (msg) => {
+    // Re-enable Start Game button if it was in loading state
+    if (btnStart.textContent === 'Starting...') {
+      btnStart.disabled = false;
+      btnStart.textContent = 'Start Game';
+    }
+    alert(msg);
+  });
+
+  // --- Preset Names ---
+  let usePresetNames = false;
+  let presetNames = [];
+  let takenNames = [];
+
+  const usePresetNamesInput = document.getElementById('usePresetNamesInput');
+  const presetNamesSection = document.getElementById('presetNamesSection');
+  const presetNameInput = document.getElementById('presetNameInput');
+  const addPresetNameBtn = document.getElementById('addPresetNameBtn');
+  const presetNamesError = document.getElementById('presetNamesError');
+  const presetNamesList = document.getElementById('presetNamesList');
+
+  // Toggle preset names mode
+  usePresetNamesInput.addEventListener('change', () => {
+    socket.emit('togglePresetNames');
+  });
+
+  // Add preset name
+  function addPresetName() {
+    const name = (presetNameInput.value || '').trim().toUpperCase();
+    if (!name) return;
+
+    if (presetNames.some(n => n.toUpperCase() === name)) {
+      presetNamesError.textContent = 'This name is already in the list.';
+      return;
+    }
+
+    socket.emit('addPresetName', { name });
+    presetNameInput.value = '';
+    presetNamesError.textContent = '';
+  }
+
+  addPresetNameBtn.addEventListener('click', addPresetName);
+  presetNameInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addPresetName();
+    }
+  });
+
+  // Render preset names list
+  function renderPresetNamesList() {
+    presetNamesList.innerHTML = '';
+    if (presetNames.length === 0) {
+      presetNamesList.innerHTML = '<div style="opacity:0.7; font-size:14px;">No names added yet.</div>';
+      return;
+    }
+
+    presetNames.forEach((name) => {
+      const isTaken = takenNames.includes(name.toUpperCase());
+      const tag = document.createElement('span');
+      tag.style.cssText = 'display:inline-flex; align-items:center; gap:6px; padding:6px 10px; margin:4px; background:rgba(255,255,255,0.15); border-radius:20px; font-size:14px;';
+      if (isTaken) {
+        tag.style.opacity = '0.6';
+      }
+      const takenLabel = isTaken ? ' <span style="color:#aaa;">(taken)</span>' : '';
+      tag.innerHTML = `${name}${takenLabel} <button type="button" style="background:none; border:none; color:#ff5555; cursor:pointer; font-size:16px; padding:0 4px;" data-name="${name}">&times;</button>`;
+      tag.querySelector('button').onclick = () => {
+        socket.emit('removePresetName', { name });
+      };
+      presetNamesList.appendChild(tag);
+    });
+  }
+
+  // Listen for preset names updates from server
+  socket.on('presetNamesUpdate', (data) => {
+    usePresetNames = data.usePresetNames;
+    presetNames = data.presetNames || [];
+    usePresetNamesInput.checked = usePresetNames;
+    presetNamesSection.style.display = usePresetNames ? 'block' : 'none';
+    renderPresetNamesList();
+  });
+
+  // Update taken names when player list updates
+  socket.on('playerListUpdate', (playersPayload) => {
+    const list = Array.isArray(playersPayload) ? playersPayload : [];
+    const normalized = list.map(p => (typeof p === 'string') ? ({ name: p, connected: true }) : p);
+    takenNames = normalized.map(p => (p.name || '').toUpperCase());
+    renderPresetNamesList();
+
+    // Also update the player list display (existing logic)
+    const total = normalized.length;
+    const connected = normalized.filter(p => p && p.connected).length;
+
+    playerList.innerHTML = '';
+    normalized.forEach(p => {
+      const li = document.createElement('li');
+      const on = !!p.connected;
+      li.className = on ? '' : 'p-offline';
+      li.style.display = 'flex';
+      li.style.justifyContent = 'space-between';
+      li.style.alignItems = 'center';
+
+      const dot = `<span class="p-dot ${on ? 'on' : ''}"></span>`;
+
+      const nameSpan = document.createElement('span');
+      nameSpan.innerHTML = `${dot}${p.name}`;
+      li.appendChild(nameSpan);
+
+      // Add kick button (only visible in setup phase)
+      if (p.key) {
+        const kickBtn = document.createElement('button');
+        kickBtn.textContent = 'Kick';
+        kickBtn.style.cssText = 'background:#ff5555; color:white; border:none; padding:4px 8px; border-radius:6px; font-size:12px; cursor:pointer; margin-left:8px;';
+        kickBtn.onclick = () => kickPlayer(p.key, p.name);
+        li.appendChild(kickBtn);
+      }
+
+      playerList.appendChild(li);
+    });
+
+    playerCountEl.textContent = `${total} (Connected: ${connected})`;
+    totalPlayersEl.textContent = connected;
+
+    btnStart.disabled = connected < 2;
+    btnStart.textContent = connected < 2 ? 'Start Game (Need 2+ Connected Players)' : 'Start Game';
+  });
+
+  function kickPlayer(playerKey, playerName) {
+    if (!confirm(`Are you sure you want to kick ${playerName}?`)) return;
+    socket.emit('kickPlayer', { playerKey });
+  }
+
+  document.getElementById('returnToLauncherBtn').onclick = () => {
+    document.getElementById('returnToLauncherBtn').disabled = true;
+    socket.emit('host_return_to_menu');
+    const masterUrl = window.location.protocol + '//' + window.location.host + '/';
+    setTimeout(() => { window.location.href = masterUrl; }, 100);
+  };
+
+  // --- Intro Animation System ---
+  const introSection = document.getElementById('introSection');
+  const btnStartGame = document.getElementById('btnStartGame');
+  const btnEndIntro = document.getElementById('btnEndIntro');
+  let introTimers = [];
+  let introSlidesVisible = { 1: false, 2: false, 3: false };
+
+  function clearIntroTimers() {
+    introTimers.forEach(t => clearTimeout(t));
+    introTimers = [];
+  }
+
+  function applyIntroVisibility() {
+    for (let i = 1; i <= 3; i++) {
+      const card = document.getElementById('introCard' + i);
+      const dot = document.getElementById('introDot' + i);
+      if (card) card.classList.toggle('visible', !!introSlidesVisible[i]);
+      if (dot) dot.classList.toggle('active', !!introSlidesVisible[i]);
+    }
+  }
+
+  function startIntroAnimation(slides) {
+    introSlidesVisible = { 1: false, 2: false, 3: false };
+    clearIntroTimers();
+
+    // Populate slide content
+    slides.forEach((slide, index) => {
+      const titleEl = document.getElementById('introTitle' + (index + 1));
+      const contentEl = document.getElementById('introContent' + (index + 1));
+      if (titleEl) titleEl.textContent = slide.title;
+      if (contentEl) contentEl.textContent = slide.content;
+    });
+
+    applyIntroVisibility();
+
+    // Animate slides in sequence
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        introSlidesVisible[1] = true;
+        applyIntroVisibility();
+      });
+    });
+
+    introTimers.push(setTimeout(() => {
+      introSlidesVisible[2] = true;
+      applyIntroVisibility();
+    }, 1000));
+
+    introTimers.push(setTimeout(() => {
+      introSlidesVisible[3] = true;
+      applyIntroVisibility();
+    }, 2000));
+  }
+
+  socket.on('introPhase', (data) => {
+    // Hide other sections, show intro
+    setupHost.classList.add('hidden');
+    gameSection.classList.add('hidden');
+    finalResults.classList.add('hidden');
+    introSection.classList.add('active');
+
+    // Start the animation
+    startIntroAnimation(data.slides);
+  });
+
+  btnStartGame.addEventListener('click', () => {
+    socket.emit('host_skip_intro');
+  });
+
+  btnEndIntro.addEventListener('click', () => {
+    if (!confirm('End the game and return to setup?')) return;
+    socket.emit('endGameManual');
+    introSection.classList.remove('active');
+    setupHost.classList.remove('hidden');
+  });
+
+  // When game actually starts (after intro), hide intro and show game
+  const originalNewRoundHandler = socket._callbacks['$newRoundHost'];
+  socket.on('newRoundHost', (data) => {
+    introSection.classList.remove('active');
+    clearIntroTimers();
+    // The rest is handled by existing newRoundHost handler
+  });
+</script>
+</body>
+</html>

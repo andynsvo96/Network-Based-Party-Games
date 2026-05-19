@@ -1,0 +1,2030 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Truth or Dare - Host</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg-primary: #0a0a0f;
+      --bg-secondary: #14151b;
+      --bg-card: rgba(20, 21, 27, 0.95);
+      --accent-primary: #a855f7;
+      --accent-secondary: #2dd4bf;
+      --accent-truth: #3b82f6;
+      --accent-dare: #ef4444;
+      --text-primary: #f5f5f5;
+      --text-muted: rgba(245, 245, 245, 0.6);
+      --border-subtle: rgba(255, 255, 255, 0.1);
+      --success: #22c55e;
+      --danger: #ef4444;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .hidden { display: none !important; }
+
+    /* Top Bar */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 24px;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .join-info {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .join-url {
+      background: var(--bg-secondary);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-family: monospace;
+      font-size: 14px;
+    }
+
+    .copy-btn {
+      background: var(--accent-primary);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .copy-btn:hover {
+      transform: scale(1.05);
+    }
+
+    .exit-btn {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border-subtle);
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .exit-btn:hover {
+      background: var(--danger);
+      color: white;
+      border-color: var(--danger);
+    }
+
+    /* Panels */
+    .panel {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    /* Intro Section - Grid Layout */
+    #introSection {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: calc(100vh - 80px);
+      padding: 40px;
+    }
+
+    .intro-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .intro-header h2 {
+      font-size: 36px;
+      color: var(--accent-primary);
+      margin-bottom: 8px;
+    }
+
+    .intro-header p {
+      color: var(--text-muted);
+      font-size: 16px;
+    }
+
+    .intro-track {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      max-width: 1000px;
+      margin-bottom: 32px;
+    }
+
+    .intro-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 24px;
+      text-align: center;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeInUp 0.5s ease forwards;
+    }
+
+    .intro-card:nth-child(1) { animation-delay: 0.1s; }
+    .intro-card:nth-child(2) { animation-delay: 0.2s; }
+    .intro-card:nth-child(3) { animation-delay: 0.3s; }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .intro-card h3 {
+      font-size: 20px;
+      margin-bottom: 12px;
+      color: var(--accent-secondary);
+    }
+
+    .intro-card p {
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--text-muted);
+    }
+
+    .intro-nav {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 768px) {
+      .intro-track {
+        grid-template-columns: 1fr;
+        max-width: 400px;
+      }
+    }
+
+    /* Lobby Panel */
+    .lobby-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 24px;
+    }
+
+    .card h3 {
+      font-size: 18px;
+      margin-bottom: 16px;
+      color: var(--accent-secondary);
+    }
+
+    .player-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .player-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--bg-secondary);
+      padding: 12px 16px;
+      border-radius: 8px;
+    }
+
+    .player-name {
+      font-weight: 600;
+    }
+
+    .player-status {
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+
+    .player-status.connected {
+      background: rgba(34, 197, 94, 0.2);
+      color: var(--success);
+    }
+
+    .player-status.disconnected {
+      background: rgba(239, 68, 68, 0.2);
+      color: var(--danger);
+    }
+
+    .kick-btn {
+      background: transparent;
+      color: var(--text-muted);
+      border: none;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+
+    .kick-btn:hover {
+      background: var(--danger);
+      color: white;
+    }
+
+    /* Settings */
+    .settings-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .setting-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .setting-row label {
+      color: var(--text-muted);
+    }
+
+    .setting-row input[type="number"] {
+      width: 80px;
+      padding: 8px;
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      text-align: center;
+    }
+
+    .setting-row input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      accent-color: var(--accent-primary);
+    }
+
+    .start-btn {
+      width: 100%;
+      padding: 20px;
+      font-size: 20px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent-primary), #7c3aed);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      margin-top: 24px;
+      transition: all 0.2s;
+    }
+
+    .start-btn:hover {
+      transform: scale(1.02);
+      box-shadow: 0 8px 32px rgba(168, 85, 247, 0.4);
+    }
+
+    .start-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Submission Phase */
+    .submission-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .submission-header h2 {
+      font-size: 28px;
+      margin-bottom: 16px;
+    }
+
+    .timer {
+      font-size: 64px;
+      font-weight: 700;
+      color: var(--accent-primary);
+      font-family: monospace;
+    }
+
+    .timer.warning {
+      color: var(--danger);
+      animation: pulse 1s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+
+    /* Timer Container and Progress Bar */
+    .timer-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      margin: 16px 0;
+    }
+
+    .timer-progress {
+      width: 300px;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .timer-progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+      transition: width 0.1s linear;
+      border-radius: 4px;
+    }
+
+    .timer-progress-bar.warning {
+      background: linear-gradient(90deg, var(--danger), #ff6b6b);
+    }
+
+    /* Toast Notifications */
+    @keyframes slideInFade {
+      0% {
+        opacity: 0;
+        transform: translateX(-20px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes fadeOut {
+      to {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+    }
+
+    .submission-success-toast, .error-toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 12px 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      z-index: 1000;
+      animation: slideInFade 0.3s ease-out, fadeOut 0.3s ease-out 2.7s;
+      pointer-events: none;
+      color: white;
+      font-weight: 600;
+    }
+
+    .submission-success-toast {
+      background: var(--success);
+    }
+
+    .error-toast {
+      background: var(--danger);
+    }
+
+    /* Accessibility */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border-width: 0;
+    }
+
+    button:focus-visible {
+      outline: 2px solid var(--accent-primary);
+      outline-offset: 2px;
+    }
+
+    .btn:focus-visible, .start-btn:focus-visible, .control-btn:focus-visible {
+      box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.4);
+    }
+
+    .submission-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-top: 24px;
+    }
+
+    .stat-card {
+      background: var(--bg-secondary);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--accent-secondary);
+    }
+
+    .stat-label {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    .player-submissions {
+      margin-top: 24px;
+    }
+
+    .player-submission-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      background: var(--bg-secondary);
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
+
+    .skip-btn {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      border: 1px solid var(--border-subtle);
+      padding: 12px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      margin-top: 24px;
+    }
+
+    .skip-btn:hover {
+      background: var(--accent-primary);
+      border-color: var(--accent-primary);
+    }
+
+    /* Playing Phase */
+    .playing-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 24px;
+    }
+
+    .spin-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 400px;
+    }
+
+    .current-player {
+      font-size: 24px;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+
+    .current-player span {
+      color: var(--accent-primary);
+      font-weight: 700;
+    }
+
+    /* Bottle Spin */
+    .spin-wheel {
+      position: relative;
+      width: 350px;
+      height: 350px;
+      margin: 24px 0;
+    }
+
+    .spin-option {
+      position: absolute;
+      background: var(--bg-secondary);
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 14px;
+      white-space: nowrap;
+      transition: all 0.3s;
+    }
+
+    .spin-option.selected {
+      background: var(--accent-primary);
+      box-shadow: 0 0 20px rgba(168, 85, 247, 0.6);
+      transform: scale(1.1);
+    }
+
+    .bottle-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 140px;
+      height: 50px;
+    }
+
+    .bottle {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, #8B4513, #D2691E, #8B4513);
+      border-radius: 25px 8px 8px 25px;
+      position: relative;
+      transform-origin: right center;
+      transition: transform 0.1s linear;
+    }
+
+    .bottle::after {
+      content: '';
+      position: absolute;
+      right: -15px;
+      top: 50%;
+      transform: translateY(-50%);
+      border-left: 20px solid #D2691E;
+      border-top: 12px solid transparent;
+      border-bottom: 12px solid transparent;
+    }
+
+    .bottle.spinning {
+      animation: spin var(--spin-duration, 3s) cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(var(--spin-degrees, 1440deg)); }
+    }
+
+    /* Spinning Wheel */
+    .spin-wheel-container {
+      position: relative;
+      width: 500px;
+      height: 500px;
+      margin: 24px auto;
+    }
+
+    #spinCanvas {
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
+
+    .wheel-pointer {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 15px solid transparent;
+      border-right: 15px solid transparent;
+      border-top: 30px solid #f59e0b;
+      filter: drop-shadow(0 4px 8px rgba(245, 158, 11, 0.6));
+      z-index: 10;
+    }
+
+    /* Type Spin */
+    .type-spin {
+      font-size: 48px;
+      font-weight: 700;
+      text-align: center;
+      padding: 24px;
+    }
+
+    .type-spin.truth {
+      color: var(--accent-truth);
+    }
+
+    .type-spin.dare {
+      color: var(--accent-dare);
+    }
+
+    /* Challenge Display */
+    .challenge-display {
+      background: var(--bg-card);
+      border: 2px solid var(--border-subtle);
+      border-radius: 20px;
+      padding: 32px;
+      text-align: center;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .challenge-type {
+      font-size: 24px;
+      font-weight: 700;
+      padding: 8px 24px;
+      border-radius: 24px;
+      display: inline-block;
+      margin-bottom: 24px;
+    }
+
+    .challenge-type.truth {
+      background: rgba(59, 130, 246, 0.2);
+      color: var(--accent-truth);
+    }
+
+    .challenge-type.dare {
+      background: rgba(239, 68, 68, 0.2);
+      color: var(--accent-dare);
+    }
+
+    .challenge-text {
+      font-size: 28px;
+      line-height: 1.4;
+      margin-bottom: 16px;
+    }
+
+    .challenge-author {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+    }
+
+    .targeted-badge {
+      background: rgba(239, 68, 68, 0.2);
+      color: var(--accent-dare);
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-left: 8px;
+    }
+
+    .challenge-controls {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      margin-top: 24px;
+    }
+
+    .complete-btn {
+      background: var(--success);
+      color: white;
+      border: none;
+      padding: 16px 32px;
+      border-radius: 12px;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .complete-btn:hover {
+      transform: scale(1.05);
+    }
+
+    .refuse-btn {
+      background: var(--danger);
+      color: white;
+      border: none;
+      padding: 16px 32px;
+      border-radius: 12px;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .refuse-btn:hover {
+      transform: scale(1.05);
+    }
+
+    /* Sidebar */
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .leaderboard {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 20px;
+    }
+
+    .leaderboard h3 {
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .target-score {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    .leaderboard-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .leaderboard-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 12px;
+      background: var(--bg-secondary);
+      border-radius: 8px;
+    }
+
+    .leaderboard-item.rank-1 { background: linear-gradient(90deg, rgba(255, 215, 0, 0.2), transparent); }
+    .leaderboard-item.rank-2 { background: linear-gradient(90deg, rgba(192, 192, 192, 0.2), transparent); }
+    .leaderboard-item.rank-3 { background: linear-gradient(90deg, rgba(205, 127, 50, 0.2), transparent); }
+
+    .leaderboard-rank {
+      font-weight: 700;
+      width: 30px;
+    }
+
+    .leaderboard-name {
+      flex: 1;
+      margin-left: 8px;
+    }
+
+    .leaderboard-score {
+      font-weight: 700;
+      color: var(--accent-primary);
+    }
+
+    .history-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 20px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .history-item {
+      padding: 12px;
+      background: var(--bg-secondary);
+      border-radius: 8px;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    .history-player {
+      font-weight: 700;
+      color: var(--accent-primary);
+    }
+
+    .history-type {
+      font-weight: 600;
+    }
+
+    .history-type.truth { color: var(--accent-truth); }
+    .history-type.dare { color: var(--accent-dare); }
+
+    .history-result {
+      float: right;
+      font-weight: 700;
+    }
+
+    .history-result.completed { color: var(--success); }
+    .history-result.refused { color: var(--danger); }
+
+    .history-challenge {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 6px;
+      font-style: italic;
+      line-height: 1.3;
+      word-break: break-word;
+    }
+
+    /* Results */
+    .results-container {
+      text-align: center;
+      padding: 40px;
+    }
+
+    .winner-display {
+      background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 215, 0, 0.05));
+      border: 2px solid gold;
+      border-radius: 24px;
+      padding: 48px;
+      margin-bottom: 32px;
+      animation: glow 2s ease-in-out infinite;
+    }
+
+    @keyframes glow {
+      0%, 100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.3); }
+      50% { box-shadow: 0 0 40px rgba(255, 215, 0, 0.5); }
+    }
+
+    .winner-label {
+      font-size: 24px;
+      color: gold;
+      margin-bottom: 16px;
+    }
+
+    .winner-name {
+      font-size: 48px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .winner-score {
+      font-size: 24px;
+      color: var(--text-muted);
+    }
+
+    .superlatives {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin: 32px 0;
+    }
+
+    .superlative-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .superlative-emoji {
+      font-size: 36px;
+      margin-bottom: 8px;
+    }
+
+    .superlative-title {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .superlative-name {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .superlative-value {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .final-leaderboard {
+      max-width: 400px;
+      margin: 32px auto;
+    }
+
+    .play-again-btn {
+      background: linear-gradient(135deg, var(--accent-primary), #7c3aed);
+      color: white;
+      border: none;
+      padding: 16px 48px;
+      border-radius: 12px;
+      font-size: 20px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 24px;
+      transition: all 0.2s;
+    }
+
+    .play-again-btn:hover {
+      transform: scale(1.05);
+    }
+
+    /* Game controls */
+    .game-controls {
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .control-btn {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      border: 1px solid var(--border-subtle);
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .control-btn:hover {
+      background: var(--accent-primary);
+      border-color: var(--accent-primary);
+    }
+
+    .control-btn.danger:hover {
+      background: var(--danger);
+      border-color: var(--danger);
+    }
+
+    /* Dealers Choice */
+    .dealers-choice {
+      text-align: center;
+      padding: 32px;
+    }
+
+    .dealers-choice h3 {
+      font-size: 32px;
+      color: gold;
+      margin-bottom: 16px;
+    }
+
+    .dealers-choice p {
+      color: var(--text-muted);
+      margin-bottom: 24px;
+    }
+
+    /* Anonymous mode badge */
+    .anon-badge {
+      background: rgba(168, 85, 247, 0.2);
+      color: var(--accent-primary);
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .lobby-grid, .playing-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .playerStatusCircle {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+    .playerStatusCircle.online { background: #10b981; }
+    .playerStatusCircle.offline {
+      background: transparent;
+      border: 2px solid #6b7280;
+    }
+  </style>
+</head>
+<body>
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <div class="join-info">
+      <!-- Players join through the main launcher only -->
+      <span id="joinUrl" style="display:none;"></span>
+      <button id="copyBtn" style="display:none;"></button>
+      <span class="anon-badge hidden" id="anonBadge">ANONYMOUS MODE</span>
+    </div>
+    <button class="exit-btn" id="exitBtn">Exit to Launcher</button>
+  </div>
+
+  <!-- Intro Section - Grid Layout with Preparation Timer -->
+  <section id="introSection" class="hidden">
+    <div class="intro-header">
+      <h2>Preparation Mode</h2>
+      <div class="timer-container">
+        <div class="timer" id="introTimer" role="timer" aria-label="Preparation timer" aria-live="polite">90</div>
+        <div class="timer-progress" aria-hidden="true">
+          <div class="timer-progress-bar" id="introTimerProgress" style="width: 100%;"></div>
+        </div>
+      </div>
+      <p>Read the rules and players can start submitting content!</p>
+    </div>
+    <div class="intro-track">
+      <div class="intro-card" id="introCard1">
+        <h3 id="introTitle1">Preparation</h3>
+        <p id="introContent1">Create your own truth or dare or claim from a pre-made list. Target specific players or it's anyone's guess.</p>
+      </div>
+      <div class="intro-card" id="introCard2">
+        <h3 id="introTitle2">Spin Your Fate</h3>
+        <p id="introContent2">The bottle spins to select a player, then roll to determine Truth or Dare. Complete challenges to earn points!</p>
+      </div>
+      <div class="intro-card" id="introCard3">
+        <h3 id="introTitle3">Score Points</h3>
+        <p id="introContent3">Complete a dare for +2 points, a truth for +1 point. Refuse a truth = -1 point, refuse a dare = -2 points. First to reach the target score wins!</p>
+      </div>
+    </div>
+    <div class="intro-nav">
+      <button class="start-btn" id="introStartBtn" style="max-width: 300px; margin-right: 16px;">START NOW</button>
+      <button class="control-btn danger" id="introEndBtn">End Game</button>
+    </div>
+  </section>
+
+  <!-- Lobby Panel -->
+  <div id="lobbyPanel" class="panel">
+    <div class="lobby-grid">
+      <div class="card">
+        <h3>Players</h3>
+        <div class="player-list" id="playerList">
+          <p style="color: var(--text-muted);">Waiting for players to join...</p>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Settings</h3>
+        <div class="settings-grid">
+          <div class="setting-row">
+            <label>Target Score</label>
+            <input type="number" id="targetScore" value="20" min="5" max="100">
+          </div>
+          <div class="setting-row">
+            <label>Submission Time (seconds)</label>
+            <input type="number" id="submissionTime" value="60" min="30" max="300">
+          </div>
+          <div class="setting-row">
+            <label>Preparation Time (seconds)</label>
+            <input type="number" id="preparationTime" value="90" min="30" max="300" step="15">
+          </div>
+          <div class="setting-row">
+            <label>Dealer's Choice Chance (%)</label>
+            <input type="number" id="dealersChance" value="5" min="0" max="50">
+          </div>
+          <div class="setting-row">
+            <label>Anonymous Mode</label>
+            <input type="checkbox" id="anonymousMode">
+          </div>
+          <div class="setting-row">
+            <label>Show Pre-made During Game</label>
+            <input type="checkbox" id="showPremadeInGame" checked>
+          </div>
+        </div>
+      </div>
+    </div>
+    <button class="start-btn" id="startBtn" disabled>START GAME (Need 2+ Players)</button>
+  </div>
+
+  <!-- Submission Phase -->
+  <div id="submissionPanel" class="panel hidden">
+    <div class="submission-header">
+      <h2>Content Submission Phase</h2>
+      <div class="timer" id="submissionTimer">60</div>
+      <p style="color: var(--text-muted);">Players are creating their truths and dares...</p>
+    </div>
+    <div class="submission-stats">
+      <div class="stat-card">
+        <div class="stat-value" id="totalTruths">0</div>
+        <div class="stat-label">Truths Submitted</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="totalDares">0</div>
+        <div class="stat-label">Dares Submitted</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="premadeRemaining">0</div>
+        <div class="stat-label">Pre-made Remaining</div>
+      </div>
+    </div>
+    <div class="player-submissions" id="playerSubmissions"></div>
+    <div style="text-align: center;">
+      <button class="skip-btn" id="skipSubmissionBtn">Skip to Game</button>
+    </div>
+  </div>
+
+  <!-- Playing Phase -->
+  <div id="playingPanel" class="panel hidden">
+    <div class="playing-grid">
+      <div class="card">
+        <div class="spin-area" id="spinArea">
+          <div class="current-player" id="currentPlayer">Waiting...</div>
+
+          <!-- Spin Wheel -->
+          <div class="spin-wheel-container hidden" id="spinWheelContainer">
+            <canvas id="spinCanvas" width="500" height="500"></canvas>
+            <div class="wheel-pointer"></div>
+          </div>
+          <div class="spin-wheel" id="spinWheel">
+            <div class="bottle-container">
+              <div class="bottle" id="bottle"></div>
+            </div>
+          </div>
+
+          <!-- Type Spin Display -->
+          <div class="type-spin hidden" id="typeSpin">TRUTH</div>
+
+          <!-- Dealers Choice -->
+          <div class="dealers-choice hidden" id="dealersChoice">
+            <h3>DEALER'S CHOICE!</h3>
+            <p>Waiting for player to choose...</p>
+          </div>
+
+          <!-- Challenge Display -->
+          <div class="challenge-display hidden" id="challengeDisplay">
+            <div class="challenge-type" id="challengeType">DARE</div>
+            <div class="challenge-text" id="challengeText">Loading...</div>
+            <div class="challenge-author" id="challengeAuthor"></div>
+            <div class="challenge-controls">
+              <button class="complete-btn" id="completeBtn">COMPLETED</button>
+              <button class="refuse-btn" id="refuseBtn">REFUSED</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="game-controls">
+          <button class="control-btn" id="skipPlayerBtn">Skip Player</button>
+          <button class="control-btn danger" id="endGameBtn">End Game</button>
+        </div>
+      </div>
+
+      <div class="sidebar">
+        <div class="leaderboard">
+          <h3>
+            Leaderboard
+            <span class="target-score">Target: <span id="targetDisplay">20</span></span>
+          </h3>
+          <div class="leaderboard-list" id="leaderboard"></div>
+        </div>
+        <div class="history-panel">
+          <h3>History</h3>
+          <div id="historyLog"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results Panel -->
+  <div id="resultsPanel" class="panel hidden">
+    <div class="results-container">
+      <div class="winner-display">
+        <div class="winner-label">WINNER</div>
+        <div class="winner-name" id="winnerName">Player</div>
+        <div class="winner-score" id="winnerScoreDisplay">Score: 0</div>
+      </div>
+
+      <div class="superlatives" id="superlatives"></div>
+
+      <div class="final-leaderboard">
+        <h3>Final Standings</h3>
+        <div class="leaderboard-list" id="finalLeaderboard"></div>
+      </div>
+
+      <button class="play-again-btn" id="playAgainBtn">PLAY AGAIN</button>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    (function() {
+      // Connect to game namespace
+      const pathParts = window.location.pathname.split('/');
+      const gameId = pathParts[2]; // e.g., "truthordare"
+      const socket = io(gameId ? `/game/${gameId}` : '/');
+
+      // State
+      let gameState = null;
+      let introSlide = 0;
+      let introSlides = [];
+      let submissionInterval = null;
+
+      // DOM Elements
+      const joinUrl = document.getElementById('joinUrl');
+      const copyBtn = document.getElementById('copyBtn');
+      const exitBtn = document.getElementById('exitBtn');
+      const anonBadge = document.getElementById('anonBadge');
+
+      const introSection = document.getElementById('introSection');
+      const introStartBtn = document.getElementById('introStartBtn');
+      const introEndBtn = document.getElementById('introEndBtn');
+      const introTimer = document.getElementById('introTimer');
+      const introTimerProgress = document.getElementById('introTimerProgress');
+
+      const lobbyPanel = document.getElementById('lobbyPanel');
+      const playerList = document.getElementById('playerList');
+      const startBtn = document.getElementById('startBtn');
+      const targetScoreInput = document.getElementById('targetScore');
+      const submissionTimeInput = document.getElementById('submissionTime');
+      const preparationTimeInput = document.getElementById('preparationTime');
+      const dealersChanceInput = document.getElementById('dealersChance');
+      const anonymousModeInput = document.getElementById('anonymousMode');
+      const showPremadeInGameInput = document.getElementById('showPremadeInGame');
+
+      const submissionPanel = document.getElementById('submissionPanel');
+      const submissionTimer = document.getElementById('submissionTimer');
+      const skipSubmissionBtn = document.getElementById('skipSubmissionBtn');
+
+      const playingPanel = document.getElementById('playingPanel');
+      const spinArea = document.getElementById('spinArea');
+      const spinWheel = document.getElementById('spinWheel');
+      const bottle = document.getElementById('bottle');
+      const typeSpin = document.getElementById('typeSpin');
+      const dealersChoice = document.getElementById('dealersChoice');
+      const challengeDisplay = document.getElementById('challengeDisplay');
+      const currentPlayer = document.getElementById('currentPlayer');
+      const leaderboard = document.getElementById('leaderboard');
+      const historyLog = document.getElementById('historyLog');
+      const targetDisplay = document.getElementById('targetDisplay');
+
+      const resultsPanel = document.getElementById('resultsPanel');
+      const winnerName = document.getElementById('winnerName');
+      const winnerScoreDisplay = document.getElementById('winnerScoreDisplay');
+      const superlatives = document.getElementById('superlatives');
+      const finalLeaderboard = document.getElementById('finalLeaderboard');
+      const playAgainBtn = document.getElementById('playAgainBtn');
+
+      // Fetch join URL
+      fetch('hostinfo')
+        .then(r => r.json())
+        .then(data => {
+          joinUrl.textContent = data.joinBase + '/players';
+        });
+
+      // Copy URL
+      copyBtn.onclick = () => {
+        navigator.clipboard.writeText(joinUrl.textContent);
+        copyBtn.textContent = 'Copied!';
+        setTimeout(() => copyBtn.textContent = 'Copy', 2000);
+      };
+
+      // Exit to launcher
+      exitBtn.onclick = () => {
+        exitBtn.disabled = true;
+        socket.emit('host_return_to_menu');
+        setTimeout(() => {
+          window.location.href = window.location.protocol + '//' + window.location.host + '/';
+        }, 100);
+      };
+
+      // Host join
+      socket.emit('hostJoin');
+
+      // Settings changes
+      targetScoreInput.onchange = () => {
+        socket.emit('updateSettings', { targetScore: parseInt(targetScoreInput.value) || 20 });
+      };
+      submissionTimeInput.onchange = () => {
+        socket.emit('updateSettings', { submissionTimeSeconds: parseInt(submissionTimeInput.value) || 60 });
+      };
+      preparationTimeInput.onchange = () => {
+        socket.emit('updateSettings', { preparationTimeSeconds: parseInt(preparationTimeInput.value) || 90 });
+      };
+      dealersChanceInput.onchange = () => {
+        socket.emit('updateSettings', { dealersChoiceChance: parseInt(dealersChanceInput.value) || 5 });
+      };
+      anonymousModeInput.onchange = () => {
+        socket.emit('updateSettings', { anonymousMode: anonymousModeInput.checked });
+      };
+      showPremadeInGameInput.onchange = () => {
+        socket.emit('updateSettings', { showPremadeInGame: showPremadeInGameInput.checked });
+      };
+
+      // Start game
+      startBtn.onclick = () => socket.emit('startGame');
+
+      // Intro controls - Start Game Now button
+      introStartBtn.onclick = () => {
+        if (confirm('Start the game now? The preparation timer will be skipped.')) {
+          socket.emit('host_start_from_preparation');
+        }
+      };
+
+      // Intro controls - End Game button
+      introEndBtn.onclick = () => {
+        socket.emit('host_end_preparation');
+      };
+
+      // Skip submission
+      skipSubmissionBtn.onclick = () => socket.emit('skipSubmission');
+
+      // Game controls
+      document.getElementById('skipPlayerBtn').onclick = () => socket.emit('skipPlayer');
+      document.getElementById('endGameBtn').onclick = () => {
+        if (confirm('End the game now?')) socket.emit('endGame');
+      };
+      document.getElementById('completeBtn').onclick = () => socket.emit('completeTurn', { completed: true });
+      document.getElementById('refuseBtn').onclick = () => socket.emit('completeTurn', { completed: false });
+
+      // Play again
+      playAgainBtn.onclick = () => socket.emit('playAgain');
+
+      // Socket events
+      socket.on('gameState', (state) => {
+        gameState = state;
+        updateUI();
+      });
+
+      socket.on('hostState', (state) => {
+        targetScoreInput.value = state.settings.targetScore;
+        submissionTimeInput.value = state.settings.submissionTimeSeconds;
+        preparationTimeInput.value = state.settings.preparationTimeSeconds;
+        dealersChanceInput.value = state.settings.dealersChoiceChance;
+        anonymousModeInput.checked = state.settings.anonymousMode;
+        showPremadeInGameInput.checked = state.settings.showPremadeInGame;
+
+        if (state.settings.anonymousMode) {
+          anonBadge.classList.remove('hidden');
+        } else {
+          anonBadge.classList.add('hidden');
+        }
+      });
+
+      // Preparation phase with timer
+      let preparationInterval = null;
+
+      socket.on('preparationPhase', (data) => {
+        // Populate intro cards
+        if (data.slides && data.slides.length >= 3) {
+          document.getElementById('introTitle1').textContent = data.slides[0].title;
+          document.getElementById('introContent1').textContent = data.slides[0].content;
+          document.getElementById('introTitle2').textContent = data.slides[1].title;
+          document.getElementById('introContent2').textContent = data.slides[1].content;
+          document.getElementById('introTitle3').textContent = data.slides[2].title;
+          document.getElementById('introContent3').textContent = data.slides[2].content;
+        }
+
+        showPanel('intro');
+        startPreparationTimer(data.deadline, data.duration || 90);
+      });
+
+      function startPreparationTimer(deadline, totalDuration) {
+        if (preparationInterval) clearInterval(preparationInterval);
+
+        const timerEl = introTimer;
+        const progressBar = introTimerProgress;
+
+        preparationInterval = setInterval(() => {
+          const remaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+          timerEl.textContent = remaining;
+
+          // Update progress bar
+          const percentage = (remaining / totalDuration) * 100;
+          progressBar.style.width = percentage + '%';
+
+          if (remaining <= 10) {
+            timerEl.classList.add('warning');
+            progressBar.classList.add('warning');
+          } else {
+            timerEl.classList.remove('warning');
+            progressBar.classList.remove('warning');
+          }
+
+          if (remaining <= 0) {
+            clearInterval(preparationInterval);
+          }
+        }, 100);
+      }
+
+      // Utility function for showing toasts
+      function showSuccessToast(message) {
+        const toast = document.createElement('div');
+        toast.className = 'submission-success-toast';
+        toast.textContent = message;
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+          toast.remove();
+        }, 3000);
+      }
+
+      socket.on('errorMessage', (data) => {
+        const toast = document.createElement('div');
+        toast.className = 'error-toast';
+        toast.textContent = data.message;
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+          toast.remove();
+        }, 3000);
+      });
+
+      socket.on('submissionPhase', (data) => {
+        showPanel('submission');
+        startSubmissionTimer(data.deadline);
+      });
+
+      socket.on('contentCounts', (counts) => {
+        updateSubmissionStats(counts);
+      });
+
+      socket.on('turnStarted', (data) => {
+        showPanel('playing');
+        currentPlayer.innerHTML = `<span>${data.playerName}</span>'s Turn`;
+
+        // Hide previous elements
+        challengeDisplay.classList.add('hidden');
+        typeSpin.classList.add('hidden');
+        dealersChoice.classList.add('hidden');
+        spinWheel.classList.remove('hidden');
+
+        // Build spin wheel
+        buildSpinWheel(data.spinOptions);
+
+        // Auto-trigger spin after short delay
+        setTimeout(() => startSpin1Animation(data.spinOptions), 1000);
+      });
+
+      socket.on('spin1Complete', (data) => {
+        completeSpin1(data);
+      });
+
+      socket.on('spin2Complete', (data) => {
+        completeSpin2(data);
+      });
+
+      socket.on('challengeRevealed', (data) => {
+        showChallenge(data);
+      });
+
+      socket.on('turnComplete', (data) => {
+        updateLeaderboard();
+        addHistoryItem(data);
+      });
+
+      socket.on('gameResults', (data) => {
+        showResults(data);
+      });
+
+      socket.on('returned_to_menu', () => {
+        window.location.href = window.location.protocol + '//' + window.location.hostname + ':3000/';
+      });
+
+      socket.on('waiting_for_offline_player', (data) => {
+        let banner = document.getElementById('offlinePlayerBanner');
+        if (!banner) {
+          banner = document.createElement('div');
+          banner.id = 'offlinePlayerBanner';
+          banner.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);padding:16px 24px;border-radius:10px;z-index:9999;background:#a85d00;color:#fff;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,0.3);';
+          document.body.appendChild(banner);
+        }
+        const playerName = (data && data.playerName) || 'A player';
+        banner.innerHTML = `
+          <div style="margin-bottom:8px;font-weight:bold;">${playerName} is offline</div>
+          <div style="margin-bottom:10px;font-size:0.9em;">${data.message || 'Waiting for reconnection...'}</div>
+          <button onclick="socket.emit('host_skip_turn'); this.parentElement.remove();"
+            style="padding:8px 20px;border:none;border-radius:6px;background:#fff;color:#a85d00;font-weight:bold;cursor:pointer;">
+            Skip Turn
+          </button>
+        `;
+      });
+
+      socket.on('host_notification', (data) => {
+        if (data && data.message) {
+          const banner = document.getElementById('offlinePlayerBanner');
+          if (banner) banner.remove();
+          const notif = document.createElement('div');
+          notif.style.cssText = 'position:fixed;top:20px;right:20px;padding:12px 20px;border-radius:8px;z-index:9999;font-size:0.9em;opacity:1;transition:opacity 0.5s;color:#fff;';
+          notif.style.background = data.type === 'warning' ? '#a85d00' : '#2a6a3a';
+          notif.textContent = data.message;
+          document.body.appendChild(notif);
+          setTimeout(() => { notif.style.opacity = '0'; }, 3000);
+          setTimeout(() => { notif.remove(); }, 3500);
+        }
+      });
+
+      function updateUI() {
+        if (!gameState) return;
+
+        updatePlayerList();
+        updateLeaderboard();
+        updateHistory();
+
+        const connected = gameState.players.filter(p => p.connected).length;
+        startBtn.disabled = connected < 2;
+        startBtn.textContent = connected < 2
+          ? `START GAME (Need ${2 - connected} more player${connected === 1 ? '' : 's'})`
+          : 'START GAME';
+
+        targetDisplay.textContent = gameState.settings.targetScore;
+
+        // Show correct panel based on phase
+        if (gameState.phase === 'lobby') {
+          showPanel('lobby');
+        } else if (gameState.phase === 'playing') {
+          showPanel('playing');
+          if (gameState.currentTurn && gameState.currentTurn.status === 'challenge') {
+            showChallenge({
+              playerName: gameState.currentTurn.playerName,
+              challenge: gameState.currentTurn.challenge
+            });
+          }
+        } else if (gameState.phase === 'results') {
+          showPanel('results');
+        }
+      }
+
+      function showPanel(panel) {
+        lobbyPanel.classList.add('hidden');
+        introSection.classList.add('hidden');
+        submissionPanel.classList.add('hidden');
+        playingPanel.classList.add('hidden');
+        resultsPanel.classList.add('hidden');
+
+        switch (panel) {
+          case 'lobby': lobbyPanel.classList.remove('hidden'); break;
+          case 'intro': introSection.classList.remove('hidden'); break;
+          case 'submission': submissionPanel.classList.remove('hidden'); break;
+          case 'playing': playingPanel.classList.remove('hidden'); break;
+          case 'results': resultsPanel.classList.remove('hidden'); break;
+        }
+      }
+
+      // updateIntroSlide removed - grid layout shows all slides at once
+
+      function updatePlayerList() {
+        if (!gameState) return;
+
+        if (gameState.players.length === 0) {
+          playerList.innerHTML = '<p style="color: var(--text-muted);">Waiting for players to join...</p>';
+          return;
+        }
+
+        playerList.innerHTML = gameState.players.map(p => {
+        const connectionCircleClass = p.connected ? 'online' : 'offline';
+        const connectionCircle = `<span class="playerStatusCircle ${connectionCircleClass}"></span>`;
+        return `
+          <div class="player-item">
+            <span class="player-name">${connectionCircle}${p.name}</span>
+            <div>
+              <button class="kick-btn" onclick="kickPlayer('${p.id}')">Kick</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+      }
+
+      window.kickPlayer = (id) => {
+        if (confirm('Kick this player?')) {
+          socket.emit('kickPlayer', id);
+        }
+      };
+
+      function startSubmissionTimer(deadline) {
+        if (submissionInterval) clearInterval(submissionInterval);
+
+        submissionInterval = setInterval(() => {
+          const remaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+          submissionTimer.textContent = remaining;
+
+          if (remaining <= 10) {
+            submissionTimer.classList.add('warning');
+          } else {
+            submissionTimer.classList.remove('warning');
+          }
+
+          if (remaining <= 0) {
+            clearInterval(submissionInterval);
+          }
+        }, 100);
+      }
+
+      function updateSubmissionStats(counts) {
+        let totalTruths = 0;
+        let totalDares = 0;
+
+        const rows = [];
+        for (const p of gameState.players) {
+          const c = counts[p.id] || { submitted: 0, claimed: 0 };
+          rows.push(`
+            <div class="player-submission-row">
+              <span>${p.name}</span>
+              <span>Submitted: ${c.submitted} | Claimed: ${c.claimed}</span>
+            </div>
+          `);
+        }
+        document.getElementById('playerSubmissions').innerHTML = rows.join('');
+      }
+
+      // ============ SPINNING WHEEL SETUP ============
+      const canvas = document.getElementById('spinCanvas');
+      const ctx = canvas ? canvas.getContext('2d') : null;
+      const canvasSize = 500;
+      const centerX = canvasSize / 2;
+      const centerY = canvasSize / 2;
+      const wheelRadius = 200;
+
+      // Animation state
+      let wheelConfig = { segments: [], colors: [], type: '' };
+      let wheelRotation = 0;
+      let targetRotation = 0;
+      let isAnimating = false;
+      let animationStartTime = null;
+      const animationDuration = 3000;
+      let wheelCacheCanvas = null;
+      let wheelCacheKey = '';
+
+      function getWheelCacheKey() {
+        if (!wheelConfig.segments.length) return '';
+        return `${wheelConfig.type}|${wheelConfig.segments.map((segment, i) =>
+          `${segment.id}|${segment.name}|${wheelConfig.colors[i] || ''}`
+        ).join('::')}`;
+      }
+
+      // Draw a wheel slice
+      function drawWheelSlice(drawCtx, startAngle, endAngle, color) {
+        if (!drawCtx) return;
+        drawCtx.beginPath();
+        drawCtx.moveTo(centerX, centerY);
+        drawCtx.arc(centerX, centerY, wheelRadius, startAngle, endAngle);
+        drawCtx.closePath();
+        drawCtx.fillStyle = color;
+        drawCtx.fill();
+        drawCtx.strokeStyle = '#14151b';
+        drawCtx.lineWidth = 3;
+        drawCtx.stroke();
+      }
+
+      // Draw text on a wheel slice
+      function drawWheelText(drawCtx, text, angle, radius) {
+        if (!drawCtx) return;
+        drawCtx.save();
+        drawCtx.translate(centerX, centerY);
+        drawCtx.rotate(angle);
+        drawCtx.textAlign = 'right';
+        drawCtx.fillStyle = '#ffffff';
+        drawCtx.font = 'bold 16px "Segoe UI"';
+        drawCtx.shadowColor = 'rgba(0,0,0,0.5)';
+        drawCtx.shadowBlur = 4;
+
+        // Auto-size text to fit
+        let fontSize = 16;
+        const maxWidth = wheelRadius * 0.5;
+        drawCtx.font = `bold ${fontSize}px "Segoe UI"`;
+        while (drawCtx.measureText(text).width > maxWidth && fontSize > 12) {
+          fontSize--;
+          drawCtx.font = `bold ${fontSize}px "Segoe UI"`;
+        }
+
+        drawCtx.fillText(text, radius - 20, 5);
+        drawCtx.restore();
+      }
+
+      // Draw center circle
+      function drawCenterCircle() {
+        if (!ctx) return;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 40, 0, 2 * Math.PI);
+        ctx.fillStyle = '#14151b';
+        ctx.fill();
+        ctx.strokeStyle = '#a855f7';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+      }
+
+      function rebuildWheelCache() {
+        const cacheKey = getWheelCacheKey();
+        if (!cacheKey) {
+          wheelCacheCanvas = null;
+          wheelCacheKey = '';
+          return null;
+        }
+        if (wheelCacheCanvas && wheelCacheKey === cacheKey) {
+          return wheelCacheCanvas;
+        }
+
+        const nextCacheCanvas = document.createElement('canvas');
+        nextCacheCanvas.width = canvasSize;
+        nextCacheCanvas.height = canvasSize;
+        const cacheCtx = nextCacheCanvas.getContext('2d');
+        const segmentCount = wheelConfig.segments.length;
+        const segmentAngle = (2 * Math.PI) / segmentCount;
+
+        for (let i = 0; i < segmentCount; i++) {
+          const startAngle = i * segmentAngle;
+          const endAngle = (i + 1) * segmentAngle;
+          const midAngle = startAngle + segmentAngle / 2;
+
+          drawWheelSlice(cacheCtx, startAngle, endAngle, wheelConfig.colors[i]);
+          drawWheelText(cacheCtx, wheelConfig.segments[i].name, midAngle, wheelRadius * 0.7);
+        }
+
+        wheelCacheCanvas = nextCacheCanvas;
+        wheelCacheKey = cacheKey;
+        return wheelCacheCanvas;
+      }
+
+      // Main wheel drawing function
+      function drawWheel(currentRotation = 0) {
+        if (!ctx) return;
+        ctx.clearRect(0, 0, canvasSize, canvasSize);
+        if (!wheelConfig.segments.length) return;
+
+        const cachedWheel = rebuildWheelCache();
+        if (cachedWheel) {
+          ctx.save();
+          ctx.translate(centerX, centerY);
+          ctx.rotate(-currentRotation);
+          ctx.drawImage(cachedWheel, -centerX, -centerY);
+          ctx.restore();
+        }
+
+        drawCenterCircle();
+      }
+
+      // Build player wheel configuration
+      function buildPlayerWheel(players, isAnonymous) {
+        // isAnonymous parameter is ignored - always build player wheel
+        wheelConfig.segments = players.map(p => ({
+          id: p.id,
+          name: p.name
+        }));
+        wheelConfig.colors = wheelConfig.segments.map((_, i) =>
+          `hsl(${(i / wheelConfig.segments.length) * 360}, 70%, 55%)`
+        );
+        wheelConfig.type = 'player';
+      }
+
+      // Easing function (matches existing cubic-bezier)
+      function easeInOutCubic(t) {
+        if (t < 0.5) {
+          return 4 * t * t * t;
+        } else {
+          return 1 - Math.pow(-2 * t + 2, 3) / 2;
+        }
+      }
+
+      // Calculate target rotation to land on specific segment
+      function calculateTargetRotation(targetIndex, segmentCount) {
+        const segmentAngle = (2 * Math.PI) / segmentCount;
+        const pointerAngle = Math.PI / 2; // Top center
+
+        const targetSegmentAngle = targetIndex * segmentAngle + segmentAngle / 2;
+        const fullRotations = 3 + Math.random() * 2;
+        const baseRotation = fullRotations * 2 * Math.PI;
+
+        return baseRotation + (2 * Math.PI - targetSegmentAngle) + pointerAngle;
+      }
+
+      // Animation loop
+      function animateWheel(timestamp) {
+        if (!animationStartTime) animationStartTime = timestamp;
+
+        const elapsed = timestamp - animationStartTime;
+        const progress = Math.min(elapsed / animationDuration, 1);
+        const easedProgress = easeInOutCubic(progress);
+
+        wheelRotation = easedProgress * targetRotation;
+        drawWheel(wheelRotation);
+
+        if (progress < 1) {
+          requestAnimationFrame(animateWheel);
+        } else {
+          isAnimating = false;
+        }
+      }
+
+      function buildSpinWheel(options) {
+        // Remove duplicates for display
+        const unique = [];
+        const seen = new Set();
+        for (const opt of options) {
+          if (!seen.has(opt.id)) {
+            seen.add(opt.id);
+            unique.push(opt);
+          }
+        }
+
+        // HIDE the old bottle wheel immediately - don't build bottle HTML
+        spinWheel.classList.add('hidden');
+
+        // Build wheel for canvas display
+        const isAnonymous = gameState.settings.anonymousMode;
+        buildPlayerWheel(unique, isAnonymous);
+        drawWheel(0);
+
+        // Show canvas wheel immediately
+        const spinWheelContainer = document.getElementById('spinWheelContainer');
+        spinWheelContainer.classList.remove('hidden');
+      }
+
+      function startSpin1Animation(options) {
+        // Hide challenge and other displays
+        challengeDisplay.classList.add('hidden');
+        typeSpin.classList.add('hidden');
+        dealersChoice.classList.add('hidden');
+
+        // Show canvas wheel and hide old bottle wheel
+        const spinWheelContainer = document.getElementById('spinWheelContainer');
+        spinWheelContainer.classList.remove('hidden');
+        spinWheel.classList.add('hidden');
+
+        // Build appropriate wheel
+        const isAnonymous = gameState.settings.anonymousMode;
+        const unique = [];
+        const seen = new Set();
+        for (const opt of options) {
+          if (!seen.has(opt.id)) {
+            seen.add(opt.id);
+            unique.push(opt);
+          }
+        }
+        buildPlayerWheel(unique, isAnonymous);
+        drawWheel(0);
+
+        // Pick random result
+        const resultIndex = Math.floor(Math.random() * options.length);
+        const result = options[resultIndex];
+
+        // Calculate target rotation
+        const segmentIndex = wheelConfig.segments.findIndex(s => s.id === result.id);
+        targetRotation = calculateTargetRotation(segmentIndex, wheelConfig.segments.length);
+
+        // Start animation
+        wheelRotation = 0;
+        animationStartTime = null;
+        isAnimating = true;
+        requestAnimationFrame(animateWheel);
+
+        // Emit completion event after animation
+        setTimeout(() => {
+          socket.emit('triggerSpin1', result);
+        }, 3100);
+      }
+
+      function completeSpin1(data) {
+        // Highlight selected option
+        document.querySelectorAll('.spin-option').forEach(el => {
+          el.classList.toggle('selected', el.dataset.id === data.result.id);
+        });
+
+        const spinWheelContainer = document.getElementById('spinWheelContainer');
+
+        if (data.anonymousMode) {
+          // In anonymous mode, also use text-flipping animation for truth/dare
+          setTimeout(() => {
+            spinWheel.classList.add('hidden');
+            spinWheelContainer.classList.add('hidden');
+            startSpin2Animation();
+          }, 1000);
+        } else if (data.isDealersChoice) {
+          // Show dealers choice message
+          setTimeout(() => {
+            spinWheel.classList.add('hidden');
+            spinWheelContainer.classList.add('hidden');
+            dealersChoice.classList.remove('hidden');
+          }, 500);
+        } else {
+          // Start spin 2
+          setTimeout(() => {
+            spinWheel.classList.add('hidden');
+            spinWheelContainer.classList.add('hidden');
+            startSpin2Animation();
+          }, 1000);
+        }
+      }
+
+      function startSpin2Animation() {
+        typeSpin.classList.remove('hidden');
+        typeSpin.className = 'type-spin';
+
+        let count = 0;
+        const maxCount = 20;
+        const interval = setInterval(() => {
+          count++;
+          const isTruth = count % 2 === 0;
+          typeSpin.textContent = isTruth ? 'TRUTH' : 'DARE';
+          typeSpin.className = 'type-spin ' + (isTruth ? 'truth' : 'dare');
+
+          if (count >= maxCount) {
+            clearInterval(interval);
+            const result = Math.random() < 0.5 ? 'truth' : 'dare';
+            typeSpin.textContent = result.toUpperCase();
+            typeSpin.className = 'type-spin ' + result;
+            socket.emit('triggerSpin2', result);
+          }
+        }, 100 + count * 10);
+      }
+
+      function completeSpin2(data) {
+        typeSpin.textContent = data.result.toUpperCase();
+        typeSpin.className = 'type-spin ' + data.result;
+      }
+
+      function showChallenge(data) {
+        const spinWheelContainer = document.getElementById('spinWheelContainer');
+        spinWheel.classList.add('hidden');
+        spinWheelContainer.classList.add('hidden');
+        typeSpin.classList.add('hidden');
+        dealersChoice.classList.add('hidden');
+        challengeDisplay.classList.remove('hidden');
+
+        currentPlayer.innerHTML = `<span>${data.playerName}</span>'s Challenge`;
+
+        const challenge = data.challenge;
+        const typeEl = document.getElementById('challengeType');
+        typeEl.textContent = challenge.type.toUpperCase();
+        typeEl.className = 'challenge-type ' + challenge.type;
+
+        if (challenge.isTargeted) {
+          typeEl.innerHTML += '<span class="targeted-badge">TARGETED</span>';
+        }
+
+        document.getElementById('challengeText').textContent = challenge.text;
+
+        const authorEl = document.getElementById('challengeAuthor');
+        if (challenge.authorName) {
+          authorEl.textContent = 'Written by: ' + challenge.authorName;
+        } else {
+          authorEl.textContent = '';
+        }
+      }
+
+      function updateLeaderboard() {
+        if (!gameState) return;
+
+        const sorted = [...gameState.players].sort((a, b) => b.score - a.score);
+
+        leaderboard.innerHTML = sorted.map((p, i) => `
+          <div class="leaderboard-item ${i < 3 ? 'rank-' + (i + 1) : ''}">
+            <span class="leaderboard-rank">${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1)}</span>
+            <span class="leaderboard-name">${p.name}</span>
+            <span class="leaderboard-score">${p.score}</span>
+          </div>
+        `).join('');
+      }
+
+      function updateHistory() {
+        if (!gameState || !gameState.turnHistory) return;
+
+        historyLog.innerHTML = gameState.turnHistory.map(h => `
+          <div class="history-item">
+            <span class="history-player">${h.playerName}</span> -
+            <span class="history-type ${h.type}">${h.type.toUpperCase()}</span>
+            <span class="history-result ${h.completed ? 'completed' : 'refused'}">
+              ${h.completed ? '+' + (h.type === 'dare' ? '2' : '1') : (h.type === 'dare' ? '-2' : '-1')}
+            </span>
+            <div class="history-challenge">"${h.challengeText || ''}"</div>
+          </div>
+        `).join('');
+      }
+
+      function addHistoryItem(data) {
+        const html = `
+          <div class="history-item">
+            <span class="history-player">${data.playerName}</span> -
+            <span class="history-type ${data.type}">${data.type.toUpperCase()}</span>
+            <span class="history-result ${data.completed ? 'completed' : 'refused'}">
+              ${data.pointChange > 0 ? '+' : ''}${data.pointChange}
+            </span>
+            ${data.challengeText ? `<div class="history-challenge">"${data.challengeText}"</div>` : ''}
+          </div>
+        `;
+        historyLog.insertAdjacentHTML('afterbegin', html);
+      }
+
+      function showResults(data) {
+        showPanel('results');
+
+        if (data.winner) {
+          winnerName.textContent = data.winner.name;
+          winnerScoreDisplay.textContent = 'Score: ' + data.winner.score;
+        } else {
+          winnerName.textContent = 'No Winner';
+          winnerScoreDisplay.textContent = '';
+        }
+
+        // Helper function to get descriptive text for superlative values
+        function getSuperlativeLabel(title, value) {
+          const labels = {
+            'Most Daring': value === 1 ? 'dare completed' : 'dares completed',
+            'Truth Seeker': value === 1 ? 'truth completed' : 'truths completed',
+            'Party Pooper': value === 1 ? 'refusal' : 'refusals',
+            'Content Creator': value === 1 ? 'submission' : 'submissions',
+            'Popular Author': value === 1 ? 'time used' : 'times used',
+            'Hot Seat': value === 1 ? 'time targeted' : 'times targeted',
+          };
+          return `${value} ${labels[title] || ''}`;
+        }
+
+        superlatives.innerHTML = data.superlatives.map(s => `
+          <div class="superlative-card">
+            <div class="superlative-emoji">${s.emoji}</div>
+            <div class="superlative-title">${s.title}</div>
+            <div class="superlative-name">${s.playerName}</div>
+            ${s.value ? `<div class="superlative-value">${getSuperlativeLabel(s.title, s.value)}</div>` : ''}
+          </div>
+        `).join('');
+
+        finalLeaderboard.innerHTML = data.leaderboard.map((p, i) => `
+          <div class="leaderboard-item ${i < 3 ? 'rank-' + (i + 1) : ''}">
+            <span class="leaderboard-rank">${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1)}</span>
+            <span class="leaderboard-name">${p.name}</span>
+            <span class="leaderboard-score">${p.score}</span>
+          </div>
+        `).join('');
+      }
+    })();
+  </script>
+
+  <!-- Screen reader announcement region for accessibility -->
+  <div class="sr-only" role="status" aria-live="polite" aria-atomic="true" id="srAnnouncements"></div>
+</body>
+</html>

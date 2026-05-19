@@ -1,0 +1,8 @@
+{
+  "id": "charades",
+  "name": "CHARADES",
+  "minPlayers": 3,
+  "maxPlayers": 20,
+  "description": "Act out words and phrases - 4 exciting game modes!",
+  "icon": "icon.png"
+}

@@ -1,0 +1,8 @@
+{
+  "id": "tournament",
+  "name": "Mini Games Tournament",
+  "minPlayers": 2,
+  "maxPlayers": 16,
+  "description": "Battle through 10 exciting mini-games in an epic elimination tournament! Only the strongest will survive to become champion.",
+  "icon": "icon.png"
+}

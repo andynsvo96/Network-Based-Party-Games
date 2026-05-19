@@ -1,0 +1,2641 @@
+<!-- index.html (HOST) - Poker Betting (no cards) -->
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Poker Betting Host</title>
+  <style>
+    :root {
+      --bg: #0b0f14;
+      --panel: #111826;
+      --panel2: #0f1623;
+      --border: rgba(255, 255, 255, .10);
+      --muted: rgba(255, 255, 255, .70);
+      --muted2: rgba(255, 255, 255, .55);
+      --text: #eaf0ff;
+      --accent: #4ea1ff;
+      --good: #39d98a;
+      --warn: #ffcc66;
+      --bad: #ff5c7a;
+      --chip: #1b2a41;
+      --shadow: 0 12px 40px rgba(0, 0, 0, .45);
+      --radius: 16px;
+      --radius2: 22px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    body {
+      margin: 0;
+      font-family: var(--sans);
+      background:
+        radial-gradient(1000px 600px at 15% 10%, rgba(78, 161, 255, .18), transparent 60%),
+        radial-gradient(900px 550px at 80% 15%, rgba(57, 217, 138, .10), transparent 60%),
+        radial-gradient(900px 550px at 55% 110%, rgba(255, 92, 122, .10), transparent 60%),
+        var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    a {
+      color: inherit
+    }
+
+    .wrap {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 18px 18px 28px
+    }
+
+    header {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding: 14px 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(255, 255, 255, .06), rgba(255, 255, 255, .03));
+      box-shadow: var(--shadow);
+    }
+
+    .titleRow {
+      display: flex;
+      flex-direction: column;
+      gap: 8px
+    }
+
+    .title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: .2px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(0, 0, 0, .25);
+      font-size: 12px;
+      color: var(--muted);
+      width: fit-content;
+    }
+
+    .mono {
+      font-family: var(--mono)
+    }
+
+    .rightHeader {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: flex-end
+    }
+
+    .btnRow {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end
+    }
+
+    .quickGrid{
+      display: grid;
+      grid-template-columns: repeat(3, minmax(120px, 160px));
+      gap: 10px;
+      width: min(520px, 100%);
+      justify-items: stretch;
+    }
+    @media (max-width: 720px){
+      .quickGrid{ grid-template-columns: 1fr; width: 100%; }
+      .rightHeader{ align-items: stretch; }
+      .btnRow{ justify-content: flex-start; }
+    }
+
+
+    button {
+      font-family: inherit;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, .06);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: transform .05s ease, background .15s ease, border-color .15s ease;
+      user-select: none;
+    }
+
+    button:hover {
+      background: rgba(255, 255, 255, .10)
+    }
+
+    button:active {
+      transform: translateY(1px)
+    }
+
+    button.primary {
+      background: linear-gradient(180deg, rgba(78, 161, 255, .95), rgba(78, 161, 255, .72));
+      border-color: rgba(78, 161, 255, .65);
+      color: #06111f;
+      font-weight: 800;
+    }
+
+    button.danger {
+      background: linear-gradient(180deg, rgba(255, 92, 122, .95), rgba(255, 92, 122, .70));
+      border-color: rgba(255, 92, 122, .60);
+      color: #21040b;
+      font-weight: 800;
+    }
+
+    button.ghost {
+      background: transparent
+    }
+
+    button:disabled {
+      opacity: .45;
+      cursor: not-allowed
+    }
+
+    .grid2 {
+      display: grid;
+      grid-template-columns: 1.35fr .9fr;
+      gap: 14px;
+      margin-top: 14px
+    }
+
+    .gridGame {
+      display: grid;
+      grid-template-columns: 1.65fr .95fr;
+      gap: 14px;
+      margin-top: 14px
+    }
+
+    /* Keep right column beside table even with long history lines */
+    .gridGame { grid-template-columns: minmax(0, 1.65fr) minmax(0, .95fr); }
+    .gridGame > .card { min-width: 0; }
+    .logItem { overflow-wrap: anywhere; word-break: break-word; }
+
+    .card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(255, 255, 255, .06), rgba(255, 255, 255, .03));
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .cardHeader {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(0, 0, 0, .16);
+    }
+
+    .cardHeader h2 {
+      margin: 0;
+      font-size: 14px;
+      letter-spacing: .2px
+    }
+
+    .cardBody {
+      padding: 14px
+    }
+
+
+    /* Game layout: keep table map (left) and history (right) aligned */
+    .gridGame { align-items: stretch; }
+    .tableCard, .controlCard { display: flex; flex-direction: column; min-width: 0; }
+    .tableCard .cardBody, .controlCard .cardBody { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+    .controlCard .scroll { flex: 1; min-height: 0; max-height: none; }
+
+    /* Match player money colors */
+    .moneyIn { color: var(--good); font-weight: 900; }
+    .moneyOut { color: var(--bad); font-weight: 900; }
+
+    /* Action timer warning (<=10s): flashing red */
+    @keyframes flashRed {
+      0%, 100% { color: rgba(255, 92, 122, .98); }
+      50% { color: rgba(255, 92, 122, .35); }
+    }
+    .timerWarnFlash {
+      animation: flashRed .9s ease-in-out infinite;
+      font-weight: 900;
+    }
+
+    .hint {
+      color: var(--muted2);
+      font-size: 12px;
+      line-height: 1.35
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th,
+    td {
+      text-align: left;
+      padding: 10px 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, .08);
+      vertical-align: middle;
+    }
+
+    th {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, .10);
+      background: rgba(0, 0, 0, .22);
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 99px;
+      display: inline-block;
+      background: rgba(255, 255, 255, .35);
+      box-shadow: 0 0 0 3px rgba(255, 255, 255, .06) inset;
+    }
+
+    .dot.good {
+      background: var(--good)
+    }
+
+    .dot.bad {
+      background: var(--bad)
+    }
+
+    .dot.warn {
+      background: var(--warn)
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .sep {
+      height: 1px;
+      background: rgba(255, 255, 255, .10);
+      margin: 12px 0
+    }
+
+    .fieldGrid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    input,
+    select {
+      font-family: inherit;
+      padding: 10px 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, .12);
+      background: rgba(0, 0, 0, .25);
+      color: var(--text);
+      outline: none;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: rgba(78, 161, 255, .60)
+    }
+
+    .seatList {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .seatItem {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, .12);
+      background: rgba(0, 0, 0, .22);
+      cursor: grab;
+    }
+
+    .seatItem:active {
+      cursor: grabbing
+    }
+
+    .seatLeft {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0
+    }
+
+    .grip {
+      width: 10px;
+      height: 18px;
+      opacity: .6;
+      background:
+        radial-gradient(circle, rgba(255, 255, 255, .45) 2px, transparent 3px) 0 0/6px 6px;
+      border-radius: 6px;
+    }
+
+    .seatName {
+      font-weight: 800;
+      letter-spacing: .2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .seatMeta {
+      color: var(--muted2);
+      font-size: 12px
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, .12);
+      background: rgba(255, 255, 255, .06);
+      font-size: 12px;
+      color: var(--muted);
+      min-width: 34px;
+      white-space: nowrap;
+    }
+    .badge.d { color: rgba(255, 204, 102, .95); border-color: rgba(255, 204, 102, .28); background: rgba(255, 204, 102, .10); }
+    .badge.sb { color: rgba(99, 252, 202, .95); border-color: rgba(99, 252, 202, .25); background: rgba(99, 252, 202, .10); }
+    .badge.bb { color: rgba(78, 161, 255, .95); border-color: rgba(78, 161, 255, .26); background: rgba(78, 161, 255, .10); }
+
+    .playerStatusCircle {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+    .playerStatusCircle.online { background: #10b981; }
+    .playerStatusCircle.offline {
+      background: transparent;
+      border: 2px solid #6b7280;
+    }
+    tr.player-offline {
+      opacity: 0.5;
+    }
+    tr.player-never-joined {
+      display: none;
+    }
+
+    /* Street progress (match player style) */
+    .streetBar,
+    .streetSteps {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin: 6px 0 12px 0;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: var(--muted2);
+      font-size: 12px;
+    }
+
+    .streetStep {
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, .10);
+      background: rgba(0, 0, 0, .18);
+      color: var(--muted2);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .2px;
+      user-select: none;
+    }
+
+    .streetStep.active {
+      border-color: rgba(255, 204, 102, .35);
+      background: rgba(255, 204, 102, .10);
+      color: var(--warn);
+    }
+
+    /* Legacy separator (no longer used) */
+    .streetSep { display: none; }
+
+    .showdownBtn {
+      position: relative;
+      z-index: 100;
+      margin-top: 20px;
+      padding: 16px 32px;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 204, 102, .32);
+      background: rgba(255, 204, 102, .14);
+      color: rgba(255, 204, 102, .98);
+      font-size: 18px;
+      font-weight: 950;
+      letter-spacing: .5px;
+      cursor: pointer;
+      box-shadow: 0 18px 60px rgba(0, 0, 0, .55);
+      transition: filter 0.15s ease, transform 0.1s ease;
+    }
+    .showdownBtn:hover {
+      filter: brightness(1.08);
+      transform: scale(1.05);
+    }
+    .showdownBtn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+
+    /* Views */
+    #lobbyView,
+    #gameView {
+      display: none
+    }
+
+    #lobbyView.active,
+    #gameView.active {
+      display: block
+    }
+
+    .hidden { display: none !important; }
+
+    /* Table map */
+    .tableWrap {
+      position: relative;
+      height: 520px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .tableWrap.overlayActive .tableOval {
+      filter: blur(3px);
+      opacity: .75;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .tableOverlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      z-index: 20;
+      background: rgba(0, 0, 0, .25);
+      backdrop-filter: blur(2px);
+    }
+
+    .overlayPanel {
+      width: min(540px, 92%);
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(16, 19, 26, .85);
+      border-radius: 14px;
+      padding: 16px 16px 14px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.45);
+      text-align: center;
+    }
+
+    .overlayPanel .overlayTitle {
+      font-weight: 950;
+      letter-spacing: .02em;
+      font-size: 16px;
+      margin-bottom: 8px;
+    }
+
+    .overlayPanel .overlaySub {
+      color: var(--muted);
+      font-size: 12.5px;
+      line-height: 1.35;
+      margin-bottom: 10px;
+    }
+
+    .betweenHandsTitle {
+      font-weight: 950;
+      margin-bottom: 10px;
+    }
+
+    .betweenHandsBar {
+      height: 10px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(255,255,255,.10);
+      margin: 10px 0 8px;
+    }
+
+    .betweenHandsFill {
+      height: 100%;
+      width: 100%;
+      background: rgba(255, 210, 99, .85);
+      transition: width .15s linear;
+    }
+
+    .betweenHandsSub {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .moneyPos { color: rgba(99, 252, 202, .95); font-weight: 900; }
+    .moneyNeg { color: rgba(255, 117, 117, .95); font-weight: 900; }
+
+    .tableOval {
+      width: min(780px, 95%);
+      height: 360px;
+      border-radius: 999px;
+      background: radial-gradient(ellipse at center, rgba(60, 180, 115, .25), rgba(18, 88, 55, .55) 55%, rgba(10, 40, 26, .85) 100%);
+      border: 10px solid rgba(255, 255, 255, .18);
+      box-shadow:
+        0 0 0 2px rgba(0, 0, 0, .35) inset,
+        0 22px 60px rgba(0, 0, 0, .55);
+      position: relative;
+    }
+
+    .tableCenterMark {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(255, 255, 255, .10);
+      font-weight: 900;
+      letter-spacing: 2px;
+      font-size: 22px;
+      user-select: none;
+    }
+
+    .seatNode {
+      position: absolute;
+      width: 150px;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, .12);
+      background: rgba(0, 0, 0, .30);
+      padding: 10px 10px;
+      box-shadow: 0 14px 30px rgba(0, 0, 0, .35);
+      transform: translate(-50%, -50%);
+      transition: box-shadow .15s ease, transform .15s ease, border-color .15s ease;
+    }
+
+    .seatNode.turn {
+      border-color: rgba(78, 161, 255, .65);
+      box-shadow: 0 0 0 2px rgba(78, 161, 255, .30), 0 16px 34px rgba(0, 0, 0, .45);
+      transform: translate(-50%, -50%) scale(1.02);
+    }
+
+    .seatTop {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .nmWrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .seatBadgesInline {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .seatTop .nm {
+      font-weight: 900;
+      font-size: 13px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 96px;
+    }
+
+    .seatBadges {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: flex-end
+    }
+
+    .chipline {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .chipline strong {
+      color: var(--text);
+      font-weight: 900
+    }
+
+    .statusLine {
+      margin-top: 6px;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .statusPill {
+      font-size: 11px;
+      color: var(--muted);
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, .10);
+      background: rgba(0, 0, 0, .20);
+    }
+
+    .statusPill.folded {
+      color: rgba(255, 255, 255, .55)
+    }
+
+    .statusPill.allin {
+      color: rgba(255, 204, 102, .95);
+      border-color: rgba(255, 204, 102, .25)
+    }
+
+    .statusPill.out {
+      color: rgba(255, 92, 122, .95);
+      border-color: rgba(255, 92, 122, .25)
+    }
+
+    .statusPill.sit {
+      color: rgba(255, 255, 255, .62);
+      border-color: rgba(255, 255, 255, .14)
+    }
+
+    .statusPill.disc {
+      color: rgba(255, 92, 122, .90);
+      border-color: rgba(255, 92, 122, .25)
+    }
+
+    .statusPill.bb {
+      color: rgba(78, 161, 255, .95);
+      border-color: rgba(78, 161, 255, .25)
+    }
+
+    .statusPill.sb {
+      color: rgba(57, 217, 138, .95);
+      border-color: rgba(57, 217, 138, .25)
+    }
+
+    .statusPill.d {
+      color: rgba(255, 204, 102, .95);
+      border-color: rgba(255, 204, 102, .25)
+    }
+
+    /* Side column lists */
+    .scroll {
+      max-height: 190px;
+      overflow: auto;
+      border: 1px solid rgba(255, 255, 255, .10);
+      border-radius: 12px;
+      background: rgba(0, 0, 0, .20);
+      padding: 10px 10px;
+    }
+
+    .logItem {
+      font-size: 12px;
+      color: var(--muted);
+      padding: 8px 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, .08);
+      line-height: 1.25;
+    }
+
+    .logItem:last-child {
+      border-bottom: none
+    }
+
+    .logItem strong {
+      color: var(--text)
+    }
+
+    .kpiRow {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 10px
+    }
+
+    .kpi {
+      flex: 1;
+      min-width: 160px;
+      border: 1px solid rgba(255, 255, 255, .10);
+      border-radius: 14px;
+      background: rgba(0, 0, 0, .20);
+      padding: 10px 10px;
+    }
+
+    .kpi .label {
+      font-size: 11px;
+      color: var(--muted2)
+    }
+
+    .kpi .value {
+      font-size: 15px;
+      font-weight: 900;
+      margin-top: 4px
+    }
+
+    .kpi .sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 6px
+    }
+
+    /* Modals */
+    .modalBackdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      z-index: 999;
+    }
+
+    .modalBackdrop.show {
+      display: flex
+    }
+
+    .modal {
+      width: min(780px, 96vw);
+      max-height: 92vh;
+      overflow: auto;
+      border: 1px solid rgba(255, 255, 255, .14);
+      border-radius: var(--radius2);
+      background: linear-gradient(180deg, rgba(17, 24, 38, .98), rgba(10, 14, 20, .98));
+      box-shadow: 0 24px 80px rgba(0, 0, 0, .65);
+    }
+
+    .modalHeader {
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, .12);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .modalHeader h3 {
+      margin: 0;
+      font-size: 14px;
+      letter-spacing: .2px
+    }
+
+    .modalBody {
+      padding: 14px 16px
+    }
+
+    .modalFooter {
+      padding: 14px 16px;
+      border-top: 1px solid rgba(255, 255, 255, .12);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .potCard {
+      border: 1px solid rgba(255, 255, 255, .10);
+      border-radius: 14px;
+      background: rgba(0, 0, 0, .22);
+      padding: 12px 12px;
+      margin-bottom: 12px;
+    }
+
+    .potTop {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px
+    }
+
+    .potTop .amt {
+      font-weight: 900
+    }
+
+    .eligList {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px
+    }
+
+    .checkPill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, .12);
+      background: rgba(0, 0, 0, .20);
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .checkPill input {
+      accent-color: var(--accent)
+    }
+
+    .warnBox {
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 204, 102, .25);
+      background: rgba(255, 204, 102, .10);
+      color: rgba(255, 255, 255, .85);
+      font-size: 12px;
+      line-height: 1.35;
+      margin: 10px 0;
+    }
+
+    /* Toast */
+    .toastWrap {
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 1200;
+      pointer-events: none;
+    }
+
+    .toast {
+      pointer-events: auto;
+      width: min(380px, 92vw);
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, .12);
+      background: rgba(0, 0, 0, .65);
+      box-shadow: 0 18px 50px rgba(0, 0, 0, .55);
+      padding: 10px 12px;
+      color: rgba(255, 255, 255, .90);
+      font-size: 12px;
+      line-height: 1.3;
+    }
+
+    .toast .t {
+      font-weight: 900;
+      margin-bottom: 4px
+    }
+
+    .toast.good {
+      border-color: rgba(57, 217, 138, .28)
+    }
+
+    .toast.bad {
+      border-color: rgba(255, 92, 122, .28)
+    }
+
+    .toast.warn {
+      border-color: rgba(255, 204, 102, .28)
+    }
+
+    /* Preset name tags */
+    .presetTagList {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .presetTag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(78, 161, 255, .30);
+      background: rgba(78, 161, 255, .12);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .presetTag.taken {
+      border-color: rgba(255, 255, 255, .15);
+      background: rgba(0, 0, 0, .25);
+      color: var(--muted2);
+    }
+
+    .presetTag .removeBtn {
+      background: none;
+      border: none;
+      padding: 0;
+      margin: 0;
+      cursor: pointer;
+      color: rgba(255, 92, 122, .85);
+      font-size: 14px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .presetTag .removeBtn:hover {
+      color: rgba(255, 92, 122, 1);
+    }
+
+    .presetTag .takenLabel {
+      font-size: 10px;
+      color: var(--muted2);
+      font-weight: 600;
+    }
+
+    /* Intro Animation Styles */
+    #introSection {
+      display: none;
+      padding: 40px 20px;
+      text-align: center;
+    }
+    #introSection.active {
+      display: block;
+    }
+    #introSection h2 {
+      font-size: 28px;
+      margin-bottom: 30px;
+      color: #10b981;
+    }
+    .intro-track {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      max-width: 1200px;
+      margin: 0 auto 30px;
+    }
+    .intro-card {
+      background: var(--panelBg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+    .intro-card.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .intro-card h3 {
+      color: #10b981;
+      font-size: 20px;
+      margin: 0 0 12px 0;
+    }
+    .intro-card p {
+      font-size: 15px;
+      line-height: 1.6;
+      margin: 0;
+      color: var(--muted);
+    }
+    .intro-footer {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 20px;
+    }
+    .intro-dots {
+      display: flex;
+      gap: 8px;
+    }
+    .intro-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--border);
+      transition: background 0.3s ease;
+    }
+    .intro-dot.active {
+      background: #10b981;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <header>
+      <div class="titleRow">
+        <div class="title">
+          Poker Betting (Host)
+          <span class="pill"><span class="dot" id="connDot"></span><span id="connText">Connecting…</span></span>
+        </div>
+
+        <!-- Players join through the main launcher only -->
+        <span id="playerUrl" style="display:none;"></span>
+        <button id="copyLinkBtn" style="display:none;"></button>
+
+        <div class="hint">
+          Host-only screen. Set seats + settings, then start. During play, pots are tracked here; you resolve
+          winners/splits at the end of each hand.
+        </div>
+      </div>
+
+      <div class="rightHeader">
+        <div class="btnRow">
+          <button id="openSettingsBtn">⚙ Settings</button>
+          <button id="startGameBtn" class="primary" disabled>Start Game</button>
+          <button id="endGameBtn" class="danger" disabled>End Game</button>
+          <button id="forceAdvanceBtn" disabled
+            title="Optional. Server normally auto-advances streets when betting completes.">Force Advance</button>
+          <button id="returnToLauncherBtn" style="background:#ef4444;color:white;">Exit to Launcher</button>
+        </div>
+
+        <div class="quickGrid" id="mainBlindsRow">
+          <div class="field">
+            <label>Buy-in ($)</label>
+            <input id="buyinMainInp" inputmode="decimal" placeholder="e.g. 100" />
+          </div>
+          <div class="field">
+            <label>Small Blind ($)</label>
+            <input id="sbMainInp" inputmode="decimal" placeholder="e.g. 1.00" />
+          </div>
+          <div class="field">
+            <label>Big Blind ($)</label>
+            <input id="bbMainInp" inputmode="decimal" placeholder="e.g. 2.00" />
+          </div>
+        </div>
+
+        <div class="hint" id="statusHint"></div>
+      </div>
+    </header>
+
+    <!-- INTRO SECTION -->
+    <section id="introSection">
+      <h2>How to Play Poker</h2>
+      <div class="intro-track">
+        <div class="intro-card" id="introCard1">
+          <h3 id="introTitle1">Loading...</h3>
+          <p id="introContent1"></p>
+        </div>
+        <div class="intro-card" id="introCard2">
+          <h3 id="introTitle2">Loading...</h3>
+          <p id="introContent2"></p>
+        </div>
+        <div class="intro-card" id="introCard3">
+          <h3 id="introTitle3">Loading...</h3>
+          <p id="introContent3"></p>
+        </div>
+      </div>
+      <div class="intro-footer">
+        <div class="intro-dots">
+          <div class="intro-dot" id="introDot1"></div>
+          <div class="intro-dot" id="introDot2"></div>
+          <div class="intro-dot" id="introDot3"></div>
+        </div>
+        <button id="btnStartAfterIntro">Start Game</button>
+        <button id="btnEndIntro" class="ghost" style="background:#ef4444;color:white;">Cancel</button>
+      </div>
+    </section>
+
+    <!-- LOBBY VIEW -->
+    <section id="lobbyView" class="active">
+      <div class="grid2">
+        <div class="card">
+          <div class="cardHeader">
+            <h2>Players</h2>
+            <div class="row" style="gap:8px;align-items:center">
+              <span class="tag" id="playerCountTag">0 connected</span>
+            </div>
+          </div>
+          <div class="cardBody">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:24%">Name</th>
+                  <th style="width:12%">Status</th>
+                  <th style="width:17%">Earned</th>
+                  <th style="width:17%">Lost</th>
+                  <th style="width:17%">Total</th>
+                  <th style="width:13%"></th>
+                </tr>
+              </thead>
+              <tbody id="playersTbody">
+                <tr>
+                  <td colspan="6" class="hint">Waiting for players…</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="sep"></div>
+            <div class="hint">
+              Seat order is required before starting. Drag players on the right to match your real-life seating order
+              around the table.
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="cardHeader">
+            <h2>Seat Order (2–8)</h2>
+            <div class="row">
+              <button id="autoSeatBtn">Auto-seat</button>
+              <span class="tag" id="seatOkTag">Not ready</span>
+            </div>
+          </div>
+          <div class="cardBody">
+            <ul class="seatList" id="seatList"></ul>
+            <div class="sep"></div>
+            <div class="hint" id="seatHint">
+              Drag to reorder. Rotation direction is handled by game settings (clockwise / counter-clockwise).
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card" id="connectCard">
+        <div class="cardHeader">
+          <h2>How Players Join</h2>
+        </div>
+        <div class="cardBody">
+          <div class="hint" style="margin-bottom:8px;">Players on the same Wi-Fi open:</div>
+
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+            <select id="joinUrlSelect" style="min-width:320px;"></select>
+            <button id="copyJoinUrlBtn" class="primary">Copy</button>
+          </div>
+
+          <div class="hint" style="margin-top:10px;">
+            If the link won’t load, allow Node.js / port 3000 through the firewall (Private network).
+          </div>
+        </div>
+      </div>
+
+    </section>    <!-- GAME VIEW -->
+    <section id="gameView">
+      <div class="gridGame">
+        <div class="card tableCard">
+          <div class="cardHeader">
+            <h2>Table</h2>
+            <span class="tag" id="handTag">Hand —</span>
+          </div>
+          <div class="cardBody">
+            <div class="streetBar" id="streetSteps" aria-label="Hand progress">
+              <span class="streetStep" data-step="preflop">Pre-flop</span>
+              <span class="streetStep" data-step="flop">Flop</span>
+              <span class="streetStep" data-step="turn">Turn</span>
+              <span class="streetStep" data-step="river">River</span>
+              <span class="streetStep" data-step="showdown">Showdown</span>
+            </div>
+
+            <div class="tableWrap" id="tableWrap">
+              <div class="tableOval" id="tableOval">
+                <div class="tableCenterMark">POT TRACKER</div>
+              </div>
+
+              <div id="tableOverlay" class="tableOverlay hidden" aria-live="polite">
+                <div class="overlayPanel">
+                  <div id="betweenHandsPanel" class="hidden">
+                    <div class="overlayTitle">Next hand begins in</div>
+                    <div class="overlayTimer" id="betweenHandsTimer">15s</div>
+                    <div class="overlaySub">Cash Game only • Players may cash out now</div>
+                  </div>
+
+                  <div id="showdownPanel" class="hidden">
+                    <div class="overlayTitle">SHOWDOWN</div>
+                    <div class="overlaySub">Resolve the pot(s) and award winnings.</div>
+                    <button id="showdownBtn" class="showdownBtn" type="button">RESOLVE POT</button>
+                  </div>
+
+                  <div id="winnerPanel" class="hidden">
+                    <div class="overlayTitle">Winner</div>
+                    <div class="overlayWinner" id="winnerName">—</div>
+                    <div class="overlaySub">wins the game</div>
+                    <button id="winnerEndBtn" class="danger" type="button">END &amp; SETTLE</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="kpiRow">
+              <div class="kpi">
+                <div class="label">Street</div>
+                <div class="val" id="streetKpi">—</div>
+              </div>
+              <div class="kpi">
+                <div class="label">To Call</div>
+                <div class="val" id="toCallKpi">$0.00</div>
+              </div>
+              <div class="kpi">
+                <div class="label">Timer</div>
+                <div class="sub" id="timerKpi">Timer: —</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card controlCard">
+          <div class="cardHeader">
+            <h2>Game Control</h2>
+            <span class="tag" id="phaseTag">—</span>
+          </div>
+          <div class="cardBody">
+            <div class="hint" style="margin-bottom:8px">Hand History</div>
+            <div class="scroll" id="handHistory"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  <!-- SETTINGS MODAL -->
+  <div class="modalBackdrop" id="settingsModal">
+    <div class="modal">
+      <div class="modalHeader">
+        <h3>Host Settings (Lobby)</h3>
+        <button id="closeSettingsBtn">Close</button>
+      </div>
+      <div class="modalBody">
+        <div class="fieldGrid">
+          <div class="field">
+            <label>Mode</label>
+            <select id="modeSel">
+              <option value="tournament">Tournament (default)</option>
+              <option value="cash">Cash Game</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label>Rotation Direction</label>
+            <select id="dirSel">
+              <option value="clockwise">Clockwise (default)</option>
+              <option value="counter">Counter-clockwise</option>
+            </select>
+          </div>
+<div class="field">
+            <label>Blind Increase %</label>
+            <input id="blindIncInp" inputmode="decimal" placeholder="33" />
+          </div>
+<div class="field">
+            <label>Dealer Mode</label>
+            <select id="dealerSel">
+              <option value="on">ON (default)</option>
+              <option value="off">OFF</option>
+            </select>
+          </div>
+</div>
+
+        <div class="sep"></div>
+
+        <div class="fieldGrid">
+          <div class="field">
+            <label>Action Timer</label>
+            <select id="timerSel">
+              <option value="off">Off (default)</option>
+              <option value="on">On</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Timer Seconds</label>
+            <input id="timerSecInp" inputmode="numeric" placeholder="e.g. 20" disabled />
+          </div>
+        </div>
+
+        <div class="fieldGrid" id="betweenHandsRow">
+          <div class="field">
+            <label>Between-hands Delay (Cash only)</label>
+            <input id="betweenSecInp" inputmode="numeric" placeholder="e.g. 15" disabled />
+          </div>
+          <div class="field">
+            <label style="opacity:.85"> </label>
+            <div class="hint" style="margin-top:6px">Shown between hands so players can cash-out. Independent from Action Timer.</div>
+          </div>
+        </div>
+
+        <div class="warnBox">
+          Cash-out is only available in <strong>Cash Game</strong>. Cash-out is <strong>between hands only</strong> and
+          players cannot return until the game ends.
+        </div>
+
+        <div class="sep"></div>
+
+        <div class="card" style="margin-top:6px;">
+          <div class="cardHeader">
+            <h2>Player Names</h2>
+          </div>
+          <div class="cardBody">
+            <div class="fieldGrid">
+              <div class="field">
+                <label>Name Mode</label>
+                <select id="nameModeSel">
+                  <option value="custom">Custom Names (default)</option>
+                  <option value="preset">Preset Names</option>
+                </select>
+              </div>
+              <div class="field">
+                <label style="opacity:.85"> </label>
+                <div class="hint" style="margin-top:6px">Preset mode: players must choose from your list. Custom mode: players enter any name.</div>
+              </div>
+            </div>
+
+            <div id="presetNamesSection" class="hidden" style="margin-top:12px">
+              <div class="hint" style="margin-bottom:8px">Add names to the preset list (one at a time):</div>
+              <div class="row" style="align-items:end;gap:8px">
+                <input id="presetNameInp" placeholder="Enter a name" maxlength="24" style="flex:1;min-width:180px" />
+                <button id="addPresetNameBtn" class="primary">Add</button>
+              </div>
+
+              <div id="presetNamesList" style="margin-top:12px">
+                <div class="hint">No preset names added yet.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sep"></div>
+
+        <div class="card" style="margin-top:6px;">
+          <div class="cardHeader">
+            <h2>Danger Zone</h2>
+          </div>
+          <div class="cardBody">
+            <div class="hint" style="margin-bottom:10px;">
+              Resetting lifetime will set <strong>earned</strong>, <strong>lost</strong>, and <strong>total</strong> to $0.00 for everyone. This cannot be undone.
+            </div>
+            <button id="resetLifetimeBtn" class="danger" style="width:100%;">Reset Lifetime</button>
+          </div>
+        </div>
+
+        <div class="hint">
+          These settings are locked once the game starts. Blind increases apply after each hand concludes (pot awarded).
+          Blinds round to the nearest $1.
+        </div>
+      </div>
+      <div class="modalFooter">
+        <button id="saveSettingsBtn" class="primary">Save Settings</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESOLVE HAND MODAL -->
+  <div class="modalBackdrop" id="resolveModal">
+    <div class="modal">
+      <div class="modalHeader">
+        <h3>Resolve Hand (Host decides winners / splits)</h3>
+        <button id="closeResolveBtn">Close</button>
+      </div>
+      <div class="modalBody">
+        <div class="hint" style="margin-bottom:10px">
+          Select winners for each pot. If “Split” is enabled, choose multiple winners and the server will split evenly.
+        </div>
+        <div id="potsContainer"></div>
+      </div>
+      <div class="modalFooter">
+        <button id="submitResolveBtn" class="primary">Submit Resolution</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOASTS -->
+  <div class="toastWrap" id="toastWrap"></div>
+
+  <!-- Socket.IO (served by server.js) -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    // ---------- Utilities ----------
+    const $ = (id) => document.getElementById(id);
+
+    function fmtMoney(n) {
+      const v = Number(n);
+      if (!Number.isFinite(v)) return "—";
+      return v.toLocaleString(undefined, { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function safeNum(v) {
+      if (typeof v === "number") return v;
+      if (typeof v !== "string") return NaN;
+      const x = Number(v.replace(/[^0-9.\-]/g, ""));
+      return x;
+    }
+
+    
+
+    function clampInt(v, min, max, fallback){
+      const n = Math.round(Number(v));
+      if (!Number.isFinite(n)) return fallback;
+      return Math.max(min, Math.min(max, n));
+    }
+function toast(type, title, msg) {
+      const wrap = $("toastWrap");
+      const el = document.createElement("div");
+      el.className = "toast " + (type || "");
+      el.innerHTML = `<div class="t">${title}</div><div>${msg}</div>`;
+      wrap.appendChild(el);
+      setTimeout(() => el.remove(), 4200);
+    }
+
+    function confirmDanger(message) {
+      return window.confirm(message);
+    }
+
+    // ---------- App State ----------
+    // Extract game ID from URL path: /game/poker or /game/poker/
+    const pathParts = window.location.pathname.split('/').filter(p => p);
+    const gameId = pathParts[1]; // "poker" (pathParts[0] is "game")
+    const socketPath = `/game/${gameId}`;
+
+    const socket = io(socketPath, { transports: ["websocket", "polling"] });
+
+    let state = {
+      phase: "lobby", // "lobby" | "game"
+      players: [],
+      lobby: { seatOrder: [] },
+      settings: null,
+      game: null
+    };
+
+    // Local editable copies (host UI)
+    let localSettings = {
+      mode: "tournament",       // "tournament" | "cash"
+      direction: "clockwise",   // "clockwise" | "counter"
+      buyIn: 100,
+      sb: 1,
+      bb: 2,
+      blindIncreasePct: 33,
+      dealerMode: true,
+      timer: { enabled: false, seconds: 20 },
+      betweenHandsSeconds: 15
+    };
+
+    let localSeatOrder = []; // array of playerIds
+
+    // Seat node positions for up to 8 seats (percent coordinates within oval box)
+    const SEAT_POS = [
+      { x: 50, y: -6 },   // top
+      { x: 78, y: 6 },    // top-right
+      { x: 94, y: 50 },   // right
+      { x: 78, y: 94 },   // bottom-right
+      { x: 50, y: 106 },  // bottom
+      { x: 22, y: 94 },   // bottom-left
+      { x: 6, y: 50 },   // left
+      { x: 22, y: 6 },    // top-left
+    ];
+
+    // ---------- DOM Wiring ----------
+    function setConnectionStatus(connected) {
+      const dot = $("connDot");
+      const txt = $("connText");
+      if (connected) {
+        dot.className = "dot good";
+        txt.textContent = "Connected";
+      } else {
+        dot.className = "dot bad";
+        txt.textContent = "Disconnected";
+      }
+    }
+
+    // Copy Link removed — players join through the main launcher only
+
+
+    // Settings modal
+    $("openSettingsBtn").addEventListener("click", () => {
+      // prevent edits mid-game (server enforces too; UI blocks)
+      if (state.phase !== "lobby") {
+        toast("warn", "Locked", "Settings are locked once the game starts.");
+        return;
+      }
+      fillSettingsModal();
+      $("settingsModal").classList.add("show");
+    });
+    $("closeSettingsBtn").addEventListener("click", () => $("settingsModal").classList.remove("show"));
+    $("saveSettingsBtn").addEventListener("click", () => {
+      const parsed = readSettingsModal();
+      if (!parsed.ok) {
+        toast("bad", "Invalid settings", parsed.error);
+        return;
+      }
+      localSettings = parsed.value;
+      $("settingsModal").classList.remove("show");
+      toast("good", "Saved", "Host settings updated.");
+      render(); // updates Start button availability
+    });
+
+    $("timerSel").addEventListener("change", () => {
+      const on = $("timerSel").value === "on";
+      $("timerSecInp").disabled = !on;
+    });
+
+    $("modeSel").addEventListener("change", () => {
+      const isCash = $("modeSel").value === "cash";
+      $("betweenSecInp").disabled = !isCash;
+      const row = $("betweenHandsRow");
+      if (row) row.classList.toggle("hidden", !isCash);
+    });
+
+// Main menu blinds / buy-in (outside modal)
+    const mainBuy = $("buyinMainInp");
+    const mainSb = $("sbMainInp");
+    const mainBb = $("bbMainInp");
+
+    function syncMainBlindsInputs() {
+      const ae = document.activeElement;
+      if (mainBuy && ae !== mainBuy) mainBuy.value = (localSettings.buyIn ?? "") === null ? "" : String(localSettings.buyIn ?? "");
+      if (mainSb && ae !== mainSb) mainSb.value = (localSettings.sb ?? "") === null ? "" : String(localSettings.sb ?? "");
+      if (mainBb && ae !== mainBb) mainBb.value = (localSettings.bb ?? "") === null ? "" : String(localSettings.bb ?? "");
+    }
+
+    // Initial fill
+    syncMainBlindsInputs();
+
+    const onMainChange = () => {
+      if (mainBuy) localSettings.buyIn = safeNum(mainBuy.value);
+      if (mainSb) localSettings.sb = safeNum(mainSb.value);
+      if (mainBb) localSettings.bb = safeNum(mainBb.value);
+      render();
+    };
+    [mainBuy, mainSb, mainBb].forEach(el => el && el.addEventListener("input", onMainChange));
+
+// Seat order
+    $("autoSeatBtn").addEventListener("click", () => {
+      const ids = state.players.map(p => p.id);
+      localSeatOrder = ids;
+      renderSeatList();
+      toast("good", "Auto-seat", "Seat order set by join order.");
+      render();
+    });
+
+    // Start game - show intro first
+    let pendingGamePayload = null;
+    $("startGameBtn").addEventListener("click", () => {
+      if (state.phase !== "lobby") return;
+
+      const chk = validateReadyToStart();
+      if (!chk.ok) {
+        toast("bad", "Not ready", chk.error);
+        return;
+      }
+
+      pendingGamePayload = {
+        settings: buildSettingsPayload(),
+        seatOrder: [...localSeatOrder]
+      };
+      socket.emit("host_start_with_intro");
+    });
+
+    // --- Intro Animation System ---
+    const introSection = $("introSection");
+    let introTimers = [];
+    let introSlidesVisible = { 1: false, 2: false, 3: false };
+
+    function clearIntroTimers() {
+      introTimers.forEach(t => clearTimeout(t));
+      introTimers = [];
+    }
+
+    function applyIntroVisibility() {
+      for (let i = 1; i <= 3; i++) {
+        const card = $("introCard" + i);
+        const dot = $("introDot" + i);
+        if (card) card.classList.toggle("visible", !!introSlidesVisible[i]);
+        if (dot) dot.classList.toggle("active", !!introSlidesVisible[i]);
+      }
+    }
+
+    function startIntroAnimation(slides) {
+      introSlidesVisible = { 1: false, 2: false, 3: false };
+      clearIntroTimers();
+
+      slides.forEach((slide, index) => {
+        const titleEl = $("introTitle" + (index + 1));
+        const contentEl = $("introContent" + (index + 1));
+        if (titleEl) titleEl.textContent = slide.title;
+        if (contentEl) contentEl.textContent = slide.content;
+      });
+
+      applyIntroVisibility();
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          introSlidesVisible[1] = true;
+          applyIntroVisibility();
+        });
+      });
+
+      introTimers.push(setTimeout(() => {
+        introSlidesVisible[2] = true;
+        applyIntroVisibility();
+      }, 1000));
+
+      introTimers.push(setTimeout(() => {
+        introSlidesVisible[3] = true;
+        applyIntroVisibility();
+      }, 2000));
+    }
+
+    socket.on("introPhase", (data) => {
+      $("lobbyView").classList.remove("active");
+      $("gameView").classList.remove("active");
+      introSection.classList.add("active");
+      startIntroAnimation(data.slides);
+    });
+
+    socket.on("introEnded", () => {
+      introSection.classList.remove("active");
+      clearIntroTimers();
+      if (pendingGamePayload) {
+        socket.emit("host_start_game", pendingGamePayload);
+        pendingGamePayload = null;
+      }
+    });
+
+    $("btnStartAfterIntro").addEventListener("click", () => {
+      socket.emit("host_skip_intro");
+    });
+
+    $("btnEndIntro").addEventListener("click", () => {
+      introSection.classList.remove("active");
+      clearIntroTimers();
+      $("lobbyView").classList.add("active");
+      pendingGamePayload = null;
+    });
+
+    // End game
+    $("endGameBtn").addEventListener("click", () => {
+      if (state.phase !== "game") return;
+      if (!confirmDanger("End game now? This resets the session and returns everyone to the lobby (no gains/losses applied).")) return;
+      socket.emit("host_end_game", { applyLifetime: false });
+    });
+
+    // Winner overlay end & settle
+    $("winnerEndBtn").addEventListener("click", () => {
+      if (state.phase !== "game") return;
+      if (!confirmDanger("End & settle the completed game? This will finalize results and return everyone to the lobby.")) return;
+      socket.emit("host_end_game", { applyLifetime: true, reason: "game_finished" });
+    });
+
+    // Reset lifetime earnings/loss/total for everyone (danger zone)
+    $("resetLifetimeBtn").addEventListener("click", () => {
+      const connected = state.players.filter(p => p.connected).length;
+      if (!connected) return;
+      if (!confirmDanger("Are you sure you want to reset ALL players' lifetime earned/lost/total to $0.00?\n\nThis cannot be undone.")) return;
+      socket.emit("host_reset_lifetime");
+    });
+
+    // Showdown (open resolve modal)
+    $("showdownBtn").addEventListener("click", () => {
+      if (!state.game?.awaitingResolution) {
+        toast("warn", "Not ready", "SHOWDOWN is only available when the server is waiting for pot resolution.");
+        return;
+      }
+      buildResolveModal();
+      $("resolveModal").classList.add("show");
+    });
+
+$("closeResolveBtn").addEventListener("click", () => $("resolveModal").classList.remove("show"));
+
+    $("submitResolveBtn").addEventListener("click", () => {
+      if (!state.game?.awaitingResolution) return;
+
+      const resolution = readResolveModal();
+      if (!resolution.ok) {
+        toast("bad", "Fix required", resolution.error);
+        return;
+      }
+      socket.emit("host_resolve_hand", {
+        handId: state.game.handId,
+        pots: resolution.value
+      });
+      $("resolveModal").classList.remove("show");
+    });
+
+    // Optional force advance (mostly for emergency)
+    $("forceAdvanceBtn").addEventListener("click", () => {
+      if (state.phase !== "game") return;
+      if (!confirmDanger("Force advance street? Only use if something got stuck.")) return;
+      socket.emit("host_force_advance");
+    });
+
+    // ---------- Socket Events ----------
+    socket.on("connect", () => {
+      setConnectionStatus(true);
+      socket.emit("join", { role: "host" });
+    });
+
+    socket.on("disconnect", () => setConnectionStatus(false));
+
+    // Full sync snapshot
+
+    let latestServerInfo = null;
+
+    function buildJoinUrls(serverInfo) {
+      const port = serverInfo?.port || window.location.port || 3000;
+      const path = serverInfo?.playerPath || "/players";
+
+      const candidates = new Set();
+
+      // LAN IPs from server.js (best)
+      if (Array.isArray(serverInfo?.ips)) {
+        serverInfo.ips.forEach(ip => candidates.add(ip));
+      }
+
+      // Also include whatever hostname the host page is currently using
+      candidates.add(window.location.hostname);
+
+      const hosts = [...candidates].filter(Boolean);
+
+      return hosts.map(h => `http://${h}:${port}${path}`);
+    }
+
+    function renderJoinUrlPicker(serverInfo) {
+      latestServerInfo = serverInfo || latestServerInfo;
+
+      const sel = document.getElementById("joinUrlSelect");
+      const btn = document.getElementById("copyJoinUrlBtn");
+      if (!sel || !btn) return;
+
+      const urls = buildJoinUrls(latestServerInfo);
+
+      const saved = localStorage.getItem("poker_join_url") || "";
+      sel.innerHTML = "";
+
+      for (const u of urls) {
+        const opt = document.createElement("option");
+        opt.value = u;
+        opt.textContent = u;
+        sel.appendChild(opt);
+      }
+
+      if (saved && urls.includes(saved)) sel.value = saved;
+
+      sel.onchange = () => localStorage.setItem("poker_join_url", sel.value);
+
+      btn.onclick = async () => {
+        const text = sel.value || "";
+        if (!text) return;
+
+        try {
+          await navigator.clipboard.writeText(text);
+          toast("good", "Copied!", "Join link copied to clipboard");
+        } catch {
+          // Clipboard permission fallback - use textarea method
+          const ta = document.createElement("textarea");
+          ta.value = text;
+          ta.style.position = "fixed";
+          ta.style.left = "-9999px";
+          document.body.appendChild(ta);
+          ta.select();
+          try {
+            document.execCommand("copy");
+            toast("good", "Copied!", "Join link copied to clipboard");
+          } catch (e) {
+            toast("bad", "Copy failed", "Please copy the URL manually");
+          }
+          document.body.removeChild(ta);
+        }
+      };
+    }
+
+    function updatePlayerUrl() {
+      const urls = buildJoinUrls(latestServerInfo);
+      const firstUrl = urls[0] || "";
+      const legacyUrl = document.getElementById("playerUrl");
+      const legacyCopy = document.getElementById("copyLinkBtn");
+
+      if (legacyUrl) legacyUrl.textContent = firstUrl;
+      if (legacyCopy) {
+        legacyCopy.onclick = () => {
+          if (firstUrl) navigator.clipboard?.writeText(firstUrl).catch(() => {});
+        };
+      }
+
+      renderJoinUrlPicker(latestServerInfo);
+    }
+
+
+    socket.on("sync", (snapshot) => {
+      renderJoinUrlPicker(snapshot.serverInfo);
+      if (!snapshot || typeof snapshot !== "object") return;
+
+      state = snapshot;
+
+      // initialize local copies if empty
+      if (state.settings) {
+        localSettings = {
+          mode: state.settings.mode ?? localSettings.mode,
+          direction: state.settings.direction ?? localSettings.direction,
+          buyIn: state.settings.buyIn ?? localSettings.buyIn,
+          sb: state.settings.sb ?? localSettings.sb,
+          bb: state.settings.bb ?? localSettings.bb,
+          blindIncreasePct: state.settings.blindIncreasePct ?? localSettings.blindIncreasePct,
+          dealerMode: !!state.settings.dealerMode,
+          timer: {
+            enabled: !!state.settings.timer?.enabled,
+            seconds: state.settings.timer?.seconds ?? localSettings.timer.seconds
+          },
+          betweenHandsSeconds: state.settings.betweenHandsSeconds ?? localSettings.betweenHandsSeconds
+        
+        };
+      }
+
+      // Keep local seat order in sync while in lobby
+      if (state.phase === "lobby") {
+        const serverOrder = state.lobby?.seatOrder || [];
+        if (Array.isArray(serverOrder) && serverOrder.length) {
+          localSeatOrder = [...serverOrder];
+        } else if (!localSeatOrder.length) {
+          localSeatOrder = state.players.map(p => p.id);
+        } else {
+          // reconcile: remove missing, append new
+          const ids = new Set(state.players.map(p => p.id));
+          localSeatOrder = localSeatOrder.filter(id => ids.has(id));
+          for (const p of state.players) {
+            if (!localSeatOrder.includes(p.id)) localSeatOrder.push(p.id);
+          }
+        }
+      }
+
+      render();
+    });
+
+    socket.on("toast", (t) => {
+      if (!t) return;
+      toast(t.type || "warn", t.title || "Notice", t.message || "");
+    });
+
+    // ---------- Rendering ----------
+    function setView(which) {
+      $("lobbyView").classList.toggle("active", which === "lobby");
+      $("gameView").classList.toggle("active", which === "game");
+      $("startGameBtn").disabled = (which !== "lobby");
+      // Lock main buy-in/blinds once game starts
+      if ($("buyinMainInp")) $("buyinMainInp").disabled = (state.phase !== "lobby");
+      if ($("sbMainInp")) $("sbMainInp").disabled = (state.phase !== "lobby");
+      if ($("bbMainInp")) $("bbMainInp").disabled = (state.phase !== "lobby");
+      $("endGameBtn").disabled = (which !== "game");
+          if ($("forceAdvanceBtn")) {
+        $("forceAdvanceBtn").disabled = (which !== "game");
+        $("forceAdvanceBtn").style.display = (which === "game") ? "inline-flex" : "none";
+      }
+}
+
+    function validateReadyToStart() {
+      // Count all session players (including offline who joined) for min/max
+      const sessionPlayers = state.players.filter(p => p.joinedSession !== false);
+      if (sessionPlayers.length < 2) return { ok: false, error: "Need at least 2 players." };
+      if (sessionPlayers.length > 8) return { ok: false, error: "Max 8 players supported." };
+
+      const setChk = buildSettingsPayload(true);
+      if (!setChk.ok) return setChk;
+
+      // Seat validation uses connected players (must be online to be seated)
+      const connected = state.players.filter(p => p.connected);
+      const ids = new Set(connected.map(p => p.id));
+      if (!localSeatOrder.length) return { ok: false, error: "Seat order is empty. Click Auto-seat or drag players into seats." };
+      // Must include only active connected players for start (strict)
+      const seatSet = new Set(localSeatOrder);
+      for (const id of ids) {
+        if (!seatSet.has(id)) return { ok: false, error: "Seat order must include every connected player." };
+      }
+      for (const id of localSeatOrder) {
+        if (!ids.has(id)) return { ok: false, error: "Seat order contains someone who isn't connected." };
+      }
+      return { ok: true };
+    }
+
+    function render() {
+      syncMainBlindsInputs();
+
+      // Header hint
+      const connected = state.players.filter(p => p.connected).length;
+      $("playerCountTag").textContent = `${connected} connected`;
+      $("statusHint").textContent = (state.phase === "lobby")
+        ? "Lobby: Set seats + settings, then Start Game."
+        : "In game: Betting is tracked automatically. Use SHOWDOWN to resolve pots at the end of each hand.";
+
+      // Seat readiness tag
+      const ready = validateReadyToStart().ok;
+      $("seatOkTag").textContent = ready ? "Ready" : "Not ready";
+      $("seatOkTag").style.borderColor = ready ? "rgba(57,217,138,.30)" : "rgba(255,92,122,.25)";
+      $("seatOkTag").style.color = ready ? "rgba(57,217,138,.95)" : "rgba(255,92,122,.92)";
+
+      $("startGameBtn").disabled = !(state.phase === "lobby" && ready);
+
+      if (state.phase === "lobby") {
+        setView("lobby");
+        renderPlayersTable();
+        renderSeatList();
+      } else {
+        setView("game");
+        renderGame();
+      }
+    }
+
+
+    function renderGame() {
+      // Street/status bar (host matches player pill style)
+      renderStreetSteps();
+
+      // Table map
+      renderTableSeats();
+
+      // Hand history (with colored money)
+      renderHandHistory();
+
+      // Overlay panels (between-hands, showdown, winner)
+      updateTableOverlay();
+    }
+
+    function renderPlayersTable() {
+      const tb = $("playersTbody");
+      tb.innerHTML = "";
+
+      // Include ALL players (online + offline) to match other games
+      const players = state.players || [];
+
+      if ($("resetLifetimeBtn")) $("resetLifetimeBtn").disabled = !players.length;
+      if (!players.length) {
+        tb.innerHTML = `<tr><td colspan="6" class="hint">Waiting for players…</td></tr>`;
+        return;
+      }
+
+      // Sort: connected first, then by name
+      const sorted = [...players].sort((a, b) => {
+        if (a.connected !== b.connected) return a.connected ? -1 : 1;
+        return String(a.name || "").localeCompare(String(b.name || ""));
+      });
+
+      for (const p of sorted) {
+        const tr = document.createElement("tr");
+        if (p.joinedSession === false) tr.classList.add("player-never-joined");
+        if (!p.connected) tr.classList.add("player-offline");
+        const dot = p.connected ? "good" : "warn";
+        const stat = p.connected ? "Connected" : "Offline";
+        const earned = fmtMoney(p.lifetime?.earned ?? 0);
+        const lost = fmtMoney(p.lifetime?.lost ?? 0);
+        const total = fmtMoney(p.lifetime?.total ?? 0);
+
+        tr.innerHTML = `
+          <td>${escapeHtml(p.name || "")}</td>
+          <td><span class="tag"><span class="dot ${dot}"></span>${stat}</span></td>
+          <td class="mono">${earned}</td>
+          <td class="mono">${lost}</td>
+          <td class="mono">${total}</td>
+          <td><button class="danger" style="padding:6px 10px;font-size:11px;" onclick="kickPlayer('${escapeAttr(p.id)}', '${escapeAttr(p.name)}')">Kick</button></td>
+        `;
+        tb.appendChild(tr);
+      }
+    }
+
+    function kickPlayer(playerId, playerName) {
+      if (!confirm(`Are you sure you want to kick ${playerName}?`)) return;
+      socket.emit("host_kick_player", { playerId });
+    }
+
+    function renderSeatList() {
+      const ul = $("seatList");
+      ul.innerHTML = "";
+
+      // Include ALL players (online + offline) to match other games
+      const allPlayers = state.players || [];
+      const idToPlayer = new Map(allPlayers.map(p => [p.id, p]));
+
+      // Build list from localSeatOrder including all players
+      const listIds = localSeatOrder.filter(id => idToPlayer.has(id));
+      // If empty, offer hint
+      if (!listIds.length) {
+        ul.innerHTML = `<li class="hint">No seats assigned yet. Click Auto-seat.</li>`;
+        return;
+      }
+
+      listIds.forEach((id, idx) => {
+        const p = idToPlayer.get(id);
+        const isOffline = !p?.connected;
+        const li = document.createElement("li");
+        li.className = "seatItem" + (isOffline ? " offline" : "");
+        li.draggable = (state.phase === "lobby");
+        li.dataset.pid = id;
+        li.dataset.index = String(idx);
+        const offlineTag = isOffline ? ' <span style="color:#f59e0b;font-size:10px;">(offline)</span>' : '';
+        li.innerHTML = `
+          <div class="seatLeft">
+            <div class="grip" aria-hidden="true"></div>
+            <div style="min-width:0">
+              <div class="seatName">${escapeHtml(p?.name || "Player")}${offlineTag}</div>
+              <div class="seatMeta">Seat ${idx + 1}</div>
+            </div>
+          </div>
+          <span class="badge">#${idx + 1}</span>
+        `;
+
+        if (state.phase === "lobby") {
+          li.addEventListener("dragstart", onSeatDragStart);
+          li.addEventListener("dragover", onSeatDragOver);
+          li.addEventListener("drop", onSeatDrop);
+        }
+
+        ul.appendChild(li);
+      });
+    }
+
+    let dragFromIndex = null;
+
+    function onSeatDragStart(e) {
+      dragFromIndex = Number(e.currentTarget.dataset.index);
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", e.currentTarget.dataset.pid);
+    }
+    function onSeatDragOver(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+    }
+    function onSeatDrop(e) {
+      e.preventDefault();
+      const toIndex = Number(e.currentTarget.dataset.index);
+      if (!Number.isInteger(dragFromIndex) || dragFromIndex === toIndex) return;
+
+      const arr = [...localSeatOrder];
+      const [moved] = arr.splice(dragFromIndex, 1);
+      arr.splice(toIndex, 0, moved);
+      localSeatOrder = arr;
+
+      renderSeatList();
+      render();
+    }
+
+    
+    // ---------- Table overlay (between-hands + showdown) ----------
+    const BETWEEN_HANDS_SECONDS = 15; // default
+    function getBetweenHandsSeconds(){
+      const raw = (state.settings && state.settings.betweenHandsSeconds != null) ? state.settings.betweenHandsSeconds : localSettings.betweenHandsSeconds;
+      const n = Number(raw);
+      if (!Number.isFinite(n)) return BETWEEN_HANDS_SECONDS;
+      return Math.max(0, Math.min(120, Math.round(n)));
+    }
+    let betweenHandsStartedAt = null;
+    let overlayTickTimer = null;
+
+    function setTextIfChanged(el, text) {
+      if (el && el.textContent !== text) el.textContent = text;
+    }
+
+    function toggleClassIfChanged(el, className, shouldHaveClass) {
+      if (el && el.classList.contains(className) !== shouldHaveClass) {
+        el.classList.toggle(className, shouldHaveClass);
+      }
+    }
+
+    function startOverlayTicker() {
+      if (overlayTickTimer) return;
+      overlayTickTimer = setInterval(updateTableOverlayTick, 150);
+    }
+    function stopOverlayTicker() {
+      if (!overlayTickTimer) return;
+      clearInterval(overlayTickTimer);
+      overlayTickTimer = null;
+    }
+
+    function updateTableOverlay() {
+      updateTableOverlayTick();
+      const g = state.game || {};
+      const mode = state.settings?.mode || localSettings.mode || "tournament";
+      const seats = Array.isArray(g.seats) ? g.seats : [];
+      const stillIn = seats.filter(s => s.playerId && s.status !== "out" && (Number(s.stack) || 0) > 0);
+      const oneLeft = stillIn.length === 1;
+      const noneLeft = stillIn.length === 0;
+
+      const active =
+        !!g.awaitingResolution ||
+        (mode === "cash" && !!g.betweenHands) ||
+        (mode === "tournament" && (g.tournamentFinished || oneLeft)) ||
+        (mode === "cash" && (oneLeft || noneLeft));
+
+      if (active) startOverlayTicker(); else stopOverlayTicker();
+    }
+
+    function updateTableOverlayTick() {
+          const wrap = $("tableWrap");
+          const overlay = $("tableOverlay");
+          const bh = $("betweenHandsPanel");
+          const sh = $("showdownPanel");
+          const wp = $("winnerPanel");
+          if (!wrap || !overlay || !bh || !sh || !wp) return;
+
+          const g = state.game || {};
+          const mode = state.settings?.mode || localSettings.mode || "tournament";
+          const seats = Array.isArray(g.seats) ? g.seats : [];
+
+          // Seats still "in" the game (not out, has stack)
+          const stillIn = seats.filter(s => s.playerId && s.status !== "out" && (Number(s.stack) || 0) > 0);
+          const oneLeft = stillIn.length === 1;
+          const noneLeft = stillIn.length === 0;
+
+          // Winner name (derive if server doesn't provide it)
+          let winnerName = (g.winnerName || g.tournamentWinnerName || g.winner || "");
+          if (winnerName && typeof winnerName === "object") winnerName = winnerName.name || "";
+          if (!winnerName && oneLeft) {
+            const p = state.players.find(x => x.id === stillIn[0].playerId) || {};
+            winnerName = p.name || stillIn[0].name || "";
+          }
+
+          // Winner overlay:
+          // - Tournament: show when finished (or only one remains, to be safe)
+          // - Cash: show if only one (or zero) active player remains (prevents "hand could not start" spam)
+          const showWinner =
+            (mode === "tournament" && (g.tournamentFinished || oneLeft)) ||
+            (mode === "cash" && (oneLeft || noneLeft));
+
+          const showShowdown = !showWinner && !!g.awaitingResolution;
+          const showBetween = !showWinner && !showShowdown && (mode === "cash") && !!g.betweenHands;
+
+          if (showBetween) {
+            if (!betweenHandsStartedAt) betweenHandsStartedAt = Date.now();
+            const now = Date.now();
+
+            // Prefer server-provided deadline if present (future-proof)
+            const untilMs = Number.isFinite(Number(g.betweenHandsUntilMs)) ? Number(g.betweenHandsUntilMs) : null;
+
+            const remainMs = (untilMs != null)
+              ? Math.max(0, untilMs - now)
+              : Math.max(0, (betweenHandsStartedAt + getBetweenHandsSeconds() * 1000) - now);
+
+            const sec = Math.ceil(remainMs / 1000);
+            setTextIfChanged($("betweenHandsTimer"), `${sec}s`);
+          }
+
+          if (!showBetween) betweenHandsStartedAt = null;
+
+          const active = showWinner || showShowdown || showBetween;
+          toggleClassIfChanged(wrap, "overlayActive", active);
+          toggleClassIfChanged(overlay, "hidden", !active);
+
+          toggleClassIfChanged(bh, "hidden", !showBetween);
+          toggleClassIfChanged(sh, "hidden", !showShowdown);
+          toggleClassIfChanged(wp, "hidden", !showWinner);
+
+          if (showWinner) {
+            const nm = $("winnerName");
+            setTextIfChanged(nm, winnerName || (noneLeft ? "No active players" : "—"));
+          }
+
+          // button safety
+          const btn = $("showdownBtn");
+          if (btn && btn.disabled !== !showShowdown) btn.disabled = !showShowdown;
+        }
+
+    function renderTableSeats() {
+      const oval = $("tableOval");
+      // Clear existing nodes
+      [...oval.querySelectorAll(".seatNode")].forEach(n => n.remove());
+
+      const g = state.game || {};
+      const seats = Array.isArray(g.seats) ? g.seats : [];
+      // seats expected order: seatIndex 0..n-1 with playerId
+      const n = Math.min(8, Math.max(0, seats.length));
+
+      for (let i = 0; i < n; i++) {
+        const seat = seats[i] || {};
+        const p = state.players.find(x => x.id === seat.playerId) || {};
+        const pos = SEAT_POS[i];
+
+        const node = document.createElement("div");
+        node.className = "seatNode" + (seat.isTurn ? " turn" : "");
+        node.style.left = pos.x + "%";
+        node.style.top = pos.y + "%";
+
+        const badges = [];
+        if (seat.isDealer) badges.push(`<span class="badge d" title="Dealer">D</span>`);
+        if (seat.isSB) badges.push(`<span class="badge sb" title="Small Blind">SB</span>`);
+        if (seat.isBB) badges.push(`<span class="badge bb" title="Big Blind">BB</span>`);
+
+        const statusPills = [];
+        if (seat.status === "folded") statusPills.push(`<span class="statusPill folded">Folded</span>`);
+        if (seat.status === "allin") statusPills.push(`<span class="statusPill allin">All-in</span>`);
+        if (seat.status === "sitout") statusPills.push(`<span class="statusPill sit">Sit Out</span>`);
+        if (seat.status === "out") statusPills.push(`<span class="statusPill out">Out</span>`);
+        // Offline indicator moved to connection circle next to name
+        const connectionCircleClass = p.connected !== false ? 'online' : 'offline';
+
+        node.innerHTML = `
+          <div class="seatTop">
+            <div class="nmWrap" title="${escapeHtml(p.name || "")}">
+              <span class="playerStatusCircle ${connectionCircleClass}"></span><div class="nm">${escapeHtml(p.name || "—")}</div>
+              <div class="seatBadgesInline">${badges.join("")}</div>
+            </div>
+          </div>
+
+          <div class="chipline"><span>Stack</span><strong class="mono">${fmtMoney(seat.stack)}</strong></div>
+          <div class="chipline"><span>Bet</span><strong class="mono">${fmtMoney(seat.betStreet)}</strong></div>
+          <div class="chipline"><span>In Hand</span><strong class="mono">${fmtMoney(seat.contributed)}</strong></div>
+
+          <div class="statusLine">${statusPills.join("")}</div>
+        `;
+
+        oval.appendChild(node);
+      }
+    }
+    function renderStreetSteps() {
+      const wrap = $("streetSteps");
+      if (!wrap) return;
+      const g = state.game || {};
+      const label = (g.awaitingResolution ? "showdown" : (g.streetLabel || "")).toString().toLowerCase();
+      let key = "";
+      if (label.includes("pre")) key = "preflop";
+      else if (label.includes("flop") || label.includes("flip")) key = "flop";
+      else if (label.includes("turn")) key = "turn";
+      else if (label.includes("river")) key = "river";
+      else if (label.includes("show")) key = "showdown";
+
+      const steps = wrap.querySelectorAll(".streetStep");
+      steps.forEach(s => s.classList.toggle("active", (s.dataset.step || "") === key));
+    }
+
+
+    function formatLogText(raw) {
+      const safe = escapeHtml(raw == null ? "" : String(raw));
+
+      // Color money amounts. Default: green. Negative / "lost" style: red.
+      return safe.replace(/([+-])?\s*(\$\d[\d,]*\.\d{2})/g, (m, sign, amt, offset, str) => {
+        const ctx = str.slice(Math.max(0, offset - 28), Math.min(str.length, offset + m.length + 28)).toLowerCase();
+        let cls = "moneyIn";
+        if (sign === "-") cls = "moneyOut";
+        else if (sign === "+") cls = "moneyIn";
+        else if (ctx.includes("lost") || ctx.includes("lose") || ctx.includes("loses")) cls = "moneyOut";
+        return `<span class="${cls}">${(sign || "")}${amt}</span>`;
+      });
+    };
+
+function renderHandHistory() {
+      const box = $("handHistory");
+      box.innerHTML = "";
+      const hist = state.game?.handHistory || [];
+      if (!hist.length) {
+        box.innerHTML = `<div class="hint">Hand history will appear here.</div>`;
+        return;
+      }
+      for (const item of hist.slice(-80).reverse()) {
+        const div = document.createElement("div");
+        div.className = "logItem";
+        div.innerHTML = formatLogText(item.text || String(item));
+        box.appendChild(div);
+      }
+    }
+
+    // ---------- Settings Modal Helpers ----------
+    function fillSettingsModal() {
+      $("modeSel").value = localSettings.mode;
+      $("dirSel").value = localSettings.direction;
+      $("blindIncInp").value = String(localSettings.blindIncreasePct ?? 33);
+      $("dealerSel").value = localSettings.dealerMode ? "on" : "off";
+      $("timerSel").value = localSettings.timer.enabled ? "on" : "off";
+      $("timerSecInp").disabled = !localSettings.timer.enabled;
+      $("timerSecInp").value = String(localSettings.timer.seconds ?? 20);
+
+      $("betweenSecInp").value = String(localSettings.betweenHandsSeconds ?? 15);
+      $("betweenSecInp").disabled = ($("modeSel").value !== "cash");
+      const bhRow = $("betweenHandsRow");
+      if (bhRow) bhRow.classList.toggle("hidden", $("modeSel").value !== "cash");
+      // Main menu blinds/buy-in (kept outside modal)
+      if ($("buyinMainInp")) $("buyinMainInp").value = (localSettings.buyIn ?? "") === null ? "" : String(localSettings.buyIn ?? "");
+      if ($("sbMainInp")) $("sbMainInp").value = (localSettings.sb ?? "") === null ? "" : String(localSettings.sb ?? "");
+      if ($("bbMainInp")) $("bbMainInp").value = (localSettings.bb ?? "") === null ? "" : String(localSettings.bb ?? "");
+    }
+
+    
+
+    function readSettingsModal() {
+      const mode = $("modeSel").value;
+      const direction = $("dirSel").value;
+      const blindIncreasePct = safeNum($("blindIncInp").value);
+      const dealerMode = $("dealerSel").value === "on";
+      const timerEnabled = $("timerSel").value === "on";
+      const timerSeconds = safeNum($("timerSecInp").value);
+
+      if (!["tournament", "cash"].includes(mode)) return { ok: false, error: "Invalid mode." };
+      if (!["clockwise", "counter"].includes(direction)) return { ok: false, error: "Invalid direction." };
+
+      if (!Number.isFinite(blindIncreasePct) || blindIncreasePct <= 0 || blindIncreasePct > 500) {
+        return { ok: false, error: "Blind increase % must be between 1 and 500." };
+      }
+
+      if (timerEnabled) {
+        if (!Number.isFinite(timerSeconds) || timerSeconds < 3 || timerSeconds > 300) {
+          return { ok: false, error: "Timer seconds must be between 3 and 300." };
+        }
+      }
+
+      // Preserve buy-in / blinds from main menu
+      return {
+        ok: true,
+        value: {
+          ...localSettings,
+          mode,
+          direction,
+          blindIncreasePct: round2(blindIncreasePct),
+          dealerMode,
+          timer: { enabled: timerEnabled, seconds: Math.round(timerSeconds || 20) },
+          betweenHandsSeconds: (mode === "cash") ? clampInt($("betweenSecInp").value, 0, 120, 15) : 0
+        }
+      };
+    }
+
+    
+
+    function buildSettingsPayload(validateOnly = false) {
+      // Always validate using current localSettings; if missing required, error
+      const buyIn = safeNum(localSettings.buyIn);
+      const sb = safeNum(localSettings.sb);
+      const bb = safeNum(localSettings.bb);
+      const blindIncreasePct = safeNum(localSettings.blindIncreasePct);
+
+      if (!Number.isFinite(buyIn) || buyIn <= 0) return { ok: false, error: "Buy-in is required (Main menu)." };
+      if (!Number.isFinite(sb) || sb <= 0) return { ok: false, error: "Small blind is required (Main menu)." };
+      if (!Number.isFinite(bb) || bb <= 0) return { ok: false, error: "Big blind is required (Main menu)." };
+      if (bb <= sb) return { ok: false, error: "Big blind must be greater than small blind (Main menu)." };
+      if (!Number.isFinite(blindIncreasePct) || blindIncreasePct <= 0) return { ok: false, error: "Blind increase % is required (Settings)." };
+
+      const payload = {
+        mode: localSettings.mode,
+        direction: localSettings.direction,
+        buyIn: round2(buyIn),
+        sb: round2(sb),
+        bb: round2(bb),
+        blindIncreasePct: round2(blindIncreasePct),
+        blindRounding: "nearest_dollar",
+        dealerMode: !!localSettings.dealerMode,
+        timer: {
+          enabled: !!localSettings.timer?.enabled,
+          seconds: Math.round(localSettings.timer?.seconds || 20),
+          rule: "check_else_fold"
+        },
+        betweenHandsSeconds: (localSettings.mode === "cash") ? (Number(localSettings.betweenHandsSeconds) || 15) : 0,
+        cashoutPolicy: "between_hands_only",
+        maxPlayers: 8,
+        minPlayers: 2
+      };
+
+      return validateOnly ? { ok: true } : payload;
+    }
+
+    function round2(n) { return Math.round(n * 100) / 100; }
+
+    // ---------- Resolve Modal ----------
+    function buildResolveModal() {
+      const cont = $("potsContainer");
+      cont.innerHTML = "";
+
+      const g = state.game || {};
+      const pots = Array.isArray(g.pots) ? g.pots : [];
+      if (!pots.length) {
+        cont.innerHTML = `<div class="hint">No pots found.</div>`;
+        return;
+      }
+
+      const eligibleName = (pid) => {
+        const p = state.players.find(x => x.id === pid);
+        return p?.name || "Player";
+      };
+
+      pots.forEach((pot, idx) => {
+        const potId = pot.id ?? String(idx);
+        const amount = fmtMoney(pot.amount);
+        const eligible = Array.isArray(pot.eligiblePlayerIds) ? pot.eligiblePlayerIds : [];
+
+        const card = document.createElement("div");
+        card.className = "potCard";
+        card.dataset.potId = potId;
+
+        // single-winner select
+        const options = eligible.map(pid => `<option value="${escapeAttr(pid)}">${escapeHtml(eligibleName(pid))}</option>`).join("");
+
+        card.innerHTML = `
+          <div class="potTop">
+            <div><strong>Pot ${idx + 1}</strong> <span class="tag">${escapeHtml(pot.label || (idx === 0 ? "Main" : "Side"))}</span></div>
+            <div class="amt mono">${amount}</div>
+          </div>
+
+          <div class="fieldGrid" style="align-items:end">
+            <div class="field">
+              <label>Winner (single)</label>
+              <select class="winnerSel">
+                <option value="">Select winner…</option>
+                ${options}
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Split pot?</label>
+              <select class="splitSel">
+                <option value="no">No</option>
+                <option value="yes">Yes (even split)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="sep" style="margin:10px 0"></div>
+
+          <div class="hint" style="margin-bottom:8px">Eligible players for this pot:</div>
+          <div class="eligList">
+            ${eligible.map(pid => `
+              <label class="checkPill">
+                <input type="checkbox" class="splitChk" value="${escapeAttr(pid)}" disabled />
+                ${escapeHtml(eligibleName(pid))}
+              </label>
+            `).join("")}
+          </div>
+
+          <div class="hint" style="margin-top:10px">
+            If split is ON, select 2+ winners above. The server will split evenly.
+          </div>
+        `;
+
+        // Toggle split checkbox enable
+        const splitSel = card.querySelector(".splitSel");
+        const winnerSel = card.querySelector(".winnerSel");
+        const chks = [...card.querySelectorAll(".splitChk")];
+
+        splitSel.addEventListener("change", () => {
+          const splitOn = splitSel.value === "yes";
+          winnerSel.disabled = splitOn;
+          chks.forEach(c => c.disabled = !splitOn);
+        });
+
+        cont.appendChild(card);
+      });
+    }
+
+    function readResolveModal() {
+      const cards = [...document.querySelectorAll("#potsContainer .potCard")];
+      if (!cards.length) return { ok: false, error: "No pots available." };
+
+      const out = [];
+
+      for (const card of cards) {
+        const potId = card.dataset.potId;
+        const splitOn = card.querySelector(".splitSel").value === "yes";
+        const winnerSel = card.querySelector(".winnerSel");
+        const chks = [...card.querySelectorAll(".splitChk")];
+
+        if (!splitOn) {
+          const winnerId = winnerSel.value;
+          if (!winnerId) return { ok: false, error: "Select a winner for every pot (or enable split)." };
+          out.push({ potId, splitEvenly: false, winners: [winnerId] });
+        } else {
+          const winners = chks.filter(c => c.checked).map(c => c.value);
+          if (winners.length < 2) return { ok: false, error: "If split is ON, select at least 2 winners for that pot." };
+          out.push({ potId, splitEvenly: true, winners });
+        }
+      }
+
+      return { ok: true, value: out };
+    }
+
+    // ---------- Escaping ----------
+    function escapeHtml(s) {
+      return String(s ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+    function escapeAttr(s) {
+      return escapeHtml(s).replaceAll("`", "&#096;");
+    }
+
+    // ---------- Preset Names ----------
+    $("nameModeSel").addEventListener("change", () => {
+      const isPreset = $("nameModeSel").value === "preset";
+      $("presetNamesSection").classList.toggle("hidden", !isPreset);
+
+      // Toggle on server
+      const currentServerState = !!state.lobby?.usePresetNames;
+      if (isPreset !== currentServerState) {
+        socket.emit("host_toggle_preset_names");
+      }
+    });
+
+    function capitalizeName(str) {
+      return str.replace(/\b\w/g, c => c.toUpperCase());
+    }
+
+    $("addPresetNameBtn").addEventListener("click", () => {
+      const rawName = $("presetNameInp").value.trim().slice(0, 24);
+      if (!rawName) {
+        toast("bad", "Empty", "Enter a name to add.");
+        return;
+      }
+      const name = capitalizeName(rawName);
+      socket.emit("host_add_preset_name", { name });
+      $("presetNameInp").value = "";
+    });
+
+    $("presetNameInp").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        $("addPresetNameBtn").click();
+      }
+    });
+
+    function renderPresetNamesList() {
+      const container = $("presetNamesList");
+      if (!container) return;
+
+      const presetNames = state.lobby?.presetNames || [];
+      const connectedNames = new Set(
+        state.players.filter(p => p.connected).map(p => p.name.toLowerCase())
+      );
+
+      if (!presetNames.length) {
+        container.innerHTML = `<div class="hint">No preset names added yet.</div>`;
+        return;
+      }
+
+      let html = `<div class="presetTagList">`;
+      for (const name of presetNames) {
+        const isTaken = connectedNames.has(name.toLowerCase());
+        const takenClass = isTaken ? "taken" : "";
+        const takenLabel = isTaken ? `<span class="takenLabel">(taken)</span>` : "";
+        html += `
+          <span class="presetTag ${takenClass}">
+            ${escapeHtml(name)}
+            ${takenLabel}
+            <button class="removeBtn" data-name="${escapeAttr(name)}" title="Remove">&times;</button>
+          </span>
+        `;
+      }
+      html += `</div>`;
+      container.innerHTML = html;
+
+      // Add click handlers for remove buttons
+      container.querySelectorAll(".removeBtn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const nameToRemove = btn.dataset.name;
+          socket.emit("host_remove_preset_name", { name: nameToRemove });
+        });
+      });
+    }
+
+    function syncPresetNamesUI() {
+      const isPreset = !!state.lobby?.usePresetNames;
+      $("nameModeSel").value = isPreset ? "preset" : "custom";
+      $("presetNamesSection").classList.toggle("hidden", !isPreset);
+      renderPresetNamesList();
+    }
+
+    // Hook into the main render function to sync preset names
+    const originalRender = render;
+    render = function() {
+      originalRender();
+      syncPresetNamesUI();
+    };
+
+    // ---------- Return to Launcher ----------
+    $("returnToLauncherBtn").onclick = () => {
+      $("returnToLauncherBtn").disabled = true;
+      socket.emit("host_return_to_menu");
+      const masterUrl = window.location.protocol + "//" + window.location.host + "/";
+      setTimeout(() => { window.location.href = masterUrl; }, 100);
+    };
+
+    // ---------- Boot ----------
+    updatePlayerUrl();
+    setConnectionStatus(false);
+
+    // Default UI values (so user can open settings immediately)
+    fillSettingsModal();
+  </script>
+</body>
+
+</html>

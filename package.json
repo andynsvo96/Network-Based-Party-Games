@@ -1,0 +1,51 @@
+{
+  "name": "game-launcher",
+  "version": "1.0.0",
+  "description": "Master Game Launcher - Jackbox-style game selector",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "mocha tests/**/*.test.js --timeout 10000 --exit",
+    "test:watch": "mocha tests/**/*.test.js --watch --timeout 10000",
+    "test:integration": "mocha tests/integration/**/*.test.js --timeout 10000 --exit",
+    "test:compliance": "mocha tests/compliance/**/*.test.js --timeout 10000 --exit",
+    "test:e2e": "playwright test --config=tests/e2e/playwright.config.js",
+    "test:e2e:ui": "playwright test --config=tests/e2e/playwright.config.js --ui",
+    "test:e2e:headed": "playwright test --config=tests/e2e/playwright.config.js --headed",
+    "test:e2e:quick": "playwright test --config=tests/e2e/playwright.config.js --grep \"host and players\"",
+    "test:load": "node tests/load/launcher-load-check.js",
+    "test:load:all": "node tests/load/launcher-load-check.js --game=all",
+    "test:load:reconnect": "node tests/load/launcher-load-check.js --reconnect=true",
+    "test:load:all:reconnect": "node tests/load/launcher-load-check.js --game=all --reconnect=true",
+    "test:load:host-return": "node tests/load/launcher-load-check.js --host-return=true",
+    "test:load:all:host-return": "node tests/load/launcher-load-check.js --game=all --host-return=true",
+    "test:load:stress": "node tests/load/launcher-load-check.js --game=all --cycles=3",
+    "test:load:gauntlet": "node tests/load/launcher-load-check.js --game=all --cycles=2 --reconnect=true --host-return=true",
+    "test:load:mafia": "node tests/load/launcher-load-check.js --game=mafia --players=6 --isolated-settings=true",
+    "test:load:full": "node tests/load/launcher-load-check.js --game=all --players=6 --isolated-settings=true",
+    "test:load:full:gauntlet": "node tests/load/launcher-load-check.js --game=all --players=6 --cycles=2 --reconnect=true --host-return=true --isolated-settings=true",
+    "test:full": "npm test && npm run test:e2e && npm run test:load:full:gauntlet && npm run test:perf && npm run test:perf:active",
+    "test:perf": "node tests/perf/host-fps-check.js",
+    "test:perf:active": "node tests/perf/host-fps-check.js --games=spin-the-wheel,truthordare,charades,poker,tournament,trivia,voting,spyfall,mafia --active=true --sample-ms=4500",
+    "test:perf:drawing": "node tests/perf/host-fps-check.js --games=charades --active=true --sample-ms=4500",
+    "test:perf:poker": "node tests/perf/host-fps-check.js --games=poker --active=true --sample-ms=4500",
+    "test:perf:tournament": "node tests/perf/host-fps-check.js --games=tournament --active=true --sample-ms=4500",
+    "test:perf:trivia": "node tests/perf/host-fps-check.js --games=trivia --active=true --sample-ms=4500",
+    "test:perf:voting": "node tests/perf/host-fps-check.js --games=voting --active=true --sample-ms=4500",
+    "test:perf:spyfall": "node tests/perf/host-fps-check.js --games=spyfall --active=true --sample-ms=4500",
+    "test:perf:mafia": "node tests/perf/host-fps-check.js --games=mafia --active=true --sample-ms=4500"
+  },
+  "dependencies": {
+    "chokidar": "^5.0.0",
+    "express": "^4.18.2",
+    "socket.io": "^4.6.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0",
+    "chai": "^4.5.0",
+    "mocha": "^10.8.2",
+    "sinon": "^17.0.1",
+    "socket.io-client": "^4.8.3",
+    "supertest": "^6.3.4"
+  }
+}

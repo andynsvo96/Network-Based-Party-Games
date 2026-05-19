@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Jeopardy Player</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    :root {
+      --bg: #020617;
+      --panel: #030712;
+      --accent-glow: rgba(248,113,113,.45);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(1200px 800px at 50% -200px, #1d4ed8 0, #020617 55%);
+      color: #f9fafb;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .card {
+      background: var(--panel);
+      border-radius: 18px;
+      border: 1px solid #1f2937;
+      box-shadow: 0 18px 40px rgba(0,0,0,.9);
+      width: 100%;
+      max-width: 380px;
+      padding: 18px 18px 20px;
+    }
+    h1 {
+      margin: 0 0 6px 0;
+      font-size: 18px;
+      text-transform: uppercase;
+      letter-spacing: .18em;
+    }
+    .text-sm { font-size: 14px; }
+    .muted { color: #9ca3af; }
+    .mt-1 { margin-top: 4px; }
+    .mt-2 { margin-top: 10px; }
+    input[type="text"] {
+      width: 100%;
+      padding: 8px 10px;
+      font-size: 14px;
+      border-radius: 999px;
+      border: 1px solid #1f2937;
+      background: #020617;
+      color: #f9fafb;
+      outline: none;
+    }
+    input[type="text"]::placeholder {
+      color: #6b7280;
+    }
+    select {
+      width: 100%;
+      padding: 8px 10px;
+      font-size: 14px;
+      border-radius: 999px;
+      border: 1px solid #1f2937;
+      background: #020617;
+      color: #f9fafb;
+      outline: none;
+    }
+    .btn-primary {
+      width: 100%;
+      margin-top: 10px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: none;
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: #022c22;
+      font-weight: 700;
+      font-size: 15px;
+      cursor: pointer;
+      box-shadow: 0 12px 26px rgba(22,163,74,.55);
+      transition: transform .06s ease, box-shadow .06s ease, filter .1s ease;
+    }
+    .btn-primary:hover { filter: brightness(1.04); }
+    .btn-primary:active {
+      transform: translateY(1px) scale(.98);
+      box-shadow: 0 6px 18px rgba(22,163,74,.7);
+    }
+    .btn-primary:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
+    .small.secondary {
+      padding: 5px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      background: #0f172a;
+      border: 1px solid #1f2937;
+      border-radius: 999px;
+      color: white;
+    }
+    .buzzer-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+    .player-label {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: .14em;
+      color: #9ca3af;
+      margin-bottom: 4px;
+    }
+    .player-name {
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: #e5e7eb;
+      margin-bottom: 10px;
+    }
+    .buzzer-shell {
+      margin-top: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .buzzer-button {
+      width: min(70vw, 260px);
+      height: min(70vw, 260px);
+      border-radius: 999px;
+      border: 4px solid #b91c1c;
+      background: #ef4444;
+      box-shadow:
+        0 0 0 6px var(--accent-glow),
+        0 22px 40px rgba(0,0,0,.9);
+      color: #f9fafb;
+      font-weight: 800;
+      font-size: 28px;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-shadow: 0 2px 6px rgba(0,0,0,.8);
+      transition: transform .06s ease, box-shadow .08s ease, filter .12s ease, background-color .12s ease;
+    }
+    @media (min-height: 700px) {
+      .buzzer-button {
+        width: min(55vh, 260px);
+        height: min(55vh, 260px);
+      }
+    }
+
+    .buzzer-button:hover:not(:disabled) {
+      filter: brightness(1.06);
+      box-shadow:
+        0 0 0 8px var(--accent-glow),
+        0 26px 55px rgba(0,0,0,.95);
+      transform: translateY(-1px);
+    }
+    .buzzer-button:active:not(:disabled) {
+      transform: translateY(2px) scale(.97);
+      box-shadow:
+        0 0 0 5px var(--accent-glow),
+        0 14px 30px rgba(0,0,0,.9);
+    }
+    
+    .buzzer-button:not(:disabled) {
+      animation: buzzPulse 1.25s ease-in-out infinite;
+    }
+    @keyframes buzzPulse {
+      0% {
+        box-shadow:
+          0 0 0 6px var(--accent-glow),
+          0 22px 40px rgba(0,0,0,.9);
+      }
+      100% {
+        box-shadow:
+          0 0 0 14px rgba(248,113,113,.55),
+          0 22px 40px rgba(0,0,0,.9);
+      }
+    }
+.buzzer-button:disabled {
+      background: transparent;
+      border-color: rgba(148,163,184,.35);
+      color: rgba(226,232,240,.55);
+      opacity: 1;
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+      filter: none;
+    }
+    .status {
+      margin-top: 12px;
+      font-size: 14px;
+      color: #9ca3af;
+      min-height: 20px;
+    }
+    .hidden { display: none; }
+
+    /* Intro Styles */
+    #introCard {
+      display: none;
+    }
+    #introCard.active {
+      display: block;
+    }
+    .intro-content {
+      text-align: left;
+      padding: 10px 0;
+    }
+    .intro-content h3 {
+      color: #3b82f6;
+      margin: 16px 0 8px 0;
+      font-size: 17px;
+    }
+    .intro-content p {
+      font-size: 14px;
+      line-height: 1.5;
+      margin: 0;
+      color: #9ca3af;
+    }
+    .intro-waiting {
+      margin-top: 16px;
+      color: #3b82f6;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .playerStatusCircle {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+    .playerStatusCircle.online { background: #10b981; }
+    .playerStatusCircle.offline {
+      background: transparent;
+      border: 2px solid #6b7280;
+    }
+  </style>
+</head>
+<body>
+  <!-- Intro Card -->
+  <div class="card" id="introCard">
+    <h1>How to Play</h1>
+    <div class="intro-content" id="introContent">
+      <!-- Populated by JavaScript -->
+    </div>
+    <p class="intro-waiting">Waiting for host to start the game...</p>
+  </div>
+
+  <div class="card" id="joinCard">
+    <h1>Join via Launcher</h1>
+    <div class="text-sm muted" id="joinInstructions">
+      Players must join through the main launcher.
+    </div>
+    <a href="/" class="btn-primary" style="display:inline-block;text-align:center;text-decoration:none;margin-top:12px;">Go to Launcher</a>
+    <div id="joinStatus" class="text-sm muted mt-2"></div>
+    <!-- Hidden elements kept for auto-reconnect JS compatibility -->
+    <input id="nameInput" type="hidden" />
+    <select id="nameSelect" style="display:none;">
+      <option value="">Select your name...</option>
+    </select>
+    <button id="joinBtn" style="display:none;">Join</button>
+  </div>
+
+  <div class="card hidden" id="buzzerCard">
+    <div class="buzzer-wrapper">
+      <div class="player-label">You are</div>
+      <div id="playerNameLabel" class="player-name">PLAYER</div>
+      <button id="changeNameBtn" class="small secondary" style="margin-bottom:8px;">Change Name</button>
+      <div class="buzzer-shell">
+        <button id="buzzBtn" class="buzzer-button" disabled>BUZZ</button>
+      </div>
+      <div id="buzzStatus" class="status"></div>
+    </div>
+  </div>
+
+<script>
+  // ---------- Storage Manager (Private Browsing Support) ----------
+  const StorageManager = {
+    _memoryStore: {},
+    _useMemory: false,
+    init() {
+      try {
+        localStorage.setItem('_test', '1');
+        localStorage.removeItem('_test');
+        this._useMemory = false;
+      } catch (e) {
+        console.warn('localStorage unavailable (private browsing?), using in-memory storage');
+        this._useMemory = true;
+      }
+    },
+    setItem(key, value) {
+      if (this._useMemory) {
+        this._memoryStore[key] = value;
+      } else {
+        try { localStorage.setItem(key, value); }
+        catch (e) { this._memoryStore[key] = value; }
+      }
+    },
+    getItem(key) {
+      if (this._useMemory) {
+        return this._memoryStore[key] || null;
+      } else {
+        try { return localStorage.getItem(key); }
+        catch (e) { return this._memoryStore[key] || null; }
+      }
+    },
+    removeItem(key) {
+      if (this._useMemory) {
+        delete this._memoryStore[key];
+      } else {
+        try { localStorage.removeItem(key); }
+        catch (e) { delete this._memoryStore[key]; }
+      }
+    }
+  };
+  StorageManager.init();
+
+  const joinCard = document.getElementById("joinCard");
+  const buzzerCard = document.getElementById("buzzerCard");
+  const nameInput = document.getElementById("nameInput");
+  const nameSelect = document.getElementById("nameSelect");
+  const joinBtn = document.getElementById("joinBtn");
+  const joinStatus = document.getElementById("joinStatus");
+  const joinInstructions = document.getElementById("joinInstructions");
+  const playerNameLabel = document.getElementById("playerNameLabel");
+  const buzzBtn = document.getElementById("buzzBtn");
+  const buzzStatus = document.getElementById("buzzStatus");
+  const changeNameBtn = document.getElementById("changeNameBtn");
+
+  const LS_PLAYER_KEY  = "jeopardy_player_key_v1";
+  const LS_PLAYER_NAME = "jeopardy_player_name_v1";
+
+  let presetNamesEnabled = false;
+  let presetNames = [];
+  let usedPresetNames = [];
+
+  // Check for launcher credentials in URL params
+  const urlParams = new URLSearchParams(window.location.search);
+  const launcherKey = urlParams.get("launcherKey");
+  const launcherName = urlParams.get("launcherName");
+
+  function getOrCreatePlayerKey() {
+    // If coming from launcher, use the launcher key
+    if (launcherKey) {
+      StorageManager.setItem(LS_PLAYER_KEY, launcherKey);
+      return launcherKey;
+    }
+    let k = StorageManager.getItem(LS_PLAYER_KEY);
+    if (k) return k;
+    try {
+      k = (crypto && crypto.randomUUID) ? crypto.randomUUID() : null;
+    } catch (e) {
+      k = null;
+    }
+    if (!k) k = "pk_" + Math.random().toString(16).slice(2) + "_" + Date.now();
+    StorageManager.setItem(LS_PLAYER_KEY, k);
+    return k;
+  }
+
+  const playerKey = getOrCreatePlayerKey();
+
+  // If coming from launcher with a name, store it
+  if (launcherName) {
+    StorageManager.setItem(LS_PLAYER_NAME, launcherName.toUpperCase());
+  }
+
+  function validateName(raw) {
+    const trimmed = String(raw || "").trim();
+    if (!trimmed) return { ok: false, error: "Please enter a name." };
+    // Letters + spaces only
+    if (!/^[A-Za-z ]+$/.test(trimmed)) return { ok: false, error: "Special characters are not allowed." };
+    return { ok: true, name: trimmed.toUpperCase() };
+  }
+
+  function updatePresetNamesUI() {
+    if (presetNamesEnabled && presetNames.length > 0) {
+      // Show dropdown, hide text input
+      nameInput.style.display = "none";
+      nameSelect.style.display = "block";
+      joinInstructions.textContent = "Select your name from the list to join the game.";
+
+      // Populate dropdown
+      nameSelect.innerHTML = '<option value="">Select your name...</option>';
+      presetNames.forEach(name => {
+        const option = document.createElement("option");
+        option.value = name;
+        option.textContent = name;
+        option.disabled = usedPresetNames.includes(name);
+        if (option.disabled) {
+          option.textContent = name + " (taken)";
+        }
+        nameSelect.appendChild(option);
+      });
+    } else {
+      // Show text input, hide dropdown
+      nameInput.style.display = "block";
+      nameSelect.style.display = "none";
+      joinInstructions.textContent = "Enter your name to join the Jeopardy game on the host screen.";
+    }
+  }
+
+  // Make reconnections more resilient on phones
+  let wasEverConnected = false;
+
+  // Connect to game-specific namespace
+  const pathParts = window.location.pathname.split('/');
+  const gameId = pathParts[2]; // e.g., "jeopardy"
+  const socket = io(gameId ? `/game/${gameId}` : '/', {
+    transports: ["websocket", "polling"],
+    reconnection: true,
+    reconnectionAttempts: 3,
+    reconnectionDelay: 500,
+    reconnectionDelayMax: 1000
+  });
+
+  // Redirect to launcher if game server is unreachable after all reconnection attempts
+  socket.io.on("reconnect_failed", () => {
+    if (typeof toast === "function") {
+      toast("warn", "Game Ended", "Returning to lobby...");
+    }
+    setTimeout(() => {
+      const launcherUrl = window.location.protocol + "//" + window.location.host + "/players";
+      window.location.href = launcherUrl;
+    }, 1500);
+  });
+
+  // Immediate redirect if game server is unreachable on initial connection
+  socket.io.on("error", () => {
+    if (!wasEverConnected) {
+      console.log("Game server unreachable, returning to launcher...");
+      const launcherUrl = window.location.protocol + "//" + window.location.host + "/players";
+      window.location.href = launcherUrl;
+    }
+  });
+
+  function showJoin(message) {
+    joinCard.classList.remove("hidden");
+    buzzerCard.classList.add("hidden");
+    buzzBtn.disabled = true;
+    if (message) joinStatus.textContent = message;
+    joinBtn.disabled = false;
+  }
+
+  function showBuzzer(name, message) {
+    joinCard.classList.add("hidden");
+    buzzerCard.classList.remove("hidden");
+    playerNameLabel.textContent = name;
+    buzzBtn.disabled = true;
+    buzzStatus.textContent = message || "Wait for the host to start a question.";
+  }
+
+  function doRegister(rawName, opts = {}) {
+    const v = validateName(rawName);
+    if (!v.ok) {
+      showJoin(v.error);
+      return;
+    }
+
+    const payload = { name: v.name, playerKey };
+    joinBtn.disabled = true;
+    joinStatus.textContent = opts.silent ? "" : "Joining...";
+
+    socket.emit("registerPlayer", payload, (res) => {
+      if (!res || !res.ok) {
+        const msg = (res && res.error) ? res.error : "Unable to join.";
+        localStorage.removeItem(LS_PLAYER_NAME);
+        showJoin(msg);
+        return;
+      }
+
+      const name = (res.name || v.name).toUpperCase();
+      StorageManager.setItem(LS_PLAYER_NAME, name);
+      showBuzzer(name, opts.message || "Wait for the host to start a question.");
+    });
+  }
+
+  // Prefill last-used name (helps quick rejoin)
+  const savedName = StorageManager.getItem(LS_PLAYER_NAME);
+  if (savedName) nameInput.value = savedName;
+
+  joinBtn.onclick = () => {
+    const name = presetNamesEnabled && presetNames.length > 0 ? nameSelect.value : nameInput.value;
+    doRegister(name);
+  };
+
+  changeNameBtn.onclick = () => {
+    showJoin("Change your name below.");
+  };
+
+  // Auto-rejoin on reconnect (phone sleep/app switch)
+  socket.on("connect", () => {
+    wasEverConnected = true;
+    // Request current preset names
+    socket.emit("getPresetNames", (data) => {
+      if (data) {
+        presetNamesEnabled = data.enabled || false;
+        presetNames = data.names || [];
+        usedPresetNames = data.usedNames || [];
+        updatePresetNamesUI();
+      }
+    });
+
+    const n = StorageManager.getItem(LS_PLAYER_NAME);
+    if (n) {
+      // If coming from launcher, auto-join immediately without showing join screen
+      const isFromLauncher = launcherKey && launcherName;
+      showBuzzer(n, isFromLauncher ? "Joining game..." : "Reconnecting...");
+      doRegister(n, { silent: true, message: "Waiting for the host..." });
+    }
+  });
+
+  // --- Game events ---
+  socket.on("questionSelected", () => {
+    buzzBtn.disabled = true;
+    // For timed buzzer, host will broadcast a countdown next
+    buzzStatus.textContent = "Get ready...";
+  });
+
+  socket.on("buzzerCountdown", ({ remaining }) => {
+    const r = parseInt(remaining, 10);
+    if (Number.isFinite(r) && r > 0) {
+      buzzStatus.textContent = "Buzzer in: " + r + "s";
+    }
+  });
+
+  socket.on("questionStarted", () => {
+    buzzBtn.disabled = false;
+    buzzStatus.textContent = "Buzz now!";
+  });
+
+  socket.on("questionEnded", () => {
+    buzzBtn.disabled = true;
+    buzzStatus.textContent = "Question closed.";
+  });
+
+  buzzBtn.onclick = () => {
+    if (buzzBtn.disabled) return;
+    buzzBtn.disabled = true;
+    buzzStatus.textContent = "Buzzing...";
+    socket.emit("buzz", (res) => {
+      if (!res || !res.ok) {
+        buzzBtn.disabled = true;
+        buzzStatus.textContent = (res && res.error) ? res.error : "Buzzers are closed.";
+      }
+    });
+  };
+
+  socket.on("buzzAccepted", () => {
+    buzzBtn.disabled = true;
+    buzzStatus.textContent = "You buzzed in first!";
+  });
+
+  socket.on("buzzRejected", ({ winner }) => {
+    buzzBtn.disabled = true;
+    if (winner) {
+      buzzStatus.textContent = "Too late. First buzz: " + winner;
+    } else {
+      buzzStatus.textContent = "Buzzers are closed.";
+    }
+  });
+
+  socket.on("buzzLocked", ({ winner }) => {
+    buzzBtn.disabled = true;
+    if (winner) {
+      buzzStatus.textContent = "Buzz locked. First buzz: " + winner;
+    } else {
+      buzzStatus.textContent = "Buzz locked.";
+    }
+  });
+
+  socket.on("hostDisconnected", () => {
+    buzzBtn.disabled = true;
+    buzzStatus.textContent = "Host disconnected. Game over.";
+  });
+
+  socket.on("presetNamesUpdated", (data) => {
+    presetNamesEnabled = data.enabled || false;
+    presetNames = data.names || [];
+    usedPresetNames = data.usedNames || [];
+    updatePresetNamesUI();
+  });
+
+  // --- Intro Phase Handler ---
+  const introCard = document.getElementById("introCard");
+  const introContent = document.getElementById("introContent");
+
+  socket.on("introPhase", (data) => {
+    joinCard.classList.add("hidden");
+    buzzerCard.classList.add("hidden");
+    introCard.classList.add("active");
+
+    let html = "";
+    data.slides.forEach(slide => {
+      html += `<h3>${slide.title}</h3><p>${slide.content}</p>`;
+    });
+    introContent.innerHTML = html;
+  });
+
+  socket.on("introEnded", () => {
+    introCard.classList.remove("active");
+    buzzerCard.classList.remove("hidden");
+  });
+
+  socket.on("kicked", ({ message }) => {
+    // Reset player completely
+    StorageManager.removeItem(LS_PLAYER_KEY);
+    StorageManager.removeItem(LS_PLAYER_NAME);
+    showJoin(message || "You have been removed from the game by the host.");
+    joinStatus.style.color = "#ff8a80";
+  });
+
+  // FIX 7: Send acknowledgment before redirecting to ensure graceful shutdown
+  socket.on("returned_to_menu", (data) => {
+    if (data && data.shutdownId) {
+      socket.emit("player_ack_return_to_menu", { shutdownId: data.shutdownId });
+    }
+    // Small delay to ensure ack is sent before disconnect
+    setTimeout(() => {
+      socket.disconnect();
+      const masterUrl = window.location.protocol + "//" + window.location.host + "/players";
+      window.location.href = masterUrl;
+    }, 50);
+  });
+</script>
+</body>
+</html>

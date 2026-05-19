@@ -1,0 +1,1524 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Game Launcher - Host</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/shared/vendor/qrcode.min.js"></script>
+  <style>
+    :root {
+      --bg: #020617;
+      --bg-card: rgba(15, 23, 42, 0.95);
+      --accent: #f59e0b;
+      --accent-hover: #d97706;
+      --danger: #ef4444;
+      --danger-hover: #dc2626;
+      --success: #22c55e;
+      --text: #e5e7eb;
+      --text-dim: #9ca3af;
+      --border: rgba(245, 158, 11, 0.3);
+      --radius-xl: 24px;
+      --radius-lg: 16px;
+      --radius-md: 12px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: clamp(36px, 6vw, 56px);
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      color: var(--accent);
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 18px;
+      margin-bottom: 30px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 24px;
+    }
+
+    .card-title {
+      font-size: 20px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--accent);
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+
+    .game-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
+    }
+
+    .game-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px 16px;
+      min-height: 160px;
+      font-size: 18px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.05));
+      border: 2px solid var(--border);
+      color: var(--text);
+      border-radius: var(--radius-lg);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .game-btn:hover:not(:disabled) {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.3), rgba(245, 158, 11, 0.15));
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+
+    .game-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .game-btn .player-range {
+      font-size: 12px;
+      color: var(--text-dim);
+      font-weight: 400;
+      margin-top: 6px;
+    }
+
+    .game-btn .player-range.warning {
+      color: var(--danger);
+    }
+
+    .game-btn .game-icon {
+      width: 200px;
+      height: 200px;
+      margin-bottom: 5px;
+      object-fit: contain;
+    }
+
+    .game-btn .game-icon.placeholder {
+      width: 200px;
+      height: 200px;
+      background: rgba(245, 158, 11, 0.2);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      color: var(--accent);
+    }
+
+    .game-btn .game-name {
+      font-size: 16px;
+      margin-bottom: 4px;
+    }
+
+    .action-btns {
+      display: flex;
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 16px 24px;
+      font-size: 16px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      border: none;
+      border-radius: var(--radius-lg);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #111;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: var(--accent-hover);
+    }
+
+    .btn-secondary {
+      background: rgba(245, 158, 11, 0.15);
+      border: 2px solid var(--border);
+      color: var(--accent);
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: rgba(245, 158, 11, 0.25);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .voting-section {
+      margin-top: 20px;
+      padding: 20px;
+      background: rgba(245, 158, 11, 0.1);
+      border-radius: var(--radius-lg);
+      text-align: center;
+    }
+
+    .voting-section h3 {
+      color: var(--accent);
+      margin-bottom: 10px;
+    }
+
+    .vote-tally {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      margin: 16px 0;
+    }
+
+    .vote-item {
+      padding: 8px 16px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: var(--radius-md);
+    }
+
+    .vote-item .game-name {
+      font-weight: 600;
+    }
+
+    .vote-item .vote-count {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .timer {
+      font-size: 32px;
+      font-weight: 900;
+      color: var(--accent);
+    }
+
+    .game-active {
+      text-align: center;
+      padding: 60px 20px;
+    }
+
+    .game-active h2 {
+      font-size: 36px;
+      color: var(--accent);
+      margin-bottom: 20px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* Player chips layout (horizontal) */
+    .player-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 12px 0;
+    }
+
+    .player-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 24px;
+      font-size: 14px;
+    }
+
+    .player-chip .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--text-dim);
+    }
+
+    .player-chip .dot.connected {
+      background: var(--success);
+      box-shadow: 0 0 8px rgba(34, 197, 94, 0.5);
+    }
+
+    .player-chip .kick-btn {
+      padding: 2px 8px;
+      font-size: 10px;
+      margin-left: 4px;
+      background: rgba(239, 68, 68, 0.2);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    .player-chip .kick-btn:hover {
+      background: var(--danger);
+      color: white;
+    }
+
+    .no-players {
+      color: var(--text-dim);
+      font-style: italic;
+    }
+
+    /* Compact join info at bottom */
+    .join-info {
+      text-align: center;
+      padding: 24px;
+      margin-top: 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+    }
+
+    .join-info .join-label {
+      font-size: 14px;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+    }
+
+    .join-info .url {
+      font-size: 24px;
+      font-family: monospace;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+
+    .btn-small {
+      padding: 10px 20px;
+      font-size: 14px;
+      background: var(--accent);
+      color: #111;
+      border: none;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .btn-small:hover {
+      background: var(--accent-hover);
+    }
+
+    .games-card {
+      margin-bottom: 20px;
+    }
+
+    .players-card {
+      margin-bottom: 0;
+    }
+
+    /* Toast Notifications */
+    .toastWrap {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
+    }
+
+    .toast {
+      pointer-events: auto;
+      padding: 14px 18px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text);
+      font-size: 13px;
+      max-width: 320px;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    .toast .t {
+      font-weight: 700;
+      margin-bottom: 4px;
+      color: var(--accent);
+    }
+
+    .toast.good {
+      border-color: var(--success);
+    }
+
+    .toast.good .t {
+      color: var(--success);
+    }
+
+    .toast.bad {
+      border-color: var(--danger);
+    }
+
+    .toast.bad .t {
+      color: var(--danger);
+    }
+
+    /* Preset Names Settings */
+    .preset-toggle {
+      margin-bottom: 16px;
+    }
+
+    .toggle-label {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      font-size: 14px;
+      color: var(--text);
+    }
+
+    .toggle-label input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .preset-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 16px;
+      min-height: 40px;
+    }
+
+    .preset-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-size: 14px;
+    }
+
+    .preset-chip.taken {
+      opacity: 0.5;
+      text-decoration: line-through;
+    }
+
+    .preset-chip .remove-btn {
+      background: none;
+      border: none;
+      color: var(--danger);
+      cursor: pointer;
+      font-size: 16px;
+      padding: 0;
+      line-height: 1;
+    }
+
+    .preset-chip .remove-btn:hover {
+      color: var(--danger-hover);
+    }
+
+    .preset-add {
+      display: flex;
+      gap: 10px;
+    }
+
+    .preset-add input {
+      flex: 1;
+      padding: 10px 14px;
+      font-size: 14px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      color: var(--text);
+    }
+
+    .preset-add input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .btn-add {
+      padding: 10px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      background: var(--accent);
+      color: #111;
+      border: none;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+    }
+
+    .btn-add:hover {
+      background: var(--accent-hover);
+    }
+
+    /* QR Code */
+    .qr-section {
+      margin-top: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+    }
+
+    .qr-code {
+      background: white;
+      padding: 10px;
+      border-radius: 12px;
+      display: inline-block;
+    }
+
+    .qr-code img,
+    .qr-code canvas {
+      display: block;
+    }
+
+    /* Sound Toggle */
+    .sound-toggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      width: 48px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 24px;
+      z-index: 100;
+    }
+
+    .sound-toggle:hover {
+      border-color: var(--accent);
+    }
+
+    /* Game Preview Popup */
+    .game-btn {
+      position: relative;
+    }
+
+    .game-btn .preview-popup {
+      display: none;
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      margin-bottom: 10px;
+      z-index: 50;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 8px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .game-btn:hover .preview-popup {
+      display: block;
+    }
+
+    .preview-popup img {
+      max-width: 200px;
+      max-height: 150px;
+      border-radius: 8px;
+      display: block;
+    }
+
+    /* ============ ANIMATION SYSTEM ============ */
+
+    /* Ripple Effect */
+    .ripple {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.4);
+      transform: scale(0);
+      animation: rippleEffect 0.6s ease-out forwards;
+      pointer-events: none;
+    }
+
+    @keyframes rippleEffect {
+      to {
+        transform: scale(4);
+        opacity: 0;
+      }
+    }
+
+    /* Enhanced Game Card Hover */
+    .game-btn {
+      position: relative;
+      overflow: hidden;
+      will-change: transform;
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+                  box-shadow 0.3s ease,
+                  background 0.3s ease !important;
+    }
+
+    .game-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: var(--radius-lg);
+      background: linear-gradient(135deg,
+        rgba(245, 158, 11, 0.5) 0%,
+        transparent 50%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+    }
+
+    .game-btn:hover::before {
+      opacity: 1;
+    }
+
+    .game-btn:hover:not(:disabled) {
+      transform: translateY(-8px) scale(1.05) !important;
+      box-shadow: 0 20px 40px rgba(245, 158, 11, 0.3),
+                  0 0 60px rgba(245, 158, 11, 0.2),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+    }
+
+    /* Card Entrance Animation */
+    @keyframes cardEntrance {
+      from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.9);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .game-btn.animate-entrance {
+      animation: cardEntrance 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    /* Vote Counter Animations */
+    .vote-item {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .vote-item.updated {
+      animation: votePulse 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes votePulse {
+      0%, 100% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.15);
+        box-shadow: 0 0 30px rgba(245, 158, 11, 0.5);
+      }
+    }
+
+    /* Phase Transitions */
+    #menuSection, #votingSection, #gameSection {
+      transition: opacity 0.4s ease,
+                  transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      will-change: opacity, transform;
+    }
+
+    .phase-exit {
+      opacity: 0;
+      transform: translateX(-30px);
+      pointer-events: none;
+    }
+
+    .phase-enter {
+      opacity: 0;
+      transform: translateX(30px);
+    }
+
+    .phase-active {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    /* Player Join/Leave Animations */
+    .player-chip {
+      animation: playerJoin 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    @keyframes playerJoin {
+      0% {
+        opacity: 0;
+        transform: scale(0.5) translateY(-20px);
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    .player-chip.leaving {
+      animation: playerLeave 0.4s ease forwards;
+    }
+
+    @keyframes playerLeave {
+      0% {
+        opacity: 1;
+        transform: scale(1);
+      }
+      100% {
+        opacity: 0;
+        transform: scale(0.5) translateX(50px);
+      }
+    }
+
+    /* Timer Warning Animation */
+    .timer {
+      transition: color 0.3s ease, transform 0.1s ease;
+    }
+
+    .timer.warning {
+      color: var(--danger);
+      animation: timerPulse 1s ease-in-out infinite;
+    }
+
+    @keyframes timerPulse {
+      0%, 100% {
+        transform: scale(1);
+        text-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+      }
+      50% {
+        transform: scale(1.1);
+        text-shadow: 0 0 40px rgba(239, 68, 68, 0.8);
+      }
+    }
+
+    /* Confetti Animation */
+    .confetti {
+      position: fixed;
+      width: 10px;
+      height: 10px;
+      pointer-events: none;
+      z-index: 9999;
+      animation: confettiFall 2s ease-out forwards;
+    }
+
+    @keyframes confettiFall {
+      0% {
+        transform: translateY(0) rotateZ(0deg);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(100vh) rotateZ(360deg);
+        opacity: 0;
+      }
+    }
+
+    /* Button Press Effect */
+    .btn:active, .game-btn:active, .vote-btn:active {
+      transform: scale(0.97);
+    }
+
+    /* Accessibility: Reduced Motion */
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Sound Toggle Button -->
+  <button class="sound-toggle" id="soundToggle" onclick="toggleSound()" title="Toggle Sound">
+    🔊
+  </button>
+
+  <div class="container">
+    <!-- HEADER -->
+    <header class="header">
+      <h1>Game Night</h1>
+      <p class="subtitle">Choose a game and let's play!</p>
+    </header>
+
+    <!-- MENU PHASE -->
+    <div id="menuSection">
+      <!-- GAME SELECTION (middle) -->
+      <div class="card games-card">
+        <div class="card-title">Select a Game</div>
+        <div class="game-grid" id="gameGrid"></div>
+        <div class="action-btns">
+          <button class="btn btn-secondary" id="btnRandom" onclick="randomGame()">Random</button>
+          <button class="btn btn-primary" id="btnVote" onclick="startVote()">Vote</button>
+          <button class="btn btn-secondary" id="btnResetSession" onclick="resetSession()">Reset Session</button>
+        </div>
+      </div>
+
+      <!-- PLAYERS (bottom) -->
+      <div class="card players-card">
+        <div class="card-title">Connected Players (<span id="playerCount">0</span>)</div>
+        <div class="player-chips" id="playerList">
+          <span class="no-players">Waiting for players...</span>
+        </div>
+      </div>
+
+      <!-- PRESET NAMES SETTINGS -->
+      <div class="card" style="margin-top: 20px;">
+        <div class="card-title">Name Settings</div>
+        <div class="preset-toggle">
+          <label class="toggle-label">
+            <input type="checkbox" id="usePresetNames" onchange="togglePresetNames()">
+            <span>Require preset names (players must pick from list)</span>
+          </label>
+        </div>
+        <div id="presetNamesSection" class="hidden">
+          <div class="preset-list" id="presetNamesList"></div>
+          <div class="preset-add">
+            <input type="text" id="newPresetName" placeholder="Add a name..." maxlength="20">
+            <button class="btn-add" onclick="addPresetName()">Add</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- JOIN INFO (very bottom) -->
+      <div class="join-info">
+        <div class="join-label">Players join at:</div>
+        <div class="url" id="joinUrl">Loading...</div>
+        <div class="qr-section">
+          <div class="qr-code" id="qrCode"></div>
+          <button class="btn btn-small" onclick="copyJoinUrl()">Copy Link</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- VOTING PHASE -->
+    <div id="votingSection" class="hidden">
+      <div class="card">
+        <div class="card-title">Voting in Progress</div>
+        <div class="voting-section">
+          <div class="timer" id="voteTimer">30</div>
+          <h3>Players are voting...</h3>
+          <div class="vote-tally" id="voteTally"></div>
+          <button class="btn btn-primary" onclick="resolveVote()">End Voting Now</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- GAME ACTIVE PHASE -->
+    <div id="gameSection" class="hidden">
+      <div class="card game-active">
+        <h2>Now Playing: <span id="currentGameName">-</span></h2>
+        <p style="color: var(--text-dim); margin-bottom: 30px;">Game is in progress. When the game ends, click below to
+          return to the menu.</p>
+        <button class="btn btn-primary" onclick="returnToMenu()">Return to Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toastWrap" id="toastWrap"></div>
+
+  <script>
+    const socket = io({
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+    });
+
+    let state = {
+      phase: "menu",
+      players: [],
+      games: [],
+      votes: null,
+      currentGameId: null,
+      usePresetNames: false,
+      presetNames: [],
+      takenNames: [],
+    };
+
+    let votingDeadline = null;
+    let voteTimerInterval = null;
+    let previousPlayerCount = 0;
+    let gameGridSignature = null;
+
+    // ============ SOUND EFFECTS ============
+    let soundEnabled = true;
+    let audioContext = null;
+
+    // Generated tones are the default; optional audio files can be registered here later.
+    const soundFileSources = {};
+    const sounds = {};
+
+    // Track which sounds failed to load
+    const soundFailed = {
+      join: true,
+      vote: true,
+      launch: true,
+      hover: true,
+      click: true,
+      transition: true,
+      countdown: true,
+      celebration: true
+    };
+
+    // Preload optional sound files and track failures
+    Object.entries(soundFileSources).forEach(([name, source]) => {
+      const audio = new Audio(source);
+      audio.addEventListener('error', () => {
+        soundFailed[name] = true;
+      });
+      audio.volume = 0.5;
+      sounds[name] = audio;
+      soundFailed[name] = false;
+      audio.load();
+    });
+
+    // Generate a simple tone using Web Audio API (fallback)
+    function canStartAudio() {
+      return !navigator.userActivation || navigator.userActivation.hasBeenActive || navigator.userActivation.isActive;
+    }
+
+    function playTone(frequency, duration, type = 'sine') {
+      if (!canStartAudio()) return;
+
+      if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioContext.state === 'suspended') {
+        audioContext.resume().catch(() => {});
+      }
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+
+      oscillator.frequency.value = frequency;
+      oscillator.type = type;
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + duration);
+    }
+
+    // Fallback tone configurations
+    const toneConfig = {
+      join: { freq: 880, duration: 0.15, type: 'sine' },         // High beep
+      vote: { freq: 440, duration: 0.3, type: 'triangle' },      // Medium tone
+      launch: { freq: 523, duration: 0.4, type: 'square' },      // Rising sound
+      hover: { freq: 600, duration: 0.1, type: 'sine' },         // Subtle beep
+      click: { freq: 800, duration: 0.12, type: 'triangle' },    // Click sound
+      transition: { freq: 450, duration: 0.25, type: 'sine' },   // Whoosh
+      countdown: { freq: 440, duration: 0.05, type: 'square' },  // Tick
+      celebration: { freq: 659, duration: 0.5, type: 'sine' },   // E note
+    };
+
+    function playSound(name) {
+      if (!soundEnabled) return;
+
+      if (sounds[name] && !soundFailed[name]) {
+        sounds[name].currentTime = 0;
+        sounds[name].play().catch(() => {
+          // File failed to play, use generated tone
+          if (toneConfig[name]) {
+            const { freq, duration, type } = toneConfig[name];
+            playTone(freq, duration, type);
+          }
+        });
+      } else if (toneConfig[name]) {
+        // Use generated tone as fallback
+        const { freq, duration, type } = toneConfig[name];
+        playTone(freq, duration, type);
+      }
+    }
+
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      document.getElementById('soundToggle').textContent = soundEnabled ? '🔊' : '🔇';
+      localStorage.setItem('soundEnabled', soundEnabled);
+    }
+
+    // Load sound preference
+    const savedSound = localStorage.getItem('soundEnabled');
+    if (savedSound !== null) {
+      soundEnabled = savedSound === 'true';
+      document.getElementById('soundToggle').textContent = soundEnabled ? '🔊' : '🔇';
+    }
+
+    // Elements
+    const menuSection = document.getElementById("menuSection");
+    const votingSection = document.getElementById("votingSection");
+    const gameSection = document.getElementById("gameSection");
+    const playerList = document.getElementById("playerList");
+    const playerCount = document.getElementById("playerCount");
+    const gameGrid = document.getElementById("gameGrid");
+    const voteTally = document.getElementById("voteTally");
+    const voteTimer = document.getElementById("voteTimer");
+    const currentGameName = document.getElementById("currentGameName");
+
+    socket.on("connect", () => {
+      socket.emit("host_join");
+    });
+
+    socket.on("host_init", (data) => {
+      const url = `http://${data.localIp}:${data.port}/players`;
+      document.getElementById("joinUrl").textContent = url;
+      state.games = data.games;
+      state.usePresetNames = data.usePresetNames || false;
+      state.presetNames = data.presetNames || [];
+      state.takenNames = data.takenNames || [];
+      renderGames({ force: true });
+      renderPresetNames();
+      document.getElementById("usePresetNames").checked = state.usePresetNames;
+      document.getElementById("presetNamesSection").classList.toggle("hidden", !state.usePresetNames);
+
+      // Generate QR Code
+      generateQRCode(url);
+    });
+
+    // Hot-reload: games list updated
+    socket.on("games_updated", (data) => {
+      state.games = data.games;
+      renderGames({ force: true });
+      showToast("good", "Games Reloaded", `${data.games.length} game(s) available`);
+    });
+
+    socket.on("state_update", (data) => {
+      // Check if player count increased (new player joined)
+      const newPlayerCount = data.players ? data.players.filter(p => p.connected).length : 0;
+      if (newPlayerCount > previousPlayerCount && previousPlayerCount > 0) {
+        playSound('join');
+      }
+      previousPlayerCount = newPlayerCount;
+
+      state = { ...state, ...data };
+      render();
+      renderPresetNames();
+      document.getElementById("usePresetNames").checked = state.usePresetNames;
+      document.getElementById("presetNamesSection").classList.toggle("hidden", !state.usePresetNames);
+    });
+
+    socket.on("voting_started", (data) => {
+      votingDeadline = data.deadline;
+      startVoteTimer();
+      playSound('vote');
+    });
+
+    socket.on("launch_game", (data) => {
+      createConfetti(40);
+      playSound('celebration');
+      playSound('launch');
+      // Redirect host to game's host page after animation
+      setTimeout(() => {
+        window.location.href = data.hostUrl;
+      }, 500);
+    });
+
+    socket.on("host_error", (msg) => {
+      showToast("bad", "Error", msg);
+    });
+
+    function render() {
+      // Determine which sections to show/hide with transitions
+      const phases = {
+        menu: menuSection,
+        voting: votingSection,
+        game: gameSection
+      };
+
+      // Find the section to show and hide
+      const showSection = phases[state.phase];
+      const hideSections = Object.values(phases).filter(s => s !== showSection && !s.classList.contains('hidden'));
+
+      // Transition if needed
+      if (hideSections.length > 0 && !isTransitioning) {
+        transitionPhase(hideSections[0], showSection);
+      } else if (!showSection.classList.contains('phase-active')) {
+        // Initial load
+        Object.values(phases).forEach(s => {
+          if (s === showSection) {
+            s.classList.remove('hidden');
+            s.classList.add('phase-active');
+          } else {
+            s.classList.add('hidden');
+          }
+        });
+      }
+
+      // Update player list
+      renderPlayers();
+
+      // Update games
+      renderGames();
+
+      // Update vote tally
+      if (state.phase === "voting" && state.votes) {
+        renderVoteTally();
+      }
+
+      // Update current game name
+      if (state.currentGameId) {
+        const game = state.games.find(g => g.id === state.currentGameId);
+        currentGameName.textContent = game ? game.name : "-";
+      }
+    }
+
+    function renderPlayers() {
+      const connected = state.players.filter(p => p.connected);
+      playerCount.textContent = connected.length;
+
+      if (state.players.length === 0) {
+        playerList.innerHTML = '<span class="no-players">Waiting for players...</span>';
+        return;
+      }
+
+      playerList.innerHTML = state.players.map(p => `
+        <div class="player-chip">
+          <span class="dot ${p.connected ? 'connected' : ''}"></span>
+          <span>${escapeHtml(p.name)}${!p.connected ? ' (offline)' : ''}</span>
+          ${state.phase === "menu" ? `<button class="kick-btn" onclick="kickPlayer('${escapeJsString(p.key)}', '${escapeJsString(p.name)}')">X</button>` : ''}
+        </div>
+      `).join("");
+    }
+
+    function getGameGridSignature(connectedCount) {
+      const gameSignature = state.games.map(g => [
+        g.id,
+        g.name,
+        g.icon || '',
+        g.preview || '',
+        g.minPlayers,
+        g.maxPlayers
+      ].join('|')).join('::');
+      return `${connectedCount}::${gameSignature}`;
+    }
+
+    function updateGameActionButtons() {
+      document.getElementById("btnRandom").disabled = state.games.length === 0;
+      document.getElementById("btnVote").disabled = state.games.length === 0;
+    }
+
+    function renderGames(options = {}) {
+      const connectedCount = state.players.filter(p => p.connected).length;
+      const signature = getGameGridSignature(connectedCount);
+
+      updateGameActionButtons();
+      if (!options.force && gameGridSignature === signature) return;
+      gameGridSignature = signature;
+
+      gameGrid.innerHTML = state.games.map(g => {
+        const meetsRequirement = connectedCount >= g.minPlayers && connectedCount <= g.maxPlayers;
+        const iconHtml = g.icon
+          ? `<img class="game-icon" src="${g.icon}" alt="${g.name}" onerror="this.outerHTML='<div class=\\'game-icon placeholder\\'>${g.name.charAt(0)}</div>'">`
+          : `<div class="game-icon placeholder">${g.name.charAt(0)}</div>`;
+        const previewHtml = g.preview
+          ? `<div class="preview-popup"><img src="${g.preview}" alt="${g.name} preview"></div>`
+          : '';
+        return `
+          <button class="game-btn" onclick="selectGame('${g.id}')">
+            ${previewHtml}
+            ${iconHtml}
+            <span class="game-name">${g.name}</span>
+            <div class="player-range ${meetsRequirement ? '' : 'warning'}">${g.minPlayers}-${g.maxPlayers} players</div>
+          </button>
+        `;
+      }).join("");
+
+      // Add staggered entrance animation
+      setTimeout(() => {
+        const cards = document.querySelectorAll('.game-btn');
+        cards.forEach((card, index) => {
+          card.style.opacity = '0';
+          card.style.transform = 'translateY(30px) scale(0.9)';
+          setTimeout(() => {
+            card.classList.add('animate-entrance');
+          }, index * 50);
+        });
+      }, 10);
+
+      updateGameActionButtons();
+    }
+
+    function renderVoteTally() {
+      if (!state.votes) {
+        voteTally.innerHTML = "";
+        previousVoteCounts.clear();
+        return;
+      }
+
+      const entries = Object.entries(state.votes).sort((a, b) => b[1] - a[1]);
+      voteTally.innerHTML = entries.map(([gameId, count]) => {
+        const game = state.games.find(g => g.id === gameId);
+        return `
+          <div class="vote-item" data-game-id="${gameId}">
+            <span class="game-name">${game ? game.name : gameId}</span>
+            <span class="vote-count">${count}</span> vote${count !== 1 ? 's' : ''}
+          </div>
+        `;
+      }).join("");
+
+      // Animate count changes
+      entries.forEach(([gameId, newCount]) => {
+        const voteCountElement = voteTally.querySelector(`[data-game-id="${gameId}"] .vote-count`);
+        const oldCount = previousVoteCounts.get(gameId) || 0;
+
+        if (oldCount !== newCount && voteCountElement) {
+          animateCount(voteCountElement, oldCount, newCount);
+        }
+
+        previousVoteCounts.set(gameId, newCount);
+      });
+    }
+
+    function startVoteTimer() {
+      if (voteTimerInterval) clearInterval(voteTimerInterval);
+
+      voteTimerInterval = setInterval(() => {
+        const remaining = Math.max(0, Math.ceil((votingDeadline - Date.now()) / 1000));
+        voteTimer.textContent = remaining;
+
+        // Add warning class when <10 seconds
+        if (remaining <= 10 && remaining > 0) {
+          voteTimer.classList.add('warning');
+          if (remaining <= 10 && remaining % 1 === 0) {
+            playSound('countdown');
+          }
+        } else {
+          voteTimer.classList.remove('warning');
+        }
+
+        if (remaining <= 0) {
+          clearInterval(voteTimerInterval);
+          voteTimer.classList.remove('warning');
+        }
+      }, 100);
+    }
+
+    // Actions
+    function selectGame(gameId) {
+      socket.emit("host_select_game", { gameId });
+    }
+
+    function randomGame() {
+      socket.emit("host_random_game");
+    }
+
+    function startVote() {
+      socket.emit("host_start_vote");
+    }
+
+    function resolveVote() {
+      socket.emit("host_resolve_vote");
+    }
+
+    function resetSession() {
+      socket.emit("host_reset_session");
+      showToast("good", "Session Reset", "Everyone is being returned to the launcher");
+    }
+
+    function returnToMenu() {
+      socket.emit("host_return_to_menu");
+    }
+
+    function kickPlayer(playerKey, playerName) {
+      socket.emit("host_kick_player", { playerKey });
+      showToast("", "Removed", `${playerName} has been kicked`);
+    }
+
+    function copyJoinUrl() {
+      const url = document.getElementById("joinUrl").textContent;
+
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(url)
+          .then(() => showToast("good", "Copied!", "Join link copied to clipboard"))
+          .catch(() => fallbackCopy(url));
+      } else {
+        fallbackCopy(url);
+      }
+    }
+
+    function fallbackCopy(text) {
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+
+      try {
+        document.execCommand("copy");
+        showToast("good", "Copied!", "Join link copied to clipboard");
+      } catch {
+        showToast("bad", "Copy failed", "Select and copy the URL manually");
+      }
+
+      document.body.removeChild(textarea);
+    }
+
+    function showToast(type, title, msg) {
+      const wrap = document.getElementById("toastWrap");
+      const el = document.createElement("div");
+      el.className = "toast " + (type || "");
+      el.innerHTML = `<div class="t">${escapeHtml(title)}</div><div>${escapeHtml(msg)}</div>`;
+      wrap.appendChild(el);
+      setTimeout(() => el.remove(), 3000);
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement("div");
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function escapeJsString(str) {
+      return str.replace(/\\/g, '\\\\')
+        .replace(/'/g, "\\'")
+        .replace(/"/g, '\\"')
+        .replace(/\n/g, '\\n')
+        .replace(/\r/g, '\\r');
+    }
+
+    // Preset Names Functions
+    function renderPresetNames() {
+      const list = document.getElementById("presetNamesList");
+      if (!state.presetNames || state.presetNames.length === 0) {
+        list.innerHTML = '<span style="color: var(--text-dim); font-style: italic;">No preset names added yet</span>';
+        return;
+      }
+
+      list.innerHTML = state.presetNames.map(name => {
+        const isTaken = state.takenNames && state.takenNames.includes(name);
+        return `
+          <div class="preset-chip ${isTaken ? 'taken' : ''}">
+            <span>${escapeHtml(name)}</span>
+            <button class="remove-btn" onclick="removePresetName('${escapeJsString(name)}')" title="Remove">&times;</button>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function togglePresetNames() {
+      socket.emit("host_toggle_preset_names");
+    }
+
+    function addPresetName() {
+      const input = document.getElementById("newPresetName");
+      const name = input.value.trim();
+      if (!name) return;
+
+      socket.emit("host_add_preset_name", { name });
+      input.value = "";
+    }
+
+    document.getElementById("newPresetName").addEventListener("keypress", (e) => {
+      if (e.key === "Enter") addPresetName();
+    });
+
+    function removePresetName(name) {
+      socket.emit("host_remove_preset_name", { name });
+    }
+
+    // ============ QR CODE ============
+    let qrCodeInstance = null;
+
+    function generateQRCode(url) {
+      const container = document.getElementById('qrCode');
+      if (typeof QRCode !== 'undefined' && container) {
+        // Clear any existing QR code
+        container.innerHTML = '';
+
+        // Create new QR code using qrcodejs library
+        qrCodeInstance = new QRCode(container, {
+          text: url,
+          width: 120,
+          height: 120,
+          colorDark: '#000000',
+          colorLight: '#ffffff',
+          correctLevel: QRCode.CorrectLevel.M
+        });
+      }
+    }
+
+    // ============ ANIMATION SYSTEM ============
+
+    // Ripple Effect
+    let lastHoverSound = 0;
+    function createRipple(element, event) {
+      const ripple = document.createElement('span');
+      ripple.className = 'ripple';
+      const rect = element.getBoundingClientRect();
+      const size = Math.max(rect.width, rect.height);
+      ripple.style.width = ripple.style.height = size + 'px';
+      ripple.style.left = (event.clientX - rect.left - size / 2) + 'px';
+      ripple.style.top = (event.clientY - rect.top - size / 2) + 'px';
+      element.appendChild(ripple);
+      setTimeout(() => ripple.remove(), 600);
+    }
+
+    // Phase Transition
+    let isTransitioning = false;
+    async function transitionPhase(hideSection, showSection) {
+      if (isTransitioning) return;
+      isTransitioning = true;
+
+      // Exit animation
+      hideSection.classList.add('phase-exit');
+      await sleep(400);
+      hideSection.classList.add('hidden');
+      hideSection.classList.remove('phase-exit');
+
+      // Enter animation
+      showSection.classList.remove('hidden');
+      showSection.classList.add('phase-enter');
+
+      // Force reflow
+      showSection.offsetHeight;
+
+      showSection.classList.remove('phase-enter');
+      showSection.classList.add('phase-active');
+
+      playSound('transition');
+      isTransitioning = false;
+    }
+
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    // Confetti Effect
+    function createConfetti(count = 40) {
+      const colors = ['#f59e0b', '#ef4444', '#22c55e', '#3b82f6', '#a855f7', '#ec4899'];
+      for (let i = 0; i < count; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = 'confetti';
+        confetti.style.left = Math.random() * 100 + '%';
+        confetti.style.top = '-10px';
+        confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+        confetti.style.animationDelay = Math.random() * 0.3 + 's';
+        confetti.style.animationDuration = (1.5 + Math.random()) + 's';
+        document.body.appendChild(confetti);
+        setTimeout(() => confetti.remove(), 2500);
+      }
+    }
+
+    // Vote Counter Animation
+    let previousVoteCounts = new Map();
+    function animateCount(element, from, to, duration = 800) {
+      const start = performance.now();
+      const range = to - from;
+
+      function update(currentTime) {
+        const elapsed = currentTime - start;
+        const progress = Math.min(elapsed / duration, 1);
+
+        // Easing function: easeOutCubic
+        const eased = 1 - Math.pow(1 - progress, 3);
+        const current = Math.round(from + range * eased);
+
+        element.textContent = current;
+
+        if (progress < 1) {
+          requestAnimationFrame(update);
+        } else {
+          // Trigger pulse animation on completion
+          element.parentElement.classList.add('updated');
+          setTimeout(() => element.parentElement.classList.remove('updated'), 500);
+        }
+      }
+
+      requestAnimationFrame(update);
+    }
+
+    // Initialize on load
+    document.addEventListener('DOMContentLoaded', () => {
+      // Add hover sound to game grid (delegated)
+      const grid = document.getElementById('gameGrid');
+      if (grid) {
+        grid.addEventListener('mouseenter', (e) => {
+          if (e.target.classList.contains('game-btn')) {
+            const now = Date.now();
+            if (now - lastHoverSound > 100) {
+              playSound('hover');
+              lastHoverSound = now;
+            }
+          }
+        }, true);
+
+        // Add click ripple to game buttons
+        grid.addEventListener('click', (e) => {
+          if (e.target.closest('.game-btn')) {
+            const btn = e.target.closest('.game-btn');
+            createRipple(btn, e);
+            playSound('click');
+          }
+        });
+      }
+
+      // Add click ripple to all regular buttons
+      document.querySelectorAll('.btn, .btn-primary, .btn-secondary, .btn-small').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+          createRipple(this, e);
+          playSound('click');
+        });
+      });
+    });
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,1429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mini Games Tournament - Host</title>
+  <link rel="stylesheet" href="/shared/game-ui.css">
+  <style>
+    :root {
+      --accent: #8b5cf6;
+      --accent-hover: #a78bfa;
+      --accent-glow: rgba(139, 92, 246, 0.4);
+      --bg-primary: #0a0e1a;
+      --bg-secondary: #111827;
+      --bg-tertiary: #1f2937;
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --gold: #fbbf24;
+      --silver: #9ca3af;
+      --bronze: #cd7f32;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --border-subtle: rgba(55, 65, 81, 0.5);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Lobby Header Row */
+    .lobby-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      grid-column: 1 / -1;
+    }
+
+    .game-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .btn-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 2px solid var(--border-subtle);
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-icon:hover {
+      border-color: var(--accent);
+      background: var(--bg-secondary);
+      transform: scale(1.05);
+    }
+
+    /* Screens */
+    .screen {
+      display: none;
+      min-height: 100vh;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    /* Lobby Layout */
+    .lobby-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      padding: 24px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .lobby-panel {
+      background: var(--bg-secondary);
+      border: 2px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 24px;
+      min-height: 500px;
+    }
+
+    .panel-title {
+      font-size: 1rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid var(--border-subtle);
+    }
+
+    /* Leaderboard */
+    .leaderboard-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .leaderboard-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      font-size: 0.95rem;
+      transition: all 0.2s;
+    }
+
+    .leaderboard-item:hover {
+      background: rgba(139, 92, 246, 0.1);
+      border-color: var(--accent);
+    }
+
+    .leaderboard-rank {
+      font-weight: 700;
+      color: var(--text-secondary);
+      min-width: 25px;
+    }
+
+    .leaderboard-crown {
+      font-size: 1.2rem;
+    }
+
+    .status-indicator {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .status-indicator.online {
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success);
+    }
+
+    .status-indicator.offline {
+      background: transparent;
+      border: 2px solid var(--danger);
+    }
+
+    .leaderboard-name {
+      flex: 1;
+      font-weight: 600;
+    }
+
+    .leaderboard-wins {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    .btn-kick {
+      width: 24px;
+      height: 24px;
+      padding: 0;
+      margin-left: auto;
+      background: var(--danger);
+      border: none;
+      border-radius: 4px;
+      color: white;
+      cursor: pointer;
+      font-size: 1rem;
+      display: none;
+      line-height: 1;
+      transition: opacity 0.2s;
+    }
+
+    .leaderboard-item:hover .btn-kick {
+      display: block;
+    }
+
+    .btn-kick:hover {
+      opacity: 0.8;
+    }
+
+    /* Hide kick button when not in lobby phase */
+    #bracketScreen .btn-kick,
+    #miniGameScreen .btn-kick,
+    #showdownScreen .btn-kick,
+    #gameOverScreen .btn-kick {
+      display: none !important;
+    }
+
+    /* Game Selection */
+    .game-selection {
+      margin-bottom: 24px;
+    }
+
+    .game-checkboxes {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .game-checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      user-select: none;
+    }
+
+    .game-checkbox-item:hover {
+      background: rgba(139, 92, 246, 0.1);
+      border-color: var(--accent);
+    }
+
+    .game-checkbox-item input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: var(--accent);
+    }
+
+    .game-checkbox-label {
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+
+    .start-button {
+      width: 100%;
+      padding: 18px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: white;
+      background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 4px 12px var(--accent-glow);
+    }
+
+    .start-button:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px var(--accent-glow);
+    }
+
+    .start-button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .player-count {
+      text-align: center;
+      margin-top: 12px;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+
+    /* Intro Slides */
+    .intro-container {
+      padding: 40px 20px;
+      max-width: 900px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: calc(100vh - 80px);
+    }
+
+    .intro-track {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      width: 100%;
+      margin-bottom: 30px;
+    }
+
+    .intro-card {
+      background: var(--bg-secondary);
+      border: 2px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 40px 30px;
+      text-align: center;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .intro-card.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .intro-card h3 {
+      font-size: 1.8rem;
+      margin-bottom: 16px;
+      color: var(--accent);
+    }
+
+    .intro-card p {
+      font-size: 1.1rem;
+      line-height: 1.6;
+      color: var(--text-secondary);
+    }
+
+    .intro-controls {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-top: 30px;
+    }
+
+    .skip-button {
+      padding: 12px 24px;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      background: var(--bg-tertiary);
+      border: 2px solid var(--border-subtle);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .skip-button:hover {
+      border-color: var(--accent);
+      background: var(--bg-secondary);
+    }
+
+    /* Bracket Display */
+    .bracket-container {
+      padding: 24px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .bracket-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .bracket-header h2 {
+      font-size: 2rem;
+      margin-bottom: 10px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .current-game {
+      font-size: 1.2rem;
+      color: var(--text-secondary);
+    }
+
+    .bracket-display {
+      background: var(--bg-secondary);
+      border: 2px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 30px;
+      min-height: 400px;
+    }
+
+    .bracket-round {
+      margin-bottom: 30px;
+    }
+
+    .bracket-round-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .bracket-matches {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .bracket-match {
+      background: var(--bg-tertiary);
+      border: 2px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 16px;
+    }
+
+    .bracket-match.active {
+      border-color: var(--accent);
+      box-shadow: 0 0 20px var(--accent-glow);
+    }
+
+    .bracket-match.complete {
+      opacity: 0.7;
+    }
+
+    .bracket-player {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px;
+      margin: 4px 0;
+      border-radius: 6px;
+      background: var(--bg-primary);
+    }
+
+    .bracket-player.winner {
+      background: rgba(139, 92, 246, 0.2);
+      font-weight: 700;
+    }
+
+    .bracket-player-name {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Showdown */
+    .showdown-container {
+      padding: 40px 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .showdown-title {
+      font-size: 3rem;
+      font-weight: 900;
+      margin-bottom: 40px;
+      background: linear-gradient(135deg, var(--gold), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    .showdown-players {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      margin-top: 30px;
+    }
+
+    .showdown-player {
+      background: var(--bg-secondary);
+      border: 3px solid var(--accent);
+      border-radius: 20px;
+      padding: 40px 30px;
+      box-shadow: 0 0 40px var(--accent-glow);
+      animation: glow 2s ease-in-out infinite;
+    }
+
+    @keyframes glow {
+      0%, 100% { box-shadow: 0 0 40px var(--accent-glow); }
+      50% { box-shadow: 0 0 60px var(--accent-glow); }
+    }
+
+    .showdown-player-name {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .showdown-game-name {
+      font-size: 1.3rem;
+      color: var(--text-secondary);
+      margin-top: 20px;
+    }
+
+    /* Game Over */
+    .gameover-container {
+      padding: 40px 20px;
+      max-width: 1000px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .winner-display {
+      margin-bottom: 50px;
+    }
+
+    .winner-title {
+      font-size: 1.5rem;
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .winner-name {
+      font-size: 4rem;
+      font-weight: 900;
+      color: var(--gold);
+      text-shadow: 0 0 30px rgba(251, 191, 36, 0.5);
+      margin-bottom: 20px;
+    }
+
+    .winner-crown {
+      font-size: 5rem;
+      display: block;
+      margin-bottom: 10px;
+    }
+
+    .placements {
+      background: var(--bg-secondary);
+      border: 2px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 30px;
+      margin-top: 40px;
+    }
+
+    .placement-group {
+      margin-bottom: 30px;
+    }
+
+    .placement-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .placement-item {
+      padding: 12px;
+      margin: 8px 0;
+      background: var(--bg-tertiary);
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .return-button {
+      margin-top: 40px;
+      padding: 16px 40px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: white;
+      background: var(--accent);
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .return-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px var(--accent-glow);
+    }
+
+    /* Settings Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+
+    .modal-backdrop.show {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--bg-secondary);
+      border: 2px solid var(--border-subtle);
+      border-radius: 20px;
+      width: min(700px, 95vw);
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-header {
+      padding: 20px 24px;
+      border-bottom: 2px solid var(--border-subtle);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .modal-close {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 2px solid var(--border-subtle);
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      font-size: 1.5rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s;
+    }
+
+    .modal-close:hover {
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+
+    .modal-body {
+      padding: 24px;
+    }
+
+    .setting-group {
+      margin-bottom: 24px;
+    }
+
+    .setting-group-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .setting-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 16px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+
+    .setting-label {
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+
+    .setting-control input[type="number"] {
+      width: 80px;
+      padding: 8px 12px;
+      background: var(--bg-primary);
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      color: var(--text-primary);
+      font-size: 0.95rem;
+      text-align: center;
+    }
+
+    .setting-control select {
+      padding: 8px 12px;
+      background: var(--bg-primary);
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      color: var(--text-primary);
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+
+    .toggle-switch {
+      width: 50px;
+      height: 26px;
+      background: var(--bg-primary);
+      border: 2px solid var(--border-subtle);
+      border-radius: 13px;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .toggle-switch.active {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .toggle-slider {
+      width: 18px;
+      height: 18px;
+      background: white;
+      border-radius: 50%;
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      transition: all 0.3s;
+    }
+
+    .toggle-switch.active .toggle-slider {
+      left: 26px;
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .lobby-container {
+        grid-template-columns: 1fr;
+      }
+
+      .game-checkboxes {
+        grid-template-columns: 1fr;
+      }
+
+      .intro-track {
+        grid-template-columns: 1fr;
+      }
+
+      .showdown-players {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .game-title {
+        font-size: 1rem;
+      }
+
+      .showdown-title {
+        font-size: 2rem;
+      }
+
+      .winner-name {
+        font-size: 2.5rem;
+      }
+
+      .winner-crown {
+        font-size: 3rem;
+      }
+    }
+
+    /* Utility */
+    .hidden {
+      display: none !important;
+    }
+
+    .text-center {
+      text-align: center;
+    }
+
+    .mt-4 {
+      margin-top: 16px;
+    }
+
+    .end-game-button {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      padding: 14px 24px;
+      font-size: 1rem;
+      font-weight: 600;
+      color: white;
+      background: var(--danger);
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+      transition: all 0.3s;
+      z-index: 100;
+    }
+
+    .end-game-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(239, 68, 68, 0.6);
+    }
+  </style>
+</head>
+<body>
+  <!-- Lobby Screen -->
+  <div class="screen active" id="lobbyScreen">
+    <div class="lobby-container">
+      <!-- Header Row: Title left, Actions right -->
+      <div class="lobby-header">
+        <h1 class="game-title">Mini Games Tournament</h1>
+        <div class="header-actions">
+          <button class="btn-icon" id="settingsBtn" title="Settings">⚙️</button>
+          <button class="btn-icon" id="exitBtn" title="Exit to Launcher">🚪</button>
+        </div>
+      </div>
+      <!-- Left Column: Leaderboard -->
+      <div class="lobby-panel">
+        <h2 class="panel-title">Leaderboard</h2>
+        <div class="leaderboard-list" id="leaderboardList">
+          <div class="text-center" style="padding: 40px 20px; color: var(--text-secondary);">
+            Waiting for players to join...
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Game Controls -->
+      <div class="lobby-panel">
+        <h2 class="panel-title">Game Controls</h2>
+
+        <div class="game-selection">
+          <div style="font-size: 0.95rem; font-weight: 600; margin-bottom: 12px; color: var(--text-secondary);">
+            Select Mini-Games for Tournament:
+          </div>
+          <div class="game-checkboxes" id="gameCheckboxes">
+            <!-- Will be populated by JavaScript -->
+          </div>
+        </div>
+
+        <button class="start-button" id="startButton" disabled>
+          Start Tournament
+        </button>
+        <div class="player-count" id="playerCount">
+          0 players connected
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Intro Screen -->
+  <div class="screen" id="introScreen">
+    <div class="intro-container">
+      <div class="intro-track">
+        <div class="intro-card" id="introCard1">
+          <h3>🎮 Welcome!</h3>
+          <p>Get ready for an epic tournament featuring 10 exciting mini-games. Only the strongest will survive!</p>
+        </div>
+        <div class="intro-card" id="introCard2">
+          <h3>🏆 Elimination Bracket</h3>
+          <p>Compete head-to-head in randomly selected games. Losers are eliminated, winners advance to glory!</p>
+        </div>
+        <div class="intro-card" id="introCard3">
+          <h3>🎯 Vote & Compete</h3>
+          <p>Eliminated players vote on which games the remaining competitors will play. May the best player win!</p>
+        </div>
+      </div>
+      <div class="intro-controls">
+        <button class="skip-button" id="skipIntroBtn">Skip Intro</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bracket Screen -->
+  <div class="screen" id="bracketScreen">
+    <div class="bracket-container">
+      <div class="bracket-header">
+        <h2>Tournament Bracket</h2>
+        <div class="current-game" id="currentGameDisplay">
+          <!-- Current game name will appear here -->
+        </div>
+      </div>
+      <div class="bracket-display" id="bracketDisplay">
+        <!-- Bracket will be rendered here -->
+      </div>
+    </div>
+    <button class="end-game-button" id="endGameBtn">End Game</button>
+  </div>
+
+  <!-- Showdown Screen -->
+  <div class="screen" id="showdownScreen">
+    <div class="showdown-container">
+      <h1 class="showdown-title">🏆 FINAL SHOWDOWN 🏆</h1>
+      <div class="showdown-players" id="showdownPlayers">
+        <!-- Will be populated by JavaScript -->
+      </div>
+      <div class="showdown-game-name" id="showdownGameName">
+        <!-- Game name will appear here -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Over Screen -->
+  <div class="screen" id="gameoverScreen">
+    <div class="gameover-container">
+      <div class="winner-display">
+        <span class="winner-crown">👑</span>
+        <div class="winner-title">Tournament Champion</div>
+        <div class="winner-name" id="winnerName">CHAMPION</div>
+      </div>
+
+      <div class="placements" id="placementsList">
+        <!-- Placements will be rendered here -->
+      </div>
+
+      <button class="return-button" id="returnToMenuBtn">Return to Menu</button>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="modal-backdrop" id="settingsModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Tournament Settings</h2>
+        <button class="modal-close" id="closeSettingsBtn">×</button>
+      </div>
+      <div class="modal-body">
+        <!-- Tournament Settings -->
+        <div class="setting-group">
+          <div class="setting-group-title">Tournament</div>
+          <div class="setting-item">
+            <span class="setting-label">Eliminated Player Voting</span>
+            <div class="toggle-switch active" id="votingToggle">
+              <div class="toggle-slider"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tic Tac Toe -->
+        <div class="setting-group">
+          <div class="setting-group-title">Tic Tac Toe</div>
+          <div class="setting-item">
+            <span class="setting-label">Wins Needed</span>
+            <div class="setting-control">
+              <input type="number" id="ticTacToeWins" min="1" max="5" value="3">
+            </div>
+          </div>
+        </div>
+
+        <!-- Whack-a-Mole -->
+        <div class="setting-group">
+          <div class="setting-group-title">Whack-a-Mole</div>
+          <div class="setting-item">
+            <span class="setting-label">Popup Duration (seconds)</span>
+            <div class="setting-control">
+              <input type="number" id="whackMolePopupDuration" min="0.3" max="1.0" step="0.1" value="0.5">
+            </div>
+          </div>
+          <div class="setting-item">
+            <span class="setting-label">Score Lead to Win</span>
+            <div class="setting-control">
+              <input type="number" id="whackMoleScoreLead" min="3" max="10" value="5">
+            </div>
+          </div>
+        </div>
+
+        <!-- Cowboy Duel -->
+        <div class="setting-group">
+          <div class="setting-group-title">Cowboy Duel</div>
+          <div class="setting-item">
+            <span class="setting-label">Minimum Wait (seconds)</span>
+            <div class="setting-control">
+              <input type="number" id="cowboyMinWaitSeconds" min="2" max="5" value="3">
+            </div>
+          </div>
+        </div>
+
+        <!-- Memory Sequence -->
+        <div class="setting-group">
+          <div class="setting-group-title">Memory Sequence</div>
+          <div class="setting-item">
+            <span class="setting-label">Reveal Time (seconds)</span>
+            <div class="setting-control">
+              <input type="number" id="memoryRevealTime" min="3" max="10" value="5">
+            </div>
+          </div>
+        </div>
+
+        <!-- Math Dash -->
+        <div class="setting-group">
+          <div class="setting-group-title">Math Dash</div>
+          <div class="setting-item">
+            <span class="setting-label">Points to Win</span>
+            <div class="setting-control">
+              <select id="mathDashPointsToWin">
+                <option value="10">10 (3 each difficulty)</option>
+                <option value="13">13 (4 each difficulty)</option>
+                <option value="16">16 (5 each difficulty)</option>
+                <option value="19">19 (6 each difficulty)</option>
+                <option value="22">22 (7 each difficulty)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Minesweeper -->
+        <div class="setting-group">
+          <div class="setting-group-title">Minesweeper</div>
+          <div class="setting-item">
+            <span class="setting-label">Number of Bombs</span>
+            <div class="setting-control">
+              <input type="number" id="minesweeperBombCount" min="1" max="5" value="1">
+            </div>
+          </div>
+          <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 8px; padding: 0 16px;">
+            Note: If 2+ bombs, player who defuses most wins. Ties restart the game.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const pathParts = window.location.pathname.split('/');
+    const gameId = pathParts[2];
+    const socket = io(gameId ? `/game/${gameId}` : '/');
+
+    // Game configuration
+    const MINI_GAMES = [
+      { id: 'connect-four', name: 'Connect Four' },
+      { id: 'tic-tac-toe', name: 'Tic Tac Toe' },
+      { id: 'tap-race', name: 'Tap Race' },
+      { id: 'whack-a-mole', name: 'Whack-a-Mole' },
+      { id: 'battleship', name: 'Battleship' },
+      { id: 'cowboy-duel', name: 'Cowboy Duel' },
+      { id: 'memory-sequence', name: 'Memory Sequence' },
+      { id: 'math-dash', name: 'Math Dash' },
+      { id: 'minesweeper', name: 'Minesweeper' },
+      { id: 'blackjack', name: 'Blackjack' }
+    ];
+
+    // State
+    let currentPhase = 'lobby';
+    let players = [];
+    let leaderboard = [];
+    let enabledGames = MINI_GAMES.map(g => g.id);
+    let settings = {};
+
+    // Initialize
+    function init() {
+      console.log('[Host] Initializing...');
+
+      // Register as host
+      socket.emit('registerHost');
+
+      // Render game checkboxes
+      renderGameCheckboxes();
+
+      // Set up event listeners
+      setupEventListeners();
+
+      // Intro animation state
+      window.introSlidesVisible = { 1: false, 2: false, 3: false };
+      window.introTimers = [];
+    }
+
+    // Intro animation
+    function clearIntroTimers() {
+      introTimers.forEach(t => clearTimeout(t));
+      introTimers = [];
+    }
+
+    function startIntroAnimation() {
+      introSlidesVisible = { 1: false, 2: false, 3: false };
+      clearIntroTimers();
+
+      // Hide all cards first
+      document.querySelectorAll('.intro-card').forEach(c => c.classList.remove('visible'));
+
+      // Stagger cards 1 second apart with ease-in animation
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        introSlidesVisible[1] = true;
+        applyIntroVisibility();
+      }));
+
+      introTimers.push(setTimeout(() => {
+        introSlidesVisible[2] = true;
+        applyIntroVisibility();
+      }, 1000));
+
+      introTimers.push(setTimeout(() => {
+        introSlidesVisible[3] = true;
+        applyIntroVisibility();
+      }, 2000));
+    }
+
+    function applyIntroVisibility() {
+      const c1 = document.getElementById('introCard1');
+      const c2 = document.getElementById('introCard2');
+      const c3 = document.getElementById('introCard3');
+
+      if (c1) c1.classList.toggle('visible', !!introSlidesVisible[1]);
+      if (c2) c2.classList.toggle('visible', !!introSlidesVisible[2]);
+      if (c3) c3.classList.toggle('visible', !!introSlidesVisible[3]);
+    }
+
+    // Render game checkboxes
+    function renderGameCheckboxes() {
+      const container = document.getElementById('gameCheckboxes');
+      container.innerHTML = MINI_GAMES.map(game => `
+        <label class="game-checkbox-item">
+          <input
+            type="checkbox"
+            value="${game.id}"
+            ${enabledGames.includes(game.id) ? 'checked' : ''}
+            onchange="handleGameCheckboxChange()"
+          >
+          <span class="game-checkbox-label">${game.name}</span>
+        </label>
+      `).join('');
+    }
+
+    // Handle game checkbox change
+    window.handleGameCheckboxChange = function() {
+      const checkboxes = document.querySelectorAll('#gameCheckboxes input[type="checkbox"]');
+      const checked = Array.from(checkboxes).filter(cb => cb.checked);
+
+      // Ensure at least one game is selected
+      if (checked.length === 0) {
+        alert('At least one mini-game must be selected!');
+        checkboxes[0].checked = true;
+        return;
+      }
+
+      enabledGames = checked.map(cb => cb.value);
+
+      // Send update to server
+      socket.emit('settings:update', { enabledGames });
+    };
+
+    // Render leaderboard
+    function renderLeaderboard() {
+      const container = document.getElementById('leaderboardList');
+
+      if (leaderboard.length === 0) {
+        container.innerHTML = `
+          <div class="text-center" style="padding: 40px 20px; color: var(--text-secondary);">
+            Waiting for players to join...
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = leaderboard.map((player, index) => {
+        const isTopPlayer = index === 0 && player.wins > 0;
+        return `
+          <div class="leaderboard-item" data-player-key="${player.key}">
+            <span class="leaderboard-rank">${index + 1}.</span>
+            ${isTopPlayer ? '<span class="leaderboard-crown">👑</span>' : ''}
+            <span class="status-indicator ${player.connected ? 'online' : 'offline'}"></span>
+            <span class="leaderboard-name">${player.name}</span>
+            <span class="leaderboard-wins">${player.wins} ${player.wins === 1 ? 'win' : 'wins'}</span>
+            <button class="btn-kick" title="Kick player">×</button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Update player count
+    function updatePlayerCount() {
+      const count = players.length;
+      const countEl = document.getElementById('playerCount');
+      const startBtn = document.getElementById('startButton');
+
+      countEl.textContent = `${count} player${count === 1 ? '' : 's'} connected`;
+
+      // Enable start button if valid player count
+      const isValid = count >= 2 && count % 2 === 0 && enabledGames.length > 0;
+      startBtn.disabled = !isValid;
+
+      if (count > 0 && count % 2 !== 0) {
+        countEl.textContent += ' (need even number)';
+      }
+    }
+
+    // Show screen
+    function showScreen(screenId) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(screenId).classList.add('active');
+    }
+
+    // Event listeners
+    function setupEventListeners() {
+      // Settings button
+      document.getElementById('settingsBtn').addEventListener('click', () => {
+        document.getElementById('settingsModal').classList.add('show');
+        loadSettingsToModal();
+      });
+
+      // Close settings
+      document.getElementById('closeSettingsBtn').addEventListener('click', () => {
+        document.getElementById('settingsModal').classList.remove('show');
+        saveSettingsFromModal();
+      });
+
+      // Exit button
+      document.getElementById('exitBtn').addEventListener('click', () => {
+        document.getElementById('exitBtn').disabled = true;
+        socket.emit('host_return_to_menu');
+        setTimeout(() => { window.location.href = '/'; }, 100);
+      });
+
+      // Kick player event delegation
+      document.getElementById('leaderboardList').addEventListener('click', (e) => {
+        const kickBtn = e.target.closest('.btn-kick');
+        if (kickBtn) {
+          const item = kickBtn.closest('.leaderboard-item');
+          const playerKey = item?.dataset.playerKey;
+          if (playerKey) {
+            if (confirm('Are you sure you want to kick this player?')) {
+              socket.emit('kickPlayer', { playerKey });
+            }
+          }
+        }
+      });
+
+      // Start tournament
+      document.getElementById('startButton').addEventListener('click', () => {
+        socket.emit('host:start_tournament');
+      });
+
+      // Skip intro
+      document.getElementById('skipIntroBtn').addEventListener('click', () => {
+        socket.emit('host:skip_intro');
+      });
+
+      // End game
+      document.getElementById('endGameBtn').addEventListener('click', () => {
+        if (confirm('Are you sure you want to end the tournament?')) {
+          socket.emit('host:end_game');
+        }
+      });
+
+      // Return to menu
+      document.getElementById('returnToMenuBtn').addEventListener('click', () => {
+        socket.emit('host:return_to_lobby');
+        showScreen('lobbyScreen');
+        currentPhase = 'lobby';
+      });
+
+      // Settings toggles
+      document.getElementById('votingToggle').addEventListener('click', function() {
+        this.classList.toggle('active');
+      });
+
+      // Close modal on backdrop click
+      document.getElementById('settingsModal').addEventListener('click', (e) => {
+        if (e.target.id === 'settingsModal') {
+          document.getElementById('settingsModal').classList.remove('show');
+          saveSettingsFromModal();
+        }
+      });
+    }
+
+    // Load settings to modal
+    function loadSettingsToModal() {
+      document.getElementById('votingToggle').classList.toggle('active', settings.votingEnabled !== false);
+      document.getElementById('ticTacToeWins').value = settings.ticTacToeWins || 3;
+      document.getElementById('whackMolePopupDuration').value = settings.whackMolePopupDuration || 0.5;
+      document.getElementById('whackMoleScoreLead').value = settings.whackMoleScoreLead || 5;
+      document.getElementById('cowboyMinWaitSeconds').value = settings.cowboyMinWaitSeconds || 3;
+      document.getElementById('memoryRevealTime').value = settings.memoryRevealTime || 5;
+      document.getElementById('mathDashPointsToWin').value = settings.mathDashPointsToWin || 10;
+      document.getElementById('minesweeperBombCount').value = settings.minesweeperBombCount || 1;
+    }
+
+    // Save settings from modal
+    function saveSettingsFromModal() {
+      const updatedSettings = {
+        votingEnabled: document.getElementById('votingToggle').classList.contains('active'),
+        ticTacToeWins: parseInt(document.getElementById('ticTacToeWins').value),
+        whackMolePopupDuration: parseFloat(document.getElementById('whackMolePopupDuration').value),
+        whackMoleScoreLead: parseInt(document.getElementById('whackMoleScoreLead').value),
+        cowboyMinWaitSeconds: parseInt(document.getElementById('cowboyMinWaitSeconds').value),
+        memoryRevealTime: parseInt(document.getElementById('memoryRevealTime').value),
+        mathDashPointsToWin: parseInt(document.getElementById('mathDashPointsToWin').value),
+        minesweeperBombCount: parseInt(document.getElementById('minesweeperBombCount').value),
+        enabledGames: enabledGames
+      };
+
+      socket.emit('settings:update', updatedSettings);
+    }
+
+    // Socket events
+    socket.on('phase:update', (data) => {
+      console.log('[Host] Phase update:', data);
+      currentPhase = data.phase;
+
+      if (data.leaderboard) {
+        leaderboard = data.leaderboard;
+        renderLeaderboard();
+      }
+
+      if (data.enabledGames) {
+        enabledGames = data.enabledGames;
+        renderGameCheckboxes();
+      }
+
+      // Show appropriate screen
+      switch (currentPhase) {
+        case 'lobby':
+          showScreen('lobbyScreen');
+          break;
+        case 'intro':
+          showScreen('introScreen');
+          startIntroAnimation();
+          break;
+        case 'bracket':
+          showScreen('bracketScreen');
+          break;
+        case 'showdown':
+          showScreen('showdownScreen');
+          break;
+        case 'game_over':
+          showScreen('gameoverScreen');
+          break;
+      }
+    });
+
+    socket.on('players:update', (data) => {
+      console.log('[Host] Players update:', data);
+      players = data.players || [];
+      updatePlayerCount();
+    });
+
+    socket.on('settings:updated', (data) => {
+      console.log('[Host] Settings updated:', data);
+      settings = data;
+    });
+
+    socket.on('error', (data) => {
+      alert(data.message || 'An error occurred');
+    });
+
+    socket.on('bracket:update', (data) => {
+      console.log('[Host] Bracket update:', data);
+      renderBracket(data);
+    });
+
+    function renderBracket(data) {
+      const display = document.getElementById('bracketDisplay');
+      const gameDisplay = document.getElementById('currentGameDisplay');
+
+      if (!data || !data.rounds) return;
+
+      // Show current game name
+      if (gameDisplay && data.currentGameName) {
+        gameDisplay.textContent = 'Playing: ' + data.currentGameName;
+      }
+
+      // Build bracket HTML
+      let html = '<div style="display: flex; gap: 24px; overflow-x: auto; padding: 10px 0;">';
+
+      data.rounds.forEach((round, roundIndex) => {
+        html += '<div style="min-width: 220px; flex-shrink: 0;">';
+        html += `<div class="round-title">Round ${roundIndex + 1}</div>`;
+        html += '<div style="display: flex; flex-direction: column; gap: 12px;">';
+
+        round.forEach(match => {
+          const isActive = match.status === 'active';
+          const isComplete = match.status === 'complete';
+          const borderStyle = isActive ? '2px solid var(--accent)' : '2px solid var(--border-subtle)';
+          const glowStyle = isActive ? 'box-shadow: 0 0 12px var(--accent-glow);' : '';
+          const opacityStyle = isComplete ? 'opacity: 0.7;' : '';
+
+          html += `<div class="match-card" style="background: var(--bg-tertiary); border: ${borderStyle}; border-radius: 10px; padding: 0; overflow: hidden; ${glowStyle} ${opacityStyle}">`;
+
+          // Player 1
+          const p1Name = match.player1 ? match.player1.name : 'TBD';
+          const p1IsWinner = match.winner && match.player1 && match.winner === match.player1.key;
+          const p1Bg = p1IsWinner ? 'background: rgba(139, 92, 246, 0.2);' : 'background: var(--bg-primary);';
+          const p1Weight = p1IsWinner ? 'font-weight: 700;' : '';
+          html += `<div style="padding: 8px 12px; margin: 4px; border-radius: 6px; ${p1Bg} ${p1Weight}">${p1Name}${p1IsWinner ? ' ✓' : ''}</div>`;
+
+          // Divider
+          html += '<div style="height: 1px; background: var(--border-subtle);"></div>';
+
+          // Player 2
+          const p2Name = match.player2 ? match.player2.name : 'TBD';
+          const p2IsWinner = match.winner && match.player2 && match.winner === match.player2.key;
+          const p2Bg = p2IsWinner ? 'background: rgba(139, 92, 246, 0.2);' : 'background: var(--bg-primary);';
+          const p2Weight = p2IsWinner ? 'font-weight: 700;' : '';
+          html += `<div style="padding: 8px 12px; margin: 4px; border-radius: 6px; ${p2Bg} ${p2Weight}">${p2Name}${p2IsWinner ? ' ✓' : ''}</div>`;
+
+          html += '</div>';
+        });
+
+        html += '</div></div>';
+      });
+
+      html += '</div>';
+      display.innerHTML = html;
+    }
+
+    socket.on('returned_to_menu', (data) => {
+      if (data && data.shutdownId) {
+        socket.emit('player_ack_return_to_menu', { shutdownId: data.shutdownId });
+      }
+      setTimeout(() => {
+        socket.disconnect();
+        const masterUrl = window.location.protocol + "//" + window.location.host + "/";
+        window.location.href = masterUrl;
+      }, 50);
+    });
+
+    // Initialize on load
+    init();
+  </script>
+</body>
+</html>

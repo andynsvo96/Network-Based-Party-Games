@@ -1,0 +1,2794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CHARADES - Host</title>
+  <link rel="stylesheet" href="/shared/game-ui.css">
+  <style>
+    :root {
+      --accent: #f59e0b;
+      --accent-hover: #fbbf24;
+      --accent-glow: rgba(245, 158, 11, 0.4);
+      --bg-primary: #0a0e1a;
+      --bg-secondary: #111827;
+      --bg-tertiary: #1f2937;
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --text-gold: #fbbf24;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --border-subtle: rgba(55, 65, 81, 0.5);
+      --border-card: rgba(245, 158, 11, 0.3);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+      display: block;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    /* Header */
+    .game-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 20px;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .game-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      background: linear-gradient(135deg, #f59e0b, #fbbf24);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin: 0;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .btn-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 2px solid var(--border-subtle);
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn-icon:hover {
+      border-color: var(--accent);
+      background: var(--bg-secondary);
+    }
+
+    /* Main Layout */
+    .main-menu {
+      display: grid;
+      grid-template-columns: 280px 1fr 280px;
+      gap: 24px;
+      padding: 20px 40px;
+    }
+
+    .menu-section {
+      background: var(--bg-secondary);
+      border: 2px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 24px;
+    }
+
+    .section-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--text-gold);
+      margin-bottom: 20px;
+    }
+
+    /* Mode Grid */
+    .mode-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .mode-card {
+      position: relative;
+      background: var(--bg-tertiary);
+      border: 3px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 20px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .mode-card::before,
+    .mode-card::after {
+      content: '✦';
+      position: absolute;
+      font-size: 10px;
+      color: var(--accent);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .mode-card::before { top: 8px; left: 8px; }
+    .mode-card::after { top: 8px; right: 8px; }
+
+    .mode-card:hover::before,
+    .mode-card:hover::after,
+    .mode-card.selected::before,
+    .mode-card.selected::after {
+      opacity: 1;
+    }
+
+    .mode-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-4px);
+      box-shadow: 0 0 30px var(--accent-glow);
+    }
+
+    .mode-card.selected {
+      border-color: var(--accent);
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.05));
+      box-shadow: 0 0 30px var(--accent-glow);
+    }
+
+    .mode-card.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .mode-icon {
+      font-size: 3rem;
+      margin-bottom: 8px;
+    }
+
+    .mode-name {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .mode-players {
+      font-size: 0.75rem;
+      color: #ea580c;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Toggle Buttons */
+    .toggle-group {
+      display: flex;
+      gap: 6px;
+      justify-content: center;
+      margin: 8px 0;
+    }
+
+    .toggle-btn {
+      padding: 6px 12px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-radius: 999px;
+      border: 2px solid var(--border-subtle);
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .toggle-btn:hover {
+      border-color: var(--accent);
+      color: var(--text-primary);
+    }
+
+    .toggle-btn.active {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #000;
+      border-color: transparent;
+      font-weight: 700;
+    }
+
+    /* Players List */
+    .players-list {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .player-row {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      border-radius: 8px;
+      background: var(--bg-tertiary);
+      margin-bottom: 8px;
+    }
+
+    .player-status {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 12px;
+    }
+
+    .player-status.online { background: #10b981; }
+    .player-status.offline {
+      background: transparent;
+      border: 2px solid #6b7280;
+    }
+
+    .player-name {
+      flex: 1;
+      font-weight: 600;
+    }
+
+    .player-score {
+      font-size: 0.85rem;
+      color: var(--text-gold);
+      margin-right: 12px;
+    }
+
+    .btn-kick {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: none;
+      background: var(--danger);
+      color: white;
+      font-size: 0.8rem;
+      cursor: pointer;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+    }
+
+    .btn-kick:hover { opacity: 1; }
+
+    /* Leaderboard Table */
+    .leaderboard-container {
+      max-height: 500px;
+      overflow-y: auto;
+    }
+
+    .leaderboard-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+    }
+
+    .leaderboard-table th,
+    .leaderboard-table td {
+      padding: 8px 4px;
+      text-align: center;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .leaderboard-table th {
+      background: var(--bg-tertiary);
+      color: var(--text-gold);
+      font-weight: 700;
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    .leaderboard-table th:first-child,
+    .leaderboard-table td:first-child {
+      text-align: left;
+      padding-left: 8px;
+    }
+
+    .leaderboard-table tbody tr:hover {
+      background: rgba(245, 158, 11, 0.1);
+    }
+
+    .leaderboard-table .total-wins {
+      color: var(--text-gold);
+      font-weight: 700;
+    }
+
+    .leaderboard-table .player-online {
+      color: var(--text-primary);
+    }
+
+    .leaderboard-table .player-offline {
+      color: var(--text-secondary);
+      opacity: 0.7;
+    }
+
+    .leaderboard-table .player-never-joined {
+      display: none;
+    }
+
+    .leaderboard-table .btn-kick-small {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: none;
+      background: var(--danger);
+      color: white;
+      font-size: 0.6rem;
+      cursor: pointer;
+      opacity: 0.6;
+      transition: opacity 0.2s;
+      margin-left: 6px;
+      padding: 0;
+      line-height: 1;
+    }
+
+    .leaderboard-table .btn-kick-small:hover {
+      opacity: 1;
+    }
+
+    .leaderboard-info {
+      margin-top: 12px;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Categories */
+    .categories-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .category-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 2px solid var(--border-subtle);
+      background: var(--bg-tertiary);
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 0.85rem;
+    }
+
+    .category-chip input { display: none; }
+
+    .category-chip.selected {
+      border-color: var(--accent);
+      background: rgba(245, 158, 11, 0.2);
+      color: var(--text-gold);
+    }
+
+    /* Buttons */
+    .btn-primary {
+      width: 100%;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #000;
+      font-weight: 700;
+      padding: 16px 28px;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-top: 16px;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(245, 158, 11, 0.4);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--text-primary);
+      border: 2px solid var(--border-subtle);
+      padding: 12px 24px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    /* Phases Container */
+    .phase-container {
+      display: none;
+    }
+
+    .phase-container.active {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    /* Intro Slides */
+    .intro-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 80vh;
+      text-align: center;
+      padding: 40px;
+    }
+
+    .intro-slide {
+      max-width: 700px;
+    }
+
+    .intro-icon {
+      font-size: 5rem;
+      margin-bottom: 20px;
+    }
+
+    .intro-title {
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: var(--text-gold);
+      margin-bottom: 24px;
+    }
+
+    .intro-content {
+      font-size: 1.2rem;
+      line-height: 1.8;
+      color: var(--text-secondary);
+      white-space: pre-line;
+      margin-bottom: 40px;
+    }
+
+    .intro-dots {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-bottom: 30px;
+    }
+
+    .intro-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--border-subtle);
+      transition: all 0.3s;
+    }
+
+    .intro-dot.active {
+      background: var(--accent);
+      transform: scale(1.2);
+    }
+
+    .intro-buttons {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+    }
+
+    /* Animated Intro Track - 3-column grid */
+    .intro-track {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 24px;
+      height: 100%;
+      padding: 40px;
+    }
+
+    .intro-card {
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+      background: var(--bg-secondary);
+      border: 2px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .intro-card.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .intro-card-icon {
+      font-size: 4rem;
+      text-align: center;
+    }
+
+    .intro-card-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-gold);
+      text-align: center;
+    }
+
+    .intro-card-content {
+      font-size: 1rem;
+      line-height: 1.6;
+      color: var(--text-secondary);
+      white-space: pre-line;
+    }
+
+    .intro-footer {
+      position: absolute;
+      bottom: 30px;
+      right: 40px;
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+
+    /* Team Setup */
+    .team-setup {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      padding: 40px;
+    }
+
+    .team-column {
+      background: var(--bg-secondary);
+      border: 2px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 24px;
+    }
+
+    .team-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-gold);
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .team-players {
+      min-height: 200px;
+    }
+
+    .team-player {
+      padding: 12px 16px;
+      background: var(--bg-tertiary);
+      border-radius: 8px;
+      margin-bottom: 8px;
+      cursor: grab;
+      transition: all 0.2s;
+    }
+
+    .team-player:hover {
+      background: rgba(245, 158, 11, 0.2);
+    }
+
+    .team-player.dragging {
+      opacity: 0.5;
+    }
+
+    .team-actions {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      margin-top: 30px;
+    }
+
+    /* Gameplay */
+    .gameplay-container {
+      display: grid;
+      grid-template-columns: 280px 1fr 280px;
+      gap: 20px;
+      padding: 20px;
+      min-height: 80vh;
+      box-sizing: border-box;
+      align-items: start;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .gameplay-sidebar {
+      background: var(--bg-secondary);
+      border-radius: 16px;
+      padding: 20px;
+    }
+
+    .gameplay-main {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+    }
+
+    .timer-display {
+      font-size: 8rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      text-shadow: 0 0 30px var(--accent-glow);
+      min-width: 280px;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .timer-display.warning {
+      color: var(--warning);
+      animation: pulse 1s infinite;
+    }
+
+    .timer-display.danger {
+      color: var(--danger);
+      animation: pulse 0.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+
+    .word-display {
+      font-size: 4rem;
+      font-weight: 700;
+      color: var(--text-gold);
+      margin: 30px 0;
+      text-transform: uppercase;
+    }
+
+    .hint-display {
+      font-size: 2rem;
+      font-family: monospace;
+      letter-spacing: 0.3em;
+      color: var(--text-gold);
+      margin-top: 20px;
+      margin-bottom: 20px;
+    }
+
+    .round-info {
+      font-size: 1.2rem;
+      color: var(--text-secondary);
+      margin-bottom: 10px;
+    }
+
+    .role-display {
+      font-size: 1.5rem;
+      color: var(--accent);
+      margin-bottom: 20px;
+    }
+
+    /* Drawing Canvas */
+    .canvas-container {
+      background: white;
+      border-radius: 12px;
+      width: 600px;
+      height: 600px;
+      overflow: hidden;
+    }
+
+    #drawingCanvas {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Scores */
+    .scores-list {
+      margin-top: 20px;
+    }
+
+    .score-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .score-item:last-child {
+      border-bottom: none;
+    }
+
+    .score-name {
+      font-weight: 600;
+    }
+
+    .score-value {
+      color: var(--text-gold);
+      font-weight: 700;
+    }
+
+    /* Results */
+    .results-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 80vh;
+      text-align: center;
+    }
+
+    .results-title {
+      font-size: 3rem;
+      font-weight: 800;
+      color: var(--text-gold);
+      margin-bottom: 10px;
+    }
+
+    .phase-indicator {
+      padding: 12px 30px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 1.2rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      text-align: center;
+      margin-bottom: 20px;
+      animation: pulse-indicator 1.5s infinite;
+    }
+
+    .phase-indicator.catch-up {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #000;
+    }
+
+    .phase-indicator.tie-breaker {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: #fff;
+    }
+
+    @keyframes pulse-indicator {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.02); opacity: 0.9; }
+    }
+
+    .winner-name {
+      font-size: 4rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #f59e0b, #fbbf24);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 40px;
+    }
+
+    .final-scores {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      max-width: 800px;
+      margin-bottom: 40px;
+    }
+
+    .final-score-card {
+      background: var(--bg-secondary);
+      border: 2px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .final-score-card.winner {
+      border-color: var(--accent);
+      background: rgba(245, 158, 11, 0.15);
+    }
+
+    .results-buttons {
+      display: flex;
+      gap: 16px;
+    }
+
+    /* 3-Column Results Layout (for Heads-Up mode) */
+    .results-container.three-column {
+      display: grid;
+      grid-template-columns: 280px 1fr 280px;
+      gap: 30px;
+      width: 100%;
+      max-width: 1200px;
+      min-height: 60vh;
+      align-items: start;
+      margin: 0 auto;
+      padding-top: 80px;
+    }
+
+    .results-column {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .results-column.history-column {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-card);
+      border-radius: 12px;
+      padding: 20px;
+      max-height: 70vh;
+      overflow-y: auto;
+    }
+
+    .results-column.main-column {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .column-title {
+      color: var(--text-gold);
+      font-size: 1.2rem;
+      margin-bottom: 16px;
+      text-align: center;
+      width: 100%;
+    }
+
+    .history-log {
+      width: 100%;
+    }
+
+    .history-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 12px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      font-size: 0.9rem;
+    }
+
+    .history-item.correct {
+      background: rgba(34, 197, 94, 0.2);
+      color: #22c55e;
+    }
+
+    .history-item.skipped {
+      background: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+    }
+
+    .empty-history {
+      color: var(--text-secondary);
+      font-style: italic;
+      text-align: center;
+    }
+
+    /* Hide history columns for non-heads-up modes */
+    .results-container:not(.three-column) .history-column {
+      display: none;
+    }
+
+    /* Responsive: Stack columns on smaller screens */
+    @media (max-width: 900px) {
+      .results-container.three-column {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+
+      .results-column.history-column {
+        max-height: 30vh;
+      }
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal-content {
+      background: var(--bg-secondary);
+      border: 2px solid var(--border-card);
+      border-radius: 16px;
+      width: 90%;
+      max-width: 600px;
+      max-height: 80vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .modal-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-header h2 {
+      color: var(--accent);
+      font-size: 1.25rem;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    .modal-body {
+      padding: 24px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border-subtle);
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+
+    .settings-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .tab-btn {
+      padding: 8px 16px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .tab-btn.active {
+      background: var(--accent);
+      color: #000;
+      border-color: var(--accent);
+    }
+
+    .settings-group {
+      margin-bottom: 24px;
+    }
+
+    .settings-group h3 {
+      color: var(--text-gold);
+      font-size: 1rem;
+      margin-bottom: 16px;
+    }
+
+    .setting-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .setting-row label {
+      flex: 1;
+      color: var(--text-primary);
+    }
+
+    .setting-row input[type="range"] {
+      width: 150px;
+    }
+
+    .setting-row input[type="number"] {
+      width: 80px;
+      padding: 8px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      color: var(--text-primary);
+    }
+
+    .setting-value {
+      width: 50px;
+      text-align: right;
+      color: var(--text-gold);
+    }
+
+    .setting-unit {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      margin-left: 8px;
+    }
+
+    .setting-toggle {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      margin-bottom: 12px;
+    }
+
+    .setting-toggle input {
+      width: 20px;
+      height: 20px;
+      accent-color: var(--accent);
+    }
+
+    /* Hidden */
+    .hidden { display: none !important; }
+
+    .playerStatusCircle {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+    .playerStatusCircle.online { background: #10b981; }
+    .playerStatusCircle.offline {
+      background: transparent;
+      border: 2px solid #6b7280;
+    }
+
+    /* Game Log Styles */
+    .game-log-container {
+      margin-top: 20px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .game-log-team {
+      margin-bottom: 15px;
+    }
+    .game-log-team-header {
+      font-weight: 700;
+      color: var(--text-gold);
+      margin-bottom: 8px;
+      font-size: 0.9rem;
+    }
+    .game-log-entry {
+      padding: 6px 10px;
+      border-radius: 6px;
+      margin-bottom: 4px;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .game-log-entry.correct {
+      background: rgba(34, 197, 94, 0.2);
+      color: #22c55e;
+    }
+    .game-log-entry.skipped {
+      background: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+    }
+
+    /* Heads-Up Mode Full-Screen Layout */
+    .gameplay-container.heads-up-mode {
+      display: grid;
+      grid-template-columns: 280px 1fr 280px;
+      gap: 20px;
+      padding: 20px;
+      min-height: calc(100vh - 60px);
+      box-sizing: border-box;
+      align-items: start;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .team-sidebar {
+      background: var(--bg-secondary);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .team-score-header {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--text-gold);
+      text-align: center;
+      padding: 16px;
+      background: var(--bg-tertiary);
+      border-radius: 12px;
+      margin-bottom: 16px;
+    }
+
+    .team-score-header .score-value {
+      display: block;
+      font-size: 3rem;
+      margin-top: 8px;
+      color: var(--text-primary);
+    }
+
+    .team-history-log {
+      flex: 1;
+      overflow-y: auto;
+      padding-right: 8px;
+    }
+
+    .team-history-log::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .team-history-log::-webkit-scrollbar-track {
+      background: var(--bg-tertiary);
+      border-radius: 3px;
+    }
+
+    .team-history-log::-webkit-scrollbar-thumb {
+      background: var(--border-subtle);
+      border-radius: 3px;
+    }
+
+    .history-log-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+    }
+
+    /* Floating End Game Button for Heads-Up Mode */
+    .floating-end-game {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 100;
+      padding: 12px 24px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .floating-end-game:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+    }
+
+    .setting-info {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      font-style: italic;
+      margin: 8px 0;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="game-header">
+    <h1 class="game-title">CHARADES</h1>
+    <div class="header-actions">
+      <button class="btn-icon" id="settingsBtn" title="Settings">⚙️</button>
+      <button class="btn-danger" id="exitBtn">Exit to Launcher</button>
+    </div>
+  </header>
+
+  <!-- LOBBY PHASE -->
+  <div class="phase-container active" id="lobbyPhase">
+    <div class="main-menu">
+      <!-- Mode Selection -->
+      <section class="menu-section">
+        <h2 class="section-title">SELECT A MODE</h2>
+        <div class="mode-grid">
+          <div class="mode-card" data-mode="charade_lines">
+            <div class="mode-icon">🔗</div>
+            <div class="mode-name">CHARADES CHAIN</div>
+            <div class="mode-players">4+ PLAYERS</div>
+          </div>
+          <div class="mode-card" data-mode="heads_up">
+            <div class="mode-icon">🎯</div>
+            <div class="mode-name">HEADS-UP</div>
+            <div class="mode-players">4+ PLAYERS</div>
+          </div>
+          <div class="mode-card" data-mode="pictionary">
+            <div class="mode-icon">🎨</div>
+            <div class="mode-name">PICTIONARY</div>
+            <div class="mode-players">3+ PLAYERS</div>
+          </div>
+          <div class="mode-card" data-mode="classic">
+            <div class="mode-icon">🎭</div>
+            <div class="mode-name">CLASSIC</div>
+            <div class="toggle-group">
+              <button class="toggle-btn active" data-variant="team">Team</button>
+              <button class="toggle-btn" data-variant="individual">Solo</button>
+            </div>
+            <div class="mode-players">4+ PLAYERS</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Leaderboard -->
+      <section class="menu-section">
+        <h2 class="section-title">LEADERBOARD</h2>
+        <!-- Players join through the main launcher only -->
+        <div id="joinUrl" style="display:none;"></div>
+        <button id="copyLinkBtn" style="display:none;"></button>
+        <div class="leaderboard-container">
+          <table class="leaderboard-table">
+            <thead>
+              <tr>
+                <th>Player</th>
+                <th title="Charades Chain">Chain</th>
+                <th title="Heads Up">H-Up</th>
+                <th title="Pictionary">Pict</th>
+                <th title="Classic Team">Team</th>
+                <th title="Classic Solo">Solo</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody id="leaderboardBody"></tbody>
+          </table>
+        </div>
+        <div class="leaderboard-info">
+          <span><span id="playerCount">0</span> connected</span>
+        </div>
+      </section>
+
+      <!-- Categories & Start -->
+      <section class="menu-section">
+        <h2 class="section-title">WORD CATEGORIES</h2>
+        <div class="categories-grid" id="categoriesGrid"></div>
+
+        <button class="btn-primary" id="startGameBtn" disabled>START GAME</button>
+      </section>
+    </div>
+  </div>
+
+  <!-- INTRO PHASE -->
+  <div class="phase-container" id="introPhase">
+    <div class="intro-track" id="introTrack"></div>
+    <div class="intro-footer">
+      <div class="intro-dots" id="introDots">
+        <div class="intro-dot" id="introDot0"></div>
+        <div class="intro-dot" id="introDot1"></div>
+        <div class="intro-dot" id="introDot2"></div>
+      </div>
+      <button class="btn-secondary" id="skipIntroBtn">Start Game</button>
+    </div>
+  </div>
+
+  <!-- TEAM SETUP PHASE -->
+  <div class="phase-container" id="teamSetupPhase">
+    <h2 class="section-title" style="text-align:center;font-size:1.5rem;margin:30px 0;">TEAM SETUP</h2>
+    <div class="team-setup" id="teamSetup"></div>
+    <div class="team-actions">
+      <button class="btn-secondary" id="randomizeTeamsBtn">🎲 Randomize</button>
+      <button class="btn-primary" id="confirmTeamsBtn" style="width:auto;">Start Game</button>
+    </div>
+  </div>
+
+  <!-- GAMEPLAY PHASE (Default Layout for non-heads-up modes) -->
+  <div class="phase-container" id="gameplayPhase">
+    <div class="gameplay-container" id="defaultGameplayContainer">
+      <div class="gameplay-sidebar">
+        <h3 class="section-title">SCORES</h3>
+        <div class="scores-list" id="scoresList"></div>
+      </div>
+
+      <div class="gameplay-main">
+        <div class="round-info" id="roundInfo">Round 1</div>
+        <div class="role-display" id="roleDisplay"></div>
+        <div class="timer-display" id="timerDisplay">60</div>
+        <div class="hint-display hidden" id="hintDisplay"></div>
+        <div class="word-display" id="wordDisplay"></div>
+        <div class="canvas-container hidden" id="canvasContainer">
+          <canvas id="drawingCanvas"></canvas>
+        </div>
+      </div>
+
+      <div class="gameplay-sidebar">
+        <h3 class="section-title">INFO</h3>
+        <div id="gameInfo"></div>
+        <button class="btn-danger" id="endGameBtn" style="margin-top:20px;">End Game</button>
+      </div>
+    </div>
+
+    <!-- Heads-Up Mode Layout -->
+    <div class="gameplay-container heads-up-mode hidden" id="headsUpGameplayContainer">
+      <!-- Team 1 Column -->
+      <div class="team-sidebar">
+        <div class="team-score-header">
+          <span id="team1Name">Team 1</span>
+          <span class="score-value" id="team1Score">0</span>
+        </div>
+        <div class="history-log-title">HISTORY</div>
+        <div class="team-history-log" id="team1HistoryLog"></div>
+      </div>
+
+      <!-- Center Gameplay -->
+      <div class="gameplay-main">
+        <div class="round-info" id="headsUpRoundInfo">Round 1</div>
+        <div class="role-display" id="headsUpRoleDisplay"></div>
+        <div class="timer-display" id="headsUpTimerDisplay">60</div>
+        <div class="word-display" id="headsUpWordDisplay"></div>
+      </div>
+
+      <!-- Team 2 Column -->
+      <div class="team-sidebar">
+        <div class="team-score-header">
+          <span id="team2Name">Team 2</span>
+          <span class="score-value" id="team2Score">0</span>
+        </div>
+        <div class="history-log-title">HISTORY</div>
+        <div class="team-history-log" id="team2HistoryLog"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating End Game Button (for Heads-Up mode) -->
+  <button class="btn-danger floating-end-game hidden" id="floatingEndGameBtn">End Game</button>
+
+  <!-- ROUND RESULT PHASE -->
+  <div class="phase-container" id="roundResultPhase">
+    <div id="phaseIndicator" class="phase-indicator" style="display:none;"></div>
+    <div class="results-container">
+      <h2 class="results-title" id="roundResultTitle">Round Complete!</h2>
+      <div class="word-display" id="roundWord"></div>
+      <div class="rankings-display" id="roundRankingsHost" style="margin:20px 0;"></div>
+      <div class="final-scores" id="roundScores"></div>
+      <p class="subtitle">Next round starting...</p>
+    </div>
+  </div>
+
+  <!-- RESULTS PHASE -->
+  <div class="phase-container" id="resultsPhase">
+    <div class="results-container three-column" id="resultsContainer">
+      <!-- Column 1: Team 1 History (for heads-up mode) -->
+      <div class="results-column history-column" id="team1HistoryColumn">
+        <h3 class="column-title">Team 1 History</h3>
+        <div class="history-log" id="team1FinalHistory"></div>
+      </div>
+
+      <!-- Column 2: Game Results -->
+      <div class="results-column main-column">
+        <h2 class="results-title">GAME OVER</h2>
+        <div class="winner-name" id="winnerName">Winner!</div>
+        <div class="final-scores" id="finalScores"></div>
+        <div class="results-buttons">
+          <button class="btn-secondary" id="returnMenuBtn">Return to Menu</button>
+          <button class="btn-primary" id="playAgainBtn" style="width:auto;">Play Again</button>
+        </div>
+      </div>
+
+      <!-- Column 3: Team 2 History (for heads-up mode) -->
+      <div class="results-column history-column" id="team2HistoryColumn">
+        <h3 class="column-title">Team 2 History</h3>
+        <div class="history-log" id="team2FinalHistory"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS MODAL -->
+  <div class="modal-overlay" id="settingsModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>⚙️ GAME SETTINGS</h2>
+        <button class="modal-close" id="closeSettingsBtn">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="settings-tabs">
+          <button class="tab-btn active" data-tab="general">General</button>
+          <button class="tab-btn" data-tab="chain">Chain</button>
+          <button class="tab-btn" data-tab="headsup">Heads-Up</button>
+          <button class="tab-btn" data-tab="pictionary">Pictionary</button>
+          <button class="tab-btn" data-tab="classic">Classic</button>
+        </div>
+        <div id="settingsContent"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" id="resetDefaultsBtn">Reset Defaults</button>
+        <button class="btn-primary" id="saveSettingsBtn" style="width:auto;">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    // ========================================================================
+    // SOUND MANAGER (Web Audio API)
+    // ========================================================================
+    class SoundManager {
+      constructor() {
+        this.ctx = null;
+        this.enabled = true;
+        this.volume = 0.8;
+        this.tickEnabled = true;
+      }
+
+      init() {
+        if (!this.ctx) {
+          this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+      }
+
+      playTone(freq, duration, type = 'sine', delay = 0) {
+        if (!this.enabled || !this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = type;
+        osc.frequency.value = freq;
+        gain.gain.value = this.volume * 0.3;
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(this.ctx.currentTime + delay);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + delay + duration);
+        osc.stop(this.ctx.currentTime + delay + duration);
+      }
+
+      correct() {
+        this.playTone(880, 0.1);
+        this.playTone(1100, 0.15, 'sine', 0.1);
+      }
+
+      incorrect() {
+        this.playTone(200, 0.3, 'sawtooth');
+      }
+
+      tick() {
+        if (this.tickEnabled) this.playTone(800, 0.05);
+      }
+
+      buzzer() {
+        this.playTone(150, 0.4, 'square');
+      }
+
+      join() {
+        this.playTone(440, 0.1);
+        this.playTone(660, 0.1, 'sine', 0.1);
+      }
+
+      roundStart() {
+        this.playTone(440, 0.15);
+        this.playTone(550, 0.15, 'sine', 0.15);
+        this.playTone(660, 0.2, 'sine', 0.3);
+      }
+
+      gameOver() {
+        this.playTone(330, 0.2);
+        this.playTone(440, 0.2, 'sine', 0.2);
+        this.playTone(550, 0.3, 'sine', 0.4);
+      }
+
+      victory() {
+        this.playTone(523, 0.15);
+        this.playTone(659, 0.15, 'sine', 0.15);
+        this.playTone(784, 0.15, 'sine', 0.3);
+        this.playTone(1047, 0.3, 'sine', 0.45);
+      }
+
+      click() {
+        this.playTone(600, 0.05);
+      }
+    }
+
+    const sound = new SoundManager();
+
+    // ========================================================================
+    // SOCKET & STATE
+    // ========================================================================
+    // Connect to game namespace
+    const pathParts = window.location.pathname.split('/');
+    const gameId = pathParts[2]; // e.g., "charades"
+    const socket = io(gameId ? `/game/${gameId}` : '/');
+    let currentPhase = 'lobby';
+    let selectedMode = null;
+    let classicVariant = 'team';
+    let selectedCategories = ['location', 'object', 'person', 'action'];
+    let categoriesModifiedLocally = false;
+    let settings = {};
+    let players = [];
+    let leaderboard = [];
+    let introSlides = [];
+    let currentSlide = 0;
+    let introSlidesVisible = { 0: false, 1: false, 2: false };
+    let introTimers = [];
+    let teams = [];
+    let strokeHistory = [];
+    let currentGameMode = null;
+
+    // ========================================================================
+    // INIT
+    // ========================================================================
+    document.addEventListener('click', () => sound.init(), { once: true });
+
+    socket.emit('registerHost');
+
+    // ========================================================================
+    // JOIN URL SETUP
+    // ========================================================================
+    let joinUrl = window.location.origin + "/players";
+    fetch("/host-info")
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.joinBase) {
+          joinUrl = data.joinBase.replace(/\/+$/, "") + "/players";
+        }
+        document.getElementById('joinUrl').textContent = joinUrl;
+      })
+      .catch(() => {
+        document.getElementById('joinUrl').textContent = joinUrl;
+      });
+
+    // ========================================================================
+    // SOCKET EVENTS
+    // ========================================================================
+    socket.on('lobby_update', (data) => {
+      players = data.players || [];
+      leaderboard = data.leaderboard || [];
+      settings = data.settings || {};
+
+      // Only update categories from server if not modified locally
+      if (!categoriesModifiedLocally) {
+        selectedCategories = settings.selectedCategories || ['location', 'object', 'person', 'action'];
+      }
+
+      if (data.phase === 'lobby') {
+        // Reset game state when returning to lobby (Play Again scenario)
+        // This ensures history logs are cleared for the new game
+        if (currentPhase !== 'lobby') {
+          resetGameState();
+        }
+        showPhase('lobby');
+      }
+
+      updateLeaderboard();
+      updateCategories(data.availableCategories || []);
+      updateStartButton();
+    });
+
+    socket.on('introPhase', (data) => {
+      introSlides = data.slides;
+      showPhase('intro');
+      startIntroAnimation();
+    });
+
+    socket.on('team_setup_phase', (data) => {
+      teams = data.teams;
+      showPhase('teamSetup');
+      renderTeamSetup();
+    });
+
+    // Prep phase for charades chain - players get into position
+    socket.on('prep_phase_started_host', (data) => {
+      showPhase('gameplay');
+      currentGameMode = data.mode;
+
+      const defaultContainer = document.getElementById('defaultGameplayContainer');
+      const headsUpContainer = document.getElementById('headsUpGameplayContainer');
+      const floatingEndBtn = document.getElementById('floatingEndGameBtn');
+
+      defaultContainer.classList.remove('hidden');
+      headsUpContainer.classList.add('hidden');
+      floatingEndBtn.classList.add('hidden');
+
+      document.getElementById('roundInfo').textContent = `Round ${data.round} • ${data.teamName} - GET READY`;
+      document.getElementById('wordDisplay').textContent = '';
+      document.getElementById('wordDisplay').classList.add('hidden');
+      document.getElementById('timerDisplay').textContent = data.prepTime;
+
+      // Show line order
+      document.getElementById('roleDisplay').textContent = `${data.lineOrder.join(' → ')}`;
+
+      // Hide canvas and hints
+      document.getElementById('canvasContainer').classList.add('hidden');
+      document.getElementById('hintDisplay').classList.add('hidden');
+
+      // Update scores
+      updateScoresDisplay(data.scores);
+    });
+
+    // Prep timer countdown
+    socket.on('prep_timer_update', ({ remainingSeconds }) => {
+      document.getElementById('timerDisplay').textContent = remainingSeconds;
+    });
+
+    socket.on('round_started_host', (data) => {
+      showPhase('gameplay');
+      sound.roundStart();
+      currentGameMode = data.mode;
+
+      // Switch between default and heads-up layouts
+      const defaultContainer = document.getElementById('defaultGameplayContainer');
+      const headsUpContainer = document.getElementById('headsUpGameplayContainer');
+      const floatingEndBtn = document.getElementById('floatingEndGameBtn');
+
+      if (data.mode === 'heads_up') {
+        // Show heads-up layout
+        defaultContainer.classList.add('hidden');
+        headsUpContainer.classList.remove('hidden');
+        floatingEndBtn.classList.remove('hidden');
+
+        // Update heads-up specific elements
+        document.getElementById('headsUpRoundInfo').textContent = `Round ${data.round}`;
+        document.getElementById('headsUpWordDisplay').textContent = data.word || '';
+        document.getElementById('headsUpTimerDisplay').textContent = data.timer;
+
+        const roleText = `Guesser: ${data.guesserName} | Actors: ${data.actorNames.join(', ')}`;
+        document.getElementById('headsUpRoleDisplay').textContent = roleText;
+
+        // Clear history logs
+        document.getElementById('team1HistoryLog').innerHTML = '';
+        document.getElementById('team2HistoryLog').innerHTML = '';
+
+        // Set team names and scores
+        if (data.scores && data.scores.length >= 2) {
+          document.getElementById('team1Name').textContent = data.scores[0].name;
+          document.getElementById('team1Score').textContent = data.scores[0].score !== undefined ? data.scores[0].score : 0;
+          document.getElementById('team2Name').textContent = data.scores[1].name;
+          document.getElementById('team2Score').textContent = data.scores[1].score !== undefined ? data.scores[1].score : 0;
+        }
+      } else {
+        // Show default layout
+        defaultContainer.classList.remove('hidden');
+        headsUpContainer.classList.add('hidden');
+        floatingEndBtn.classList.add('hidden');
+
+        document.getElementById('roundInfo').textContent = `Round ${data.round} • ${data.teamName || data.drawerName || ''}`;
+        // Hide word in chain mode since everyone can see the host screen
+        // Also hide in classic solo mode and pictionary since hintDisplay handles it
+        if (data.mode === 'charade_lines') {
+          document.getElementById('wordDisplay').textContent = '';
+          document.getElementById('wordDisplay').classList.add('hidden');
+        } else if (data.mode === 'classic' && data.variant === 'individual') {
+          // Classic Solo - hide word display, only use hint display below
+          document.getElementById('wordDisplay').textContent = '';
+          document.getElementById('wordDisplay').classList.add('hidden');
+        } else if (data.mode === 'pictionary') {
+          // Pictionary - hide word display, only use hint display
+          document.getElementById('wordDisplay').textContent = '';
+          document.getElementById('wordDisplay').classList.add('hidden');
+        } else {
+          document.getElementById('wordDisplay').textContent = data.word || data.hint || '';
+          document.getElementById('wordDisplay').classList.remove('hidden');
+        }
+        document.getElementById('timerDisplay').textContent = data.timer;
+
+        // Mode-specific display
+        const canvasContainer = document.getElementById('canvasContainer');
+        const hintDisplay = document.getElementById('hintDisplay');
+
+        if (data.mode === 'pictionary') {
+          canvasContainer.classList.remove('hidden');
+          hintDisplay.classList.remove('hidden');
+          hintDisplay.textContent = data.hint;
+          initCanvas();
+          clearCanvas();
+          strokeHistory = [];
+        } else if (data.mode === 'classic' && data.variant === 'individual') {
+          // Classic Solo mode - show hints like pictionary but no canvas
+          canvasContainer.classList.add('hidden');
+          hintDisplay.classList.remove('hidden');
+          hintDisplay.textContent = data.hint || '';
+        } else {
+          canvasContainer.classList.add('hidden');
+          hintDisplay.classList.add('hidden');
+        }
+
+        // Update role display
+        let roleText = '';
+        if (data.mode === 'charade_lines') {
+          roleText = `${data.lineOrder.join(' → ')}`;
+        } else if (data.mode === 'pictionary') {
+          roleText = `Drawing: ${data.drawerName}`;
+        } else {
+          roleText = `Actor: ${data.actorName}`;
+        }
+        document.getElementById('roleDisplay').textContent = roleText;
+
+        // Update scores for default layout
+        updateScoresDisplay(data.scores);
+      }
+    });
+
+    socket.on('timer_update', ({ remainingSeconds, totalSeconds }) => {
+      // Update both timer displays (default and heads-up)
+      const defaultDisplay = document.getElementById('timerDisplay');
+      const headsUpDisplay = document.getElementById('headsUpTimerDisplay');
+
+      defaultDisplay.textContent = remainingSeconds;
+      headsUpDisplay.textContent = remainingSeconds;
+
+      // Apply warning/danger classes to both
+      [defaultDisplay, headsUpDisplay].forEach(display => {
+        display.classList.remove('warning', 'danger');
+        if (remainingSeconds <= 10) {
+          display.classList.add('danger');
+        } else if (remainingSeconds <= 30) {
+          display.classList.add('warning');
+        }
+      });
+
+      if (remainingSeconds <= 10) {
+        sound.tick();
+      }
+
+      if (remainingSeconds === 0) {
+        sound.buzzer();
+      }
+    });
+
+    // Game log update for heads-up mode
+    socket.on('game_log_update', ({ teamId, entry }) => {
+      // Use the new history log elements
+      const logContainerId = teamId === 'team1' ? 'team1HistoryLog' : 'team2HistoryLog';
+      const logContainer = document.getElementById(logContainerId);
+      if (logContainer) {
+        const entryDiv = document.createElement('div');
+        entryDiv.className = `game-log-entry ${entry.type}`;
+        const icon = entry.type === 'correct' ? '✓' : '✗';
+        entryDiv.innerHTML = `<span>${icon}</span><span>${entry.word}</span>`;
+        logContainer.appendChild(entryDiv);
+        // Auto-scroll to bottom
+        logContainer.scrollTop = logContainer.scrollHeight;
+      }
+
+      // Also update team scores when a correct answer is logged
+      if (entry.type === 'correct') {
+        // Request updated scores from server or increment locally
+        // The server should send score updates separately
+      }
+    });
+
+    // Score update for heads-up mode
+    socket.on('score_update', (data) => {
+      if (currentGameMode === 'heads_up' && data.scores && data.scores.length >= 2) {
+        document.getElementById('team1Score').textContent = data.scores[0].score !== undefined ? data.scores[0].score : 0;
+        document.getElementById('team2Score').textContent = data.scores[1].score !== undefined ? data.scores[1].score : 0;
+      }
+    });
+
+    socket.on('new_word', ({ word }) => {
+      document.getElementById('wordDisplay').textContent = word;
+      // Also update heads-up word display
+      document.getElementById('headsUpWordDisplay').textContent = word;
+      clearCanvas();
+      strokeHistory = [];
+    });
+
+    socket.on('hint_revealed', ({ hint }) => {
+      document.getElementById('hintDisplay').textContent = hint;
+    });
+
+    socket.on('guess_submitted', (data) => {
+      if (data.correct) {
+        sound.correct();
+      }
+    });
+
+    // Display the correctly guessed word on host screen (instead of next word)
+    socket.on('correct_guess_display', ({ word }) => {
+      document.getElementById('headsUpWordDisplay').textContent = word;
+    });
+
+    socket.on('word_skipped', ({ word }) => {
+      // Visual feedback for skip
+    });
+
+    // Heads-Up team transition - show when one team finishes and next team is up
+    socket.on('heads_up_team_complete', (data) => {
+      showPhase('roundResult');
+      document.getElementById('roundResultTitle').textContent = `${data.teamComplete}'s Turn Complete!`;
+      document.getElementById('roundWord').textContent = `Final Score: ${data.teamScore}`;
+
+      const rankingsDiv = document.getElementById('roundRankingsHost');
+      rankingsDiv.innerHTML = `
+        <div style="text-align: center; padding: 20px;">
+          <div style="font-size: 2rem; color: var(--text-gold); margin-bottom: 20px;">
+            Next: ${data.nextTeam}'s Turn
+          </div>
+          <div style="font-size: 1.2rem; color: var(--text-secondary);">
+            Starting in 5 seconds...
+          </div>
+        </div>
+      `;
+
+      const scoresHtml = data.scores.map(s => `
+        <div class="final-score-card ${s.hasPlayed ? 'completed' : ''}">
+          <div class="score-name">${s.name} ${s.hasPlayed ? '✓' : '(Pending)'}</div>
+          <div class="score-value">${s.score} pts</div>
+          <div style="font-size:0.8rem;color:var(--text-secondary);margin-top:8px;">
+            ${s.players.join(', ')}
+          </div>
+        </div>
+      `).join('');
+      document.getElementById('roundScores').innerHTML = scoresHtml;
+    });
+
+    socket.on('round_ended', (data) => {
+      showPhase('roundResult');
+      document.getElementById('roundResultTitle').textContent = data.success ? '✓ Correct!' : '✗ Time\'s Up!';
+      document.getElementById('roundWord').textContent = data.word;
+
+      // Show rankings if available (pictionary, classic solo)
+      const rankingsDiv = document.getElementById('roundRankingsHost');
+      if (data.correctGuessers && data.correctGuessers.length > 0) {
+        rankingsDiv.innerHTML = `<div style="font-size:1.1rem;margin-bottom:10px;color:var(--text-secondary);">Correct Guesses:</div>` +
+          data.correctGuessers.map((g, idx) => {
+            const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉';
+            return `<div style="padding:8px 15px; background:var(--bg-tertiary); border-radius:8px; margin:5px 0; display:inline-block;">
+              ${medal} ${g.name} <span style="color:var(--text-gold);">+${g.points} pts</span>
+            </div>`;
+          }).join('');
+      } else {
+        rankingsDiv.innerHTML = '';
+      }
+
+      const scoresHtml = data.scores.map(s => `
+        <div class="final-score-card">
+          <div class="score-name">${s.name}</div>
+          <div class="score-value">${s.score !== undefined ? s.score : s.points} pts</div>
+          ${s.players ? `<div style="font-size:0.8rem;color:var(--text-secondary);margin-top:8px;">${s.players.join(', ')}</div>` : ''}
+        </div>
+      `).join('');
+      document.getElementById('roundScores').innerHTML = scoresHtml;
+
+      // Show catch-up or tie-breaker phase indicator
+      const phaseIndicator = document.getElementById('phaseIndicator');
+      if (phaseIndicator) {
+        if (data.catchUpPhase) {
+          phaseIndicator.textContent = `CATCH-UP: ${data.catchUpTeam} needs to tie!`;
+          phaseIndicator.className = 'phase-indicator catch-up';
+          phaseIndicator.style.display = 'block';
+        } else if (data.tieBreakerActive) {
+          phaseIndicator.textContent = 'TIE-BREAKER!';
+          phaseIndicator.className = 'phase-indicator tie-breaker';
+          phaseIndicator.style.display = 'block';
+        } else {
+          phaseIndicator.style.display = 'none';
+        }
+      }
+    });
+
+    socket.on('game_over', (data) => {
+      showPhase('results');
+      sound.gameOver();
+
+      const resultsContainer = document.getElementById('resultsContainer');
+      const team1HistoryCol = document.getElementById('team1HistoryColumn');
+      const team2HistoryCol = document.getElementById('team2HistoryColumn');
+
+      // Handle tie vs winner scenarios
+      const resultsTitle = document.querySelector('.results-title');
+      if (data.isTie) {
+        resultsTitle.textContent = "IT'S A TIE!";
+        document.getElementById('winnerName').textContent = `Both teams scored ${data.winner.score} points!`;
+      } else {
+        setTimeout(() => sound.victory(), 1500);
+        // Show words exhausted message if applicable
+        if (data.wordsExhausted) {
+          resultsTitle.textContent = 'OUT OF WORDS!';
+        } else if (data.winner.tieBreakerWin) {
+          resultsTitle.textContent = 'TIE-BREAKER WIN!';
+        } else {
+          resultsTitle.textContent = 'GAME OVER';
+        }
+        document.getElementById('winnerName').textContent = `${data.winner.name} wins!`;
+      }
+
+      const scoresHtml = data.finalScores.map(s => `
+        <div class="final-score-card ${s.isWinner ? 'winner' : ''}">
+          <div class="score-name">${s.name}</div>
+          <div class="score-value">${s.score !== undefined ? s.score : s.points} pts</div>
+          ${s.players ? `<div style="font-size:0.8rem;color:var(--text-secondary);margin-top:8px;">${s.players.join(', ')}</div>` : ''}
+        </div>
+      `).join('');
+      document.getElementById('finalScores').innerHTML = scoresHtml;
+
+      // Display history logs (for heads-up mode only)
+      if (data.gameLog && data.mode === 'heads_up') {
+        resultsContainer.classList.add('three-column');
+        team1HistoryCol.style.display = 'flex';
+        team2HistoryCol.style.display = 'flex';
+
+        const renderHistory = (entries) => {
+          if (!entries || entries.length === 0) return '<p class="empty-history">No entries</p>';
+          return entries.map(entry => `
+            <div class="history-item ${entry.type}">
+              <span>${entry.word}</span>
+              <span>${entry.type === 'correct' ? '+1' : 'Skip'}</span>
+            </div>
+          `).join('');
+        };
+
+        document.getElementById('team1FinalHistory').innerHTML = renderHistory(data.gameLog.team1);
+        document.getElementById('team2FinalHistory').innerHTML = renderHistory(data.gameLog.team2);
+      } else {
+        // Hide history columns for non-heads-up modes
+        resultsContainer.classList.remove('three-column');
+        team1HistoryCol.style.display = 'none';
+        team2HistoryCol.style.display = 'none';
+      }
+    });
+
+    socket.on('settings_updated', (newSettings) => {
+      settings = newSettings;
+    });
+
+    socket.on('error_message', (data) => {
+      alert(data.message);
+    });
+
+    socket.on('waiting_for_offline_player', (data) => {
+      // Show a skip button overlay for offline player
+      let banner = document.getElementById('offlinePlayerBanner');
+      if (!banner) {
+        banner = document.createElement('div');
+        banner.id = 'offlinePlayerBanner';
+        banner.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);padding:16px 24px;border-radius:10px;z-index:9999;background:#a85d00;color:#fff;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,0.3);';
+        document.body.appendChild(banner);
+      }
+      const playerName = (data && data.playerName) || 'A player';
+      banner.innerHTML = `
+        <div style="margin-bottom:8px;font-weight:bold;">${playerName} is offline</div>
+        <div style="margin-bottom:10px;font-size:0.9em;">${data.message || 'Waiting for reconnection...'}</div>
+        <button onclick="socket.emit('host_skip_turn'); this.parentElement.remove();"
+          style="padding:8px 20px;border:none;border-radius:6px;background:#fff;color:#a85d00;font-weight:bold;cursor:pointer;">
+          Skip Turn
+        </button>
+      `;
+    });
+
+    socket.on('host_notification', (data) => {
+      if (data && data.message) {
+        // Remove offline banner if present
+        const banner = document.getElementById('offlinePlayerBanner');
+        if (banner) banner.remove();
+        // Show temporary notification
+        const notif = document.createElement('div');
+        notif.style.cssText = 'position:fixed;top:20px;right:20px;padding:12px 20px;border-radius:8px;z-index:9999;font-size:0.9em;opacity:1;transition:opacity 0.5s;color:#fff;';
+        notif.style.background = data.type === 'warning' ? '#a85d00' : '#2a6a3a';
+        notif.textContent = data.message;
+        document.body.appendChild(notif);
+        setTimeout(() => { notif.style.opacity = '0'; }, 3000);
+        setTimeout(() => { notif.remove(); }, 3500);
+      }
+    });
+
+    socket.on('heads_up_round_complete', (data) => {
+      // Show brief round transition notification
+      const roundInfo = document.getElementById('headsUpRoundInfo');
+      if (roundInfo) {
+        roundInfo.textContent = `Round ${data.roundInSet + 1} of ${data.totalRounds} - ${data.teamName}`;
+      }
+    });
+
+    socket.on('returned_to_menu', () => {
+      // Return to charades lobby (game mode selection), not main launcher
+      showPhase('lobby');
+      resetGameState();
+    });
+
+    // Drawing events
+    socket.on('drawing_point', (point) => {
+      drawPoint(point);
+    });
+
+    socket.on('drawing_points', (points) => {
+      if (!Array.isArray(points)) return;
+      points.forEach(drawPoint);
+    });
+
+    socket.on('stroke_complete', (stroke) => {
+      strokeHistory.push(stroke);
+    });
+
+    socket.on('canvas_cleared', () => {
+      clearCanvas();
+      strokeHistory = [];
+    });
+
+    socket.on('drawing_undo', () => {
+      strokeHistory.pop();
+      redrawCanvas();
+    });
+
+    socket.on('drawing_redo', (stroke) => {
+      strokeHistory.push(stroke);
+      redrawCanvas();
+    });
+
+    // ========================================================================
+    // UI FUNCTIONS
+    // ========================================================================
+    function showPhase(phase) {
+      currentPhase = phase;
+      document.querySelectorAll('.phase-container').forEach(el => el.classList.remove('active'));
+      document.getElementById(phase + 'Phase').classList.add('active');
+
+      // Hide floating end game button when not in gameplay
+      if (phase !== 'gameplay') {
+        document.getElementById('floatingEndGameBtn').classList.add('hidden');
+      }
+    }
+
+    function resetGameState() {
+      // Reset game mode
+      currentGameMode = null;
+
+      // Reset layouts
+      document.getElementById('defaultGameplayContainer').classList.remove('hidden');
+      document.getElementById('headsUpGameplayContainer').classList.add('hidden');
+      document.getElementById('floatingEndGameBtn').classList.add('hidden');
+
+      // Clear heads-up mode displays
+      document.getElementById('team1HistoryLog').innerHTML = '';
+      document.getElementById('team2HistoryLog').innerHTML = '';
+      document.getElementById('team1Score').textContent = '0';
+      document.getElementById('team2Score').textContent = '0';
+      document.getElementById('team1Name').textContent = 'Team 1';
+      document.getElementById('team2Name').textContent = 'Team 2';
+
+      // Clear default layout displays
+      document.getElementById('scoresList').innerHTML = '';
+      document.getElementById('timerDisplay').textContent = '60';
+      document.getElementById('timerDisplay').classList.remove('warning', 'danger');
+      document.getElementById('wordDisplay').textContent = '';
+      document.getElementById('roleDisplay').textContent = '';
+
+      // Reset canvas
+      strokeHistory = [];
+      clearCanvas();
+    }
+
+    function getTotalWins(scores) {
+      if (!scores) return 0;
+      return (scores.charade_lines?.wins || 0) +
+             (scores.heads_up?.wins || 0) +
+             (scores.pictionary?.wins || 0) +
+             (scores.classic_team?.wins || 0) +
+             (scores.classic_individual?.wins || 0);
+    }
+
+    function updateLeaderboard() {
+      const tbody = document.getElementById('leaderboardBody');
+      const count = players.filter(p => p.connected).length;
+      document.getElementById('playerCount').textContent = count;
+
+      if (!leaderboard || leaderboard.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="color:var(--text-secondary);text-align:center;padding:20px;">Waiting for players to join...</td></tr>';
+        return;
+      }
+
+      // Sort by total wins (descending), then by name
+      const sorted = [...leaderboard].sort((a, b) => {
+        const totalA = getTotalWins(a.scores);
+        const totalB = getTotalWins(b.scores);
+        if (totalB !== totalA) return totalB - totalA;
+        return a.name.localeCompare(b.name);
+      });
+
+      tbody.innerHTML = sorted.map(p => {
+        const s = p.scores || {};
+        const chain = s.charade_lines?.wins || 0;
+        const headsUp = s.heads_up?.wins || 0;
+        const pictionary = s.pictionary?.wins || 0;
+        const classicTeam = s.classic_team?.wins || 0;
+        const classicSolo = s.classic_individual?.wins || 0;
+        const total = chain + headsUp + pictionary + classicTeam + classicSolo;
+
+        const statusClass = p.connected ? 'player-online' : 'player-offline';
+        const neverJoinedClass = p.joinedSession === false ? ' player-never-joined' : '';
+        const statusIcon = p.connected ? '●' : '○';
+        const kickBtn = p.connected ? `<button class="btn-kick-small" onclick="kickPlayer('${p.key}')">✕</button>` : '';
+
+        return `
+          <tr class="${statusClass}${neverJoinedClass}">
+            <td><span style="margin-right:4px;">${statusIcon}</span>${p.name}${kickBtn}</td>
+            <td>${chain || '-'}</td>
+            <td>${headsUp || '-'}</td>
+            <td>${pictionary || '-'}</td>
+            <td>${classicTeam || '-'}</td>
+            <td>${classicSolo || '-'}</td>
+            <td class="total-wins">${total}</td>
+          </tr>
+        `;
+      }).join('');
+
+      sound.join();
+    }
+
+    function updateCategories(available) {
+      const grid = document.getElementById('categoriesGrid');
+      const icons = { location: '📍', object: '🎁', person: '👤', action: '🏃' };
+
+      grid.innerHTML = available.map(cat => `
+        <label class="category-chip ${selectedCategories.includes(cat) ? 'selected' : ''}" data-category="${cat}">
+          <input type="checkbox" ${selectedCategories.includes(cat) ? 'checked' : ''}>
+          <span>${icons[cat] || '📝'} ${cat.charAt(0).toUpperCase() + cat.slice(1)}</span>
+        </label>
+      `).join('');
+
+      grid.querySelectorAll('.category-chip').forEach(chip => {
+        chip.addEventListener('click', (e) => {
+          e.preventDefault(); // Prevent checkbox from triggering a second click event
+          sound.click();
+          categoriesModifiedLocally = true;
+          const cat = chip.dataset.category;
+          const idx = selectedCategories.indexOf(cat);
+          const checkbox = chip.querySelector('input');
+          if (idx >= 0) {
+            if (selectedCategories.length > 1) {
+              selectedCategories.splice(idx, 1);
+              chip.classList.remove('selected');
+              checkbox.checked = false;
+            }
+          } else {
+            selectedCategories.push(cat);
+            chip.classList.add('selected');
+            checkbox.checked = true;
+          }
+          updateStartButton();
+        });
+      });
+    }
+
+    function updateStartButton() {
+      const btn = document.getElementById('startGameBtn');
+      const sessionCount = players.filter(p => p.joinedSession !== false).length;
+      const minPlayers = getMinPlayers();
+
+      btn.disabled = !selectedMode || sessionCount < minPlayers || selectedCategories.length === 0;
+    }
+
+    function getMinPlayers() {
+      if (selectedMode === 'pictionary') return 3;
+      if (selectedMode === 'classic' && classicVariant === 'individual') return 3;
+      return 4;
+    }
+
+    function clearIntroTimers() {
+      introTimers.forEach(t => clearTimeout(t));
+      introTimers = [];
+    }
+
+    function startIntroAnimation() {
+      introSlidesVisible = { 0: false, 1: false, 2: false };
+      clearIntroTimers();
+      renderIntroCards();
+
+      // Animate slides appearing at 0ms, 1000ms, 2000ms
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        introSlidesVisible[0] = true;
+        applyIntroVisibility();
+      }));
+
+      introTimers.push(setTimeout(() => {
+        introSlidesVisible[1] = true;
+        applyIntroVisibility();
+      }, 1000));
+
+      introTimers.push(setTimeout(() => {
+        introSlidesVisible[2] = true;
+        applyIntroVisibility();
+      }, 2000));
+    }
+
+    function applyIntroVisibility() {
+      for (let i = 0; i < 3; i++) {
+        const card = document.getElementById('introCard' + i);
+        const dot = document.getElementById('introDot' + i);
+        if (card) card.classList.toggle('visible', !!introSlidesVisible[i]);
+        if (dot) dot.classList.toggle('active', !!introSlidesVisible[i]);
+      }
+    }
+
+    function renderIntroCards() {
+      const track = document.getElementById('introTrack');
+      if (!track || !introSlides.length) return;
+      track.innerHTML = introSlides.map((slide, i) => `
+        <div class="intro-card" id="introCard${i}">
+          <div class="intro-card-icon">${slide.icon}</div>
+          <div class="intro-card-title">${slide.title}</div>
+          <div class="intro-card-content">${slide.content}</div>
+        </div>
+      `).join('');
+    }
+
+    function renderTeamSetup() {
+      const container = document.getElementById('teamSetup');
+      container.innerHTML = teams.map(team => `
+        <div class="team-column" data-team="${team.id}">
+          <h3 class="team-title">${team.name}</h3>
+          <div class="team-players" data-team="${team.id}">
+            ${team.players.map(p => `
+              <div class="team-player" draggable="true" data-key="${p.key}">${p.name}</div>
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
+
+      setupDragAndDrop();
+    }
+
+    function setupDragAndDrop() {
+      const players = document.querySelectorAll('.team-player');
+      const dropZones = document.querySelectorAll('.team-players');
+
+      players.forEach(player => {
+        player.addEventListener('dragstart', (e) => {
+          e.dataTransfer.setData('text/plain', player.dataset.key);
+          player.classList.add('dragging');
+        });
+
+        player.addEventListener('dragend', () => {
+          player.classList.remove('dragging');
+        });
+      });
+
+      dropZones.forEach(zone => {
+        zone.addEventListener('dragover', (e) => {
+          e.preventDefault();
+        });
+
+        zone.addEventListener('drop', (e) => {
+          e.preventDefault();
+          const playerKey = e.dataTransfer.getData('text/plain');
+          const playerEl = document.querySelector(`[data-key="${playerKey}"]`);
+          if (playerEl) {
+            zone.appendChild(playerEl);
+            updateTeamsFromDOM();
+          }
+        });
+      });
+    }
+
+    function updateTeamsFromDOM() {
+      const newTeams = teams.map(team => ({
+        ...team,
+        playerKeys: Array.from(document.querySelectorAll(`[data-team="${team.id}"] .team-player`))
+          .map(el => el.dataset.key)
+      }));
+      socket.emit('host_update_teams', { teams: newTeams });
+    }
+
+    function updateScoresDisplay(scores) {
+      const list = document.getElementById('scoresList');
+      list.innerHTML = scores.map(s => `
+        <div class="score-item" style="flex-direction: column; align-items: flex-start;">
+          <div style="display: flex; justify-content: space-between; width: 100%;">
+            <span class="score-name">${s.name}</span>
+            <span class="score-value">${s.score !== undefined ? s.score : s.points}</span>
+          </div>
+          ${s.players ? `<span style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 4px;">${s.players.join(', ')}</span>` : ''}
+        </div>
+      `).join('');
+    }
+
+    // ========================================================================
+    // CANVAS (Pictionary)
+    // ========================================================================
+    let canvas, ctx;
+
+    function initCanvas() {
+      canvas = document.getElementById('drawingCanvas');
+      ctx = canvas.getContext('2d');
+      canvas.width = 600;
+      canvas.height = 600;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+    }
+
+    function clearCanvas() {
+      if (ctx) {
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+
+    function drawPoint(point) {
+      if (!ctx) return;
+      ctx.strokeStyle = point.color || '#000';
+      ctx.lineWidth = point.size || 3;
+
+      if (point.type === 'start') {
+        ctx.beginPath();
+        ctx.moveTo(point.x, point.y);
+      } else {
+        ctx.lineTo(point.x, point.y);
+        ctx.stroke();
+      }
+    }
+
+    function redrawCanvas() {
+      clearCanvas();
+      for (const stroke of strokeHistory) {
+        for (const point of stroke.points) {
+          drawPoint(point);
+        }
+      }
+    }
+
+    // ========================================================================
+    // SETTINGS MODAL
+    // ========================================================================
+    const settingsContent = {
+      general: `
+        <div class="settings-group">
+          <h3>🔊 Sound Effects</h3>
+          <label class="setting-toggle">
+            <input type="checkbox" id="soundEnabled" checked>
+            <span>Enable Sound Effects</span>
+          </label>
+          <label class="setting-toggle">
+            <input type="checkbox" id="soundTimerTick" checked>
+            <span>Timer Tick (last 10 seconds)</span>
+          </label>
+          <div class="setting-row">
+            <label>Master Volume</label>
+            <input type="range" id="masterVolume" min="0" max="100" value="80">
+            <span class="setting-value" id="volumeValue">80%</span>
+          </div>
+        </div>
+        <div class="settings-group">
+          <h3>📊 Player Data</h3>
+          <button class="btn-danger" id="resetScoresBtn">🗑️ Reset All Lifetime Scores</button>
+        </div>
+      `,
+      chain: `
+        <div class="settings-group">
+          <h3>🔗 Charades Chain Settings</h3>
+          <div class="setting-row">
+            <label>Round Timer</label>
+            <input type="number" id="chainTimer" min="1" max="600" value="90">
+            <span class="setting-unit">seconds</span>
+          </div>
+          <div class="setting-row">
+            <label>Points to Win</label>
+            <input type="number" id="chainWinTarget" min="5" max="20" value="10">
+            <span class="setting-unit">seconds</span>
+          </div>
+          <div class="setting-row">
+            <label>Prep Time</label>
+            <input type="number" id="chainPrepTime" min="0" max="30" value="10">
+            <span class="setting-unit">seconds</span>
+          </div>
+          <p class="setting-info">Time for players to get into position before word is revealed. Set to 0 to skip.</p>
+          <h3 style="margin-top: 20px;">Fair Catch-Up Rules</h3>
+          <p class="setting-info">If one team reaches the target first and the other is 1 point behind, they get a chance to catch up.</p>
+          <label class="setting-toggle">
+            <input type="checkbox" id="chainContinuousTieBreaker">
+            <span>Continuous Tie-Breaker Mode</span>
+          </label>
+          <p class="setting-info">OFF: If teams tie, game ends in a tie.<br>ON: Keep playing until one team fails to score.</p>
+        </div>
+      `,
+      headsup: `
+        <div class="settings-group">
+          <h3>🎯 Heads-Up Settings</h3>
+          <div class="setting-row">
+            <label>Round Timer</label>
+            <input type="number" id="headsupTimer" min="1" max="600" value="180">
+            <span class="setting-unit">seconds</span>
+          </div>
+          <p class="setting-info">Game ends when timer expires. Highest score wins!</p>
+          <label class="setting-toggle">
+            <input type="checkbox" id="headsupAllowSkip" checked>
+            <span>Allow Skip Voting</span>
+          </label>
+        </div>
+      `,
+      pictionary: `
+        <div class="settings-group">
+          <h3>🎨 Pictionary Settings</h3>
+          <div class="setting-row">
+            <label>Round Timer</label>
+            <input type="number" id="pictionaryTimer" min="1" max="600" value="60">
+            <span class="setting-unit">seconds</span>
+          </div>
+          <label class="setting-toggle">
+            <input type="checkbox" id="pictionaryHints" checked>
+            <span>Enable Progressive Hints</span>
+          </label>
+          <div class="setting-row">
+            <label>Hint Interval (after 50%)</label>
+            <input type="number" id="hintInterval" min="5" max="30" value="10">
+            <span>seconds</span>
+          </div>
+        </div>
+      `,
+      classic: `
+        <div class="settings-group">
+          <h3>🎭 Classic Mode Settings</h3>
+          <div class="setting-row">
+            <label>Round Timer</label>
+            <input type="number" id="classicTimer" min="1" max="600" value="90">
+            <span class="setting-unit">seconds</span>
+          </div>
+          <h3 style="margin-top: 20px;">Solo Mode - Letter Hints</h3>
+          <label class="setting-toggle">
+            <input type="checkbox" id="classicSoloHints" checked>
+            <span>Enable Progressive Hints</span>
+          </label>
+          <div class="setting-row">
+            <label>Hint Interval (after 50%)</label>
+            <input type="number" id="classicSoloHintInterval" min="5" max="30" value="10">
+            <span class="setting-unit">seconds</span>
+          </div>
+          <label class="setting-toggle">
+            <input type="checkbox" id="classicPenalty" checked>
+            <span>Actor loses point if no guesses</span>
+          </label>
+          <p class="setting-info">Word hidden from TV. Letter hints start at halftime to help guessers.</p>
+          <h3 style="margin-top: 20px;">Team Mode - Fair Catch-Up Rules</h3>
+          <p class="setting-info">If one team reaches the target first and the other is 1 point behind, they get a chance to catch up.</p>
+          <div class="setting-row">
+            <label>Points to Win</label>
+            <input type="number" id="classicWinTarget" min="5" max="20" value="10">
+            <span class="setting-unit">points</span>
+          </div>
+          <label class="setting-toggle">
+            <input type="checkbox" id="classicContinuousTieBreaker">
+            <span>Continuous Tie-Breaker Mode</span>
+          </label>
+          <p class="setting-info">OFF: If teams tie, game ends in a tie.<br>ON: Keep playing until one team fails to score.</p>
+        </div>
+      `
+    };
+
+    function showSettingsTab(tab) {
+      document.getElementById('settingsContent').innerHTML = settingsContent[tab];
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tab);
+      });
+
+      // Setup range slider for volume only
+      setupRangeSlider('masterVolume', 'volumeValue', '%');
+
+      // Populate form with saved values
+      populateSettingsValues();
+
+      // Reset scores button
+      const resetBtn = document.getElementById('resetScoresBtn');
+      if (resetBtn) {
+        resetBtn.addEventListener('click', () => {
+          if (confirm('Are you sure you want to reset ALL player scores? This cannot be undone.')) {
+            socket.emit('host_reset_all_scores');
+          }
+        });
+      }
+    }
+
+    function populateSettingsValues() {
+      // Timer values
+      const chainTimer = document.getElementById('chainTimer');
+      if (chainTimer && settings.charadeLinesTimer) chainTimer.value = settings.charadeLinesTimer;
+
+      const headsupTimer = document.getElementById('headsupTimer');
+      if (headsupTimer && settings.headsUpTimer) headsupTimer.value = settings.headsUpTimer;
+
+      const pictionaryTimer = document.getElementById('pictionaryTimer');
+      if (pictionaryTimer && settings.pictionaryTimer) pictionaryTimer.value = settings.pictionaryTimer;
+
+      const classicTimer = document.getElementById('classicTimer');
+      if (classicTimer && settings.classicTimer) classicTimer.value = settings.classicTimer;
+
+      // Win targets
+      const chainWin = document.getElementById('chainWinTarget');
+      if (chainWin && settings.charadeLinesWinTarget) chainWin.value = settings.charadeLinesWinTarget;
+
+      const chainPrep = document.getElementById('chainPrepTime');
+      if (chainPrep && settings.charadeLinesPrep !== undefined) chainPrep.value = settings.charadeLinesPrep;
+
+      const classicWin = document.getElementById('classicWinTarget');
+      if (classicWin && settings.classicWinTarget) classicWin.value = settings.classicWinTarget;
+
+      // Hint interval
+      const hintInt = document.getElementById('hintInterval');
+      if (hintInt && settings.pictionaryHintInterval) hintInt.value = settings.pictionaryHintInterval;
+
+      // Checkboxes
+      const chainTieBreaker = document.getElementById('chainContinuousTieBreaker');
+      if (chainTieBreaker && settings.charadesLinesContinuousTieBreaker !== undefined) chainTieBreaker.checked = settings.charadesLinesContinuousTieBreaker;
+
+      const headsupSkip = document.getElementById('headsupAllowSkip');
+      if (headsupSkip && settings.headsUpAllowSkip !== undefined) headsupSkip.checked = settings.headsUpAllowSkip;
+
+      const pictionaryHints = document.getElementById('pictionaryHints');
+      if (pictionaryHints && settings.pictionaryHintsEnabled !== undefined) pictionaryHints.checked = settings.pictionaryHintsEnabled;
+
+      const classicPenalty = document.getElementById('classicPenalty');
+      if (classicPenalty && settings.classicPenalty !== undefined) classicPenalty.checked = settings.classicPenalty;
+
+      const classicSoloHints = document.getElementById('classicSoloHints');
+      if (classicSoloHints && settings.classicSoloHintsEnabled !== undefined) classicSoloHints.checked = settings.classicSoloHintsEnabled;
+
+      const classicSoloHintInterval = document.getElementById('classicSoloHintInterval');
+      if (classicSoloHintInterval && settings.classicSoloHintInterval) classicSoloHintInterval.value = settings.classicSoloHintInterval;
+
+      const classicTieBreaker = document.getElementById('classicContinuousTieBreaker');
+      if (classicTieBreaker && settings.classicContinuousTieBreaker !== undefined) classicTieBreaker.checked = settings.classicContinuousTieBreaker;
+
+      // Sound settings
+      const soundEnabled = document.getElementById('soundEnabled');
+      if (soundEnabled && settings.soundEnabled !== undefined) soundEnabled.checked = settings.soundEnabled;
+
+      const soundTick = document.getElementById('soundTimerTick');
+      if (soundTick && settings.soundTimerTick !== undefined) soundTick.checked = settings.soundTimerTick;
+
+      const volume = document.getElementById('masterVolume');
+      if (volume && settings.soundVolume !== undefined) {
+        volume.value = Math.round(settings.soundVolume * 100);
+        const volumeValue = document.getElementById('volumeValue');
+        if (volumeValue) volumeValue.textContent = volume.value + '%';
+      }
+    }
+
+    function setupRangeSlider(inputId, valueId, suffix) {
+      const input = document.getElementById(inputId);
+      const value = document.getElementById(valueId);
+      if (input && value) {
+        value.textContent = input.value + suffix;
+        input.addEventListener('input', () => {
+          value.textContent = input.value + suffix;
+        });
+      }
+    }
+
+    // ========================================================================
+    // EVENT LISTENERS
+    // ========================================================================
+    // Mode selection
+    document.querySelectorAll('.mode-card').forEach(card => {
+      card.addEventListener('click', () => {
+        if (card.classList.contains('disabled')) return;
+        sound.click();
+
+        document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+        selectedMode = card.dataset.mode;
+        updateStartButton();
+      });
+    });
+
+    // Copy link button
+    document.getElementById('copyLinkBtn').addEventListener('click', () => {
+      const url = document.getElementById('joinUrl').textContent;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).catch(() => fallbackCopy(url));
+      } else {
+        fallbackCopy(url);
+      }
+    });
+
+    function fallbackCopy(text) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(ta);
+    }
+
+    // Classic variant toggle
+    document.querySelectorAll('.toggle-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        sound.click();
+        document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        classicVariant = btn.dataset.variant;
+        // Update player count display based on variant
+        const classicCard = document.querySelector('.mode-card[data-mode="classic"]');
+        const playersEl = classicCard.querySelector('.mode-players');
+        playersEl.textContent = classicVariant === 'individual' ? '3+ PLAYERS' : '4+ PLAYERS';
+        updateStartButton();
+      });
+    });
+
+    // Start game
+    document.getElementById('startGameBtn').addEventListener('click', () => {
+      sound.click();
+      const modeSettings = {
+        classicMode: classicVariant
+      };
+      socket.emit('host_start_game', {
+        mode: selectedMode,
+        categories: selectedCategories,
+        settings: modeSettings
+      });
+    });
+
+    // Intro navigation
+    document.getElementById('skipIntroBtn').addEventListener('click', () => {
+      sound.click();
+      socket.emit('host_skip_intro');
+    });
+
+    // Team setup
+    document.getElementById('randomizeTeamsBtn').addEventListener('click', () => {
+      sound.click();
+      socket.emit('host_randomize_teams');
+    });
+
+    document.getElementById('confirmTeamsBtn').addEventListener('click', () => {
+      sound.click();
+      socket.emit('host_confirm_teams');
+    });
+
+    // End game
+    document.getElementById('endGameBtn').addEventListener('click', () => {
+      sound.click();
+      if (confirm('Are you sure you want to end the game?')) {
+        socket.emit('host_end_game');
+      }
+    });
+
+    // Floating end game button for heads-up mode
+    document.getElementById('floatingEndGameBtn').addEventListener('click', () => {
+      sound.click();
+      if (confirm('Are you sure you want to end the game?')) {
+        socket.emit('host_end_game');
+      }
+    });
+
+    // Results buttons
+    document.getElementById('playAgainBtn').addEventListener('click', () => {
+      sound.click();
+      socket.emit('host_play_again');
+    });
+
+    document.getElementById('returnMenuBtn').addEventListener('click', () => {
+      sound.click();
+      socket.emit('host_return_to_menu');
+    });
+
+    // Exit
+    document.getElementById('exitBtn').addEventListener('click', () => {
+      document.getElementById('exitBtn').disabled = true;
+      socket.emit('host_return_to_menu');
+      const masterUrl = window.location.protocol + "//" + window.location.host + "/";
+      setTimeout(() => { window.location.href = masterUrl; }, 100);
+    });
+
+    // Settings modal
+    document.getElementById('settingsBtn').addEventListener('click', () => {
+      sound.click();
+      document.getElementById('settingsModal').classList.add('active');
+      showSettingsTab('general');
+    });
+
+    document.getElementById('closeSettingsBtn').addEventListener('click', () => {
+      document.getElementById('settingsModal').classList.remove('active');
+    });
+
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        sound.click();
+        showSettingsTab(btn.dataset.tab);
+      });
+    });
+
+    document.getElementById('saveSettingsBtn').addEventListener('click', () => {
+      sound.click();
+      // Collect settings from form
+      const newSettings = {};
+
+      const chainTimer = document.getElementById('chainTimer');
+      if (chainTimer) newSettings.charadeLinesTimer = parseInt(chainTimer.value);
+
+      const chainWin = document.getElementById('chainWinTarget');
+      if (chainWin) newSettings.charadeLinesWinTarget = parseInt(chainWin.value);
+
+      const chainPrep = document.getElementById('chainPrepTime');
+      if (chainPrep) newSettings.charadeLinesPrep = parseInt(chainPrep.value);
+
+      const chainTieBreaker = document.getElementById('chainContinuousTieBreaker');
+      if (chainTieBreaker) newSettings.charadesLinesContinuousTieBreaker = chainTieBreaker.checked;
+
+      const headsupTimer = document.getElementById('headsupTimer');
+      if (headsupTimer) newSettings.headsUpTimer = parseInt(headsupTimer.value);
+
+      const headsupSkip = document.getElementById('headsupAllowSkip');
+      if (headsupSkip) newSettings.headsUpAllowSkip = headsupSkip.checked;
+
+      const picTimer = document.getElementById('pictionaryTimer');
+      if (picTimer) newSettings.pictionaryTimer = parseInt(picTimer.value);
+
+      const picHints = document.getElementById('pictionaryHints');
+      if (picHints) newSettings.pictionaryHintsEnabled = picHints.checked;
+
+      const hintInt = document.getElementById('hintInterval');
+      if (hintInt) newSettings.pictionaryHintInterval = parseInt(hintInt.value);
+
+      const classicTimer = document.getElementById('classicTimer');
+      if (classicTimer) newSettings.classicTimer = parseInt(classicTimer.value);
+
+      const classicWin = document.getElementById('classicWinTarget');
+      if (classicWin) newSettings.classicWinTarget = parseInt(classicWin.value);
+
+      const classicPen = document.getElementById('classicPenalty');
+      if (classicPen) newSettings.classicPenalty = classicPen.checked;
+
+      const classicSoloHints = document.getElementById('classicSoloHints');
+      if (classicSoloHints) newSettings.classicSoloHintsEnabled = classicSoloHints.checked;
+
+      const classicSoloHintInt = document.getElementById('classicSoloHintInterval');
+      if (classicSoloHintInt) newSettings.classicSoloHintInterval = parseInt(classicSoloHintInt.value);
+
+      const classicTieBreaker = document.getElementById('classicContinuousTieBreaker');
+      if (classicTieBreaker) newSettings.classicContinuousTieBreaker = classicTieBreaker.checked;
+
+      const soundEnabled = document.getElementById('soundEnabled');
+      if (soundEnabled) {
+        newSettings.soundEnabled = soundEnabled.checked;
+        sound.enabled = soundEnabled.checked;
+      }
+
+      const soundTick = document.getElementById('soundTimerTick');
+      if (soundTick) {
+        newSettings.soundTimerTick = soundTick.checked;
+        sound.tickEnabled = soundTick.checked;
+      }
+
+      const volume = document.getElementById('masterVolume');
+      if (volume) {
+        newSettings.soundVolume = parseInt(volume.value) / 100;
+        sound.volume = newSettings.soundVolume;
+      }
+
+      socket.emit('host_update_settings', newSettings);
+      document.getElementById('settingsModal').classList.remove('active');
+    });
+
+    // Kick player
+    function kickPlayer(key) {
+      if (confirm('Remove this player?')) {
+        socket.emit('kickPlayer', { playerKey: key });
+      }
+    }
+    window.kickPlayer = kickPlayer;
+  </script>
+</body>
+</html>

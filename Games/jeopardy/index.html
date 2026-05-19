@@ -1,0 +1,2070 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Jeopardy Multiplayer Host</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #050816;
+      color: #f9fafb;
+    }
+
+    header {
+      background: #020617;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid #1f2937;
+      position: sticky;
+      top: 0;
+      z-index: 5;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 5px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      background: #2563eb;
+      color: white;
+    }
+
+    button.secondary {
+      background: #0f172a;
+      border: 1px solid #1f2937;
+    }
+
+    button.small {
+      padding: 3px 10px;
+      font-size: 12px;
+    }
+
+    button:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+    }
+
+    main {
+      padding: 10px;
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .grow {
+      flex: 1 1 0;
+    }
+
+    .panel {
+      background: #020617;
+      border-radius: 10px;
+      border: 1px solid #1f2937;
+      padding: 10px;
+    }
+
+    .panel h2 {
+      margin: 0 0 6px 0;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      color: #e5e7eb;
+    }
+
+    .text-sm {
+      font-size: 13px;
+    }
+
+    .muted {
+      color: #9ca3af;
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 4px;
+      margin-top: 8px;
+    }
+
+    .cat {
+      background: #111827;
+      border-radius: 6px;
+      padding: 6px 4px;
+      text-align: center;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .tile {
+      background: #1d4ed8;
+      color: #facc15;
+      font-weight: 700;
+      border-radius: 6px;
+      padding: 10px 4px;
+      text-align: center;
+      cursor: pointer;
+    }
+
+    .tile.used {
+      background: #030712;
+      color: #4b5563;
+      cursor: default;
+    }
+
+    #lobbyScreen {
+      padding: 16px;
+    }
+
+    #gameArea {
+      display: none;
+    }
+
+    .player-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+      border-bottom: 1px solid #111827;
+      font-size: 13px;
+    }
+
+    .player-row:last-child {
+      border-bottom: none;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #020617;
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 1px solid #1d4ed8;
+      font-size: 13px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .15s ease;
+    }
+
+    .toast.show {
+      opacity: 1;
+    }
+
+    dialog {
+      border: none;
+      border-radius: 10px;
+      padding: 10px;
+      background: #020617;
+      color: white;
+      max-width: 520px;
+      width: calc(100% - 40px);
+    }
+
+    dialog::backdrop {
+      background: rgba(15, 23, 42, .8);
+    }
+
+    select,
+    input[type="text"],
+    input[type="number"] {
+      background: #020617;
+      border-radius: 999px;
+      border: 1px solid #1f2937;
+      padding: 4px 8px;
+      color: white;
+      font-size: 13px;
+    }
+
+    .flex {
+      display: flex;
+    }
+
+    .flex-between {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .gap-2 {
+      gap: 6px;
+    }
+
+    .mt-2 {
+      margin-top: 8px;
+    }
+
+    .mt-1 {
+      margin-top: 4px;
+    }
+
+    .mb-1 {
+      margin-bottom: 4px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .join-header {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .join-link {
+      font-size: 18px;
+      font-weight: 700;
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: #020617;
+      border: 2px solid #2563eb;
+      text-align: center;
+      word-break: break-all;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, .35);
+    }
+
+    #lobbyJoinLink {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    #wdlg {
+      max-width: 520px;
+    }
+
+    #wName {
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      margin-top: 8px;
+      color: #facc15;
+      text-align: center;
+      text-shadow: 0 0 18px rgba(250, 204, 21, .4);
+      animation:
+        popWin .35s ease-out,
+        winnerPulse 1.4s ease-in-out .35s infinite alternate;
+    }
+
+    #wScore {
+      font-size: 20px;
+      margin-top: 6px;
+      text-align: center;
+    }
+
+    #wWins {
+      font-size: 14px;
+      margin-top: 4px;
+      color: #a5b4fc;
+      text-align: center;
+    }
+
+    #wTieNote {
+      text-align: center;
+      margin-top: 6px;
+    }
+
+    #finalBoard {
+      margin-top: 14px;
+      max-height: 260px;
+      overflow-y: auto;
+    }
+
+    #finalBoard .winner-row {
+      padding: 6px 8px;
+      border-radius: 8px;
+      background: #030712;
+      border: 1px solid #1f2937;
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+
+    @keyframes popWin {
+      0% {
+        transform: scale(.7);
+        opacity: 0;
+      }
+
+      60% {
+        transform: scale(1.1);
+        opacity: 1;
+      }
+
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    @keyframes winnerPulse {
+      0% {
+        transform: scale(1);
+        text-shadow: 0 0 18px rgba(250, 204, 21, .4);
+      }
+
+      50% {
+        transform: scale(1.04);
+        text-shadow: 0 0 30px rgba(250, 204, 21, .85);
+      }
+
+      100% {
+        transform: scale(1);
+        text-shadow: 0 0 18px rgba(250, 204, 21, .4);
+      }
+    }
+
+    body.light-mode {
+      background: #f3f4f6;
+      color: #020617;
+    }
+
+    body.light-mode header {
+      background: #e5e7eb;
+      border-bottom: 1px solid #d1d5db;
+    }
+
+    body.light-mode .panel {
+      background: #ffffff;
+      border-color: #d1d5db;
+    }
+
+    body.light-mode .join-link {
+      background: #ffffff;
+    }
+
+    body.light-mode .player-row {
+      border-bottom-color: #e5e7eb;
+    }
+
+    body.light-mode .text-sm.muted {
+      color: #6b7280;
+    }
+
+    body.light-mode dialog {
+      background: #ffffff;
+      color: #020617;
+    }
+
+
+    /* Responsive board and tiles (host game area only) */
+    #gameArea {
+      height: calc(100vh - 60px);
+      box-sizing: border-box;
+    }
+
+    #gameArea .row {
+      height: 100%;
+      align-items: stretch;
+    }
+
+    .board-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 0;
+    }
+
+    .board-wrapper .board {
+      flex: 0 0 auto;
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 6px;
+      align-items: stretch;
+      width: 100%;
+      /* limit width so 5x5 squares fit vertically on 1080p and scale with window */
+      max-width: min(100%, calc(100vh - 220px));
+      margin-top: 8px;
+    }
+
+    .board-wrapper .cat {
+      padding: 4px;
+      font-size: clamp(11px, 1.4vw, 13px);
+    }
+
+    .board-wrapper .tile {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      aspect-ratio: 1 / 1;
+      padding: 4px;
+      font-size: clamp(16px, 2.2vw, 26px);
+    }
+
+    /* BONUS ROUND overlay */
+    .bonus-overlay {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at center, rgba(37, 99, 235, .9), rgba(15, 23, 42, .98));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .bonus-overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+      animation: bonusFlash 1.2s ease-out;
+    }
+
+    .bonus-inner {
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: .16em;
+    }
+
+    .bonus-title {
+      font-size: clamp(32px, 6vw, 60px);
+      font-weight: 900;
+      color: #facc15;
+      text-shadow: 0 0 32px rgba(250, 204, 21, .9);
+    }
+
+    .bonus-sub {
+      margin-top: 8px;
+      font-size: clamp(16px, 3vw, 22px);
+      color: #e5e7eb;
+    }
+
+    @keyframes bonusFlash {
+      0% {
+        transform: scale(.7);
+        opacity: 0;
+      }
+
+      40% {
+        transform: scale(1.05);
+        opacity: 1;
+      }
+
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    /* Intro Animation Styles */
+    #introSection {
+      display: none;
+      padding: 40px 20px;
+      text-align: center;
+    }
+    #introSection.active {
+      display: block;
+    }
+    #introSection h2 {
+      font-size: 32px;
+      margin-bottom: 30px;
+      color: #3b82f6;
+    }
+    .intro-track {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      max-width: 1200px;
+      margin: 0 auto 30px;
+    }
+    .intro-card {
+      background: #020617;
+      border: 1px solid #1f2937;
+      border-radius: 16px;
+      padding: 24px;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+    .intro-card.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .intro-card h3 {
+      color: #3b82f6;
+      font-size: 20px;
+      margin: 0 0 12px 0;
+    }
+    .intro-card p {
+      font-size: 15px;
+      line-height: 1.6;
+      margin: 0;
+      color: #9ca3af;
+    }
+    .intro-footer {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 20px;
+    }
+    .intro-dots {
+      display: flex;
+      gap: 8px;
+    }
+    .intro-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #374151;
+      transition: background 0.3s ease;
+    }
+    .intro-dot.active {
+      background: #3b82f6;
+    }
+
+    .playerStatusCircle {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+    .playerStatusCircle.online { background: #10b981; }
+    .playerStatusCircle.offline {
+      background: transparent;
+      border: 2px solid #6b7280;
+    }
+    .player-row.player-disconnected {
+      opacity: 0.5;
+    }
+    .player-row.player-never-joined {
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>JEOPARDY HOST</h1>
+    <button id="loadXmlBtn" class="small">Load XML</button>
+    <button id="newGameBtn" class="small secondary">New Game</button>
+    <button id="backToLobbyBtn" class="small secondary">Main Menu</button>
+    <button id="settingsBtn" class="small secondary">Settings</button>
+    <button id="returnToLauncherBtn" class="small secondary" style="background:#ef4444;color:white;border-color:#ef4444;">Exit to Launcher</button>
+    <span class="text-sm muted">XML: <span id="xmlName">Not loaded</span></span>
+  </header>
+
+  <section id="lobbyScreen">
+    <div class="panel">
+      <div class="flex-between mb-1">
+        <h2>Lobby</h2>
+        <div class="text-sm muted">Players join from their phones</div>
+      </div>
+
+      <!-- Players join through the main launcher only -->
+      <span id="lobbyJoinLink" style="display:none;"></span>
+      <button id="copyLinkBtn" style="display:none;"></button>
+
+      <div class="flex gap-2 mt-2">
+        <div class="grow">
+          <div class="text-sm muted mb-1">Connected players</div>
+          <div id="lobbyPlayerList" class="panel" style="max-height:200px; overflow-y:auto; background:#030712;"></div>
+          <div id="lobbyStatus" class="text-sm muted mt-1">Waiting for players…</div>
+        </div>
+        <div class="grow">
+          <div class="flex-between mb-1">
+            <div class="text-sm muted">Select categories (at least 5)</div>
+            <div class="flex gap-2">
+              <button id="selectAllCatsBtn" class="small secondary" type="button">Select all</button>
+              <button id="deselectAllCatsBtn" class="small secondary" type="button">Deselect all</button>
+            </div>
+          </div>
+          <div id="categorySelector" class="panel" style="max-height:200px; overflow-y:auto; background:#030712;"></div>
+          <div id="catCounter" class="text-sm muted mt-1">0 selected (max 5 used in game)</div>
+          <div class="flex-between mt-2">
+            <div></div>
+            <div class="flex gap-2" style="align-items:center;">
+              <span class="text-sm muted">If you pick more than 5, 5 are chosen at random.</span>
+              <button id="startGameBtn">Start Game</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Intro Section -->
+  <section id="introSection">
+    <h2>How to Play Jeopardy</h2>
+    <div class="intro-track">
+      <div class="intro-card" id="introCard1">
+        <h3 id="introTitle1">Loading...</h3>
+        <p id="introContent1"></p>
+      </div>
+      <div class="intro-card" id="introCard2">
+        <h3 id="introTitle2">Loading...</h3>
+        <p id="introContent2"></p>
+      </div>
+      <div class="intro-card" id="introCard3">
+        <h3 id="introTitle3">Loading...</h3>
+        <p id="introContent3"></p>
+      </div>
+    </div>
+    <div class="intro-footer">
+      <div class="intro-dots">
+        <div class="intro-dot" id="introDot1"></div>
+        <div class="intro-dot" id="introDot2"></div>
+        <div class="intro-dot" id="introDot3"></div>
+      </div>
+      <button id="btnStartAfterIntro">Start Game</button>
+      <button id="btnEndIntro" class="secondary" style="background:#ef4444;color:white;border-color:#ef4444;">Cancel</button>
+    </div>
+  </section>
+
+  <main id="gameArea">
+    <div class="row">
+      <div class="panel grow board-wrapper" style="min-height:260px;">
+        <div class="flex-between">
+          <h2>Board</h2>
+          <div class="text-sm muted" id="boardInfo">Load XML and start game</div>
+        </div>
+        <div id="board" class="board mt-2"></div>
+      </div>
+      <div class="panel" style="width:280px;">
+        <div class="flex-between">
+          <h2>Players</h2>
+          <div class="text-sm muted">
+            Scoring: configure in Settings
+          </div>
+        </div>
+        <div id="players" class="mt-2"></div>
+        <hr class="mt-2" />
+        <div>
+          <div class="text-sm muted">Leader</div>
+          <div class="text-sm mt-1"><strong id="leaderName">No players</strong></div>
+          <div class="text-sm" id="leaderScore">$0</div>
+          <div class="text-sm muted" id="leaderWins">0 lifetime wins</div>
+          <button id="showWinnerBtn" class="small mt-2">Show Winner</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div id="bonusOverlay" class="bonus-overlay hidden">
+    <div class="bonus-inner">
+      <div class="bonus-title">BONUS ROUND</div>
+      <div class="bonus-sub">Tie-breaker!</div>
+    </div>
+  </div>
+
+  <dialog id="settingsDialog">
+    <div class="flex-between mb-1">
+      <h2 class="text-sm">Settings</h2>
+      <button id="settingsCloseBtn" class="small secondary" type="button">Close</button>
+    </div>
+
+    <div class="mt-1 text-sm">
+      <div class="muted mb-1">Scoring mode</div>
+      <label><input type="radio" name="settingsScoreMode" value="turn"> Turn-based</label>
+      <label style="margin-left:8px;"><input type="radio" name="settingsScoreMode" value="first" checked> First to
+        buzz</label>
+    </div>
+
+    <div class="mt-2 text-sm">
+      <div class="muted mb-1">Timed questions</div>
+      <label><input type="checkbox" id="settingsTimed"> Enable timer</label>
+      <span style="margin-left:8px;">Seconds:</span>
+      <input id="settingsTimeInput" type="number" min="1" max="600" value="20" style="width:70px;" />
+    </div>
+
+    <div class="mt-2 text-sm">
+      <div class="muted mb-1">Buzzer behavior</div>
+      <label><input type="radio" name="settingsBuzzMode" value="auto" checked> Players can buzz as soon as question appears</label>
+
+      <div class="mt-1">
+        <label><input type="radio" name="settingsBuzzMode" value="timed"> Timed Buzzer (buzzers open after a delay)</label>
+        <div id="timedBuzzSettings" class="mt-1" style="margin-left:22px; display:none;">
+          <span>Delay (seconds):</span>
+          <input id="settingsBuzzDelayInput" type="number" min="0" max="60" value="3" style="width:70px; margin-left:6px;" />
+        </div>
+      </div>
+
+      <div class="mt-1">
+        <label><input type="radio" name="settingsBuzzMode" value="manual"> Host uses a button to open buzzers</label>
+      </div>
+    </div>
+
+    <div class="mt-2 text-sm">
+      <div class="muted mb-1">Appearance</div>
+      <label><input type="checkbox" id="settingsTheme"> Light mode</label>
+    </div>
+
+    <div class="mt-2 text-sm">
+      <div class="muted mb-1">Preset Names</div>
+      <label><input type="checkbox" id="settingsPresetNamesEnabled"> Use preset names for players</label>
+      <div id="presetNamesSection" class="mt-1" style="display:none;">
+        <div class="text-sm muted mb-1">Player names (press Enter to add):</div>
+        <input id="presetNameInput" type="text" placeholder="Enter a name" style="width:100%; margin-bottom:6px;" />
+        <div id="presetNamesList" style="max-height:120px; overflow-y:auto; background:#030712; border-radius:8px; padding:4px; border:1px solid #1f2937;"></div>
+        <div id="presetNamesError" class="text-sm muted mt-1" style="color:#ef4444;"></div>
+      </div>
+    </div>
+
+    <div class="mt-2 text-sm">
+      <div class="muted mb-1">Lifetime wins</div>
+      <button id="settingsResetWinsBtn" class="small secondary" type="button">Reset lifetime wins</button>
+    </div>
+  </dialog>
+
+  <dialog id="qdlg">
+    <div class="flex-between">
+      <div>
+        <div class="text-sm muted" id="qcat">Category</div>
+        <div class="text-sm" id="qvalue">$100</div>
+      </div>
+      <button id="qclose" class="small secondary">Close</button>
+    </div>
+    <div class="mt-2 text-sm" id="qtext">Question text</div>
+    <div class="mt-2 text-sm hidden" id="answerBox">
+      <div class="muted">Answer:</div>
+      <div id="qanswer"></div>
+    </div>
+    <div class="mt-2 text-sm" id="mediaArea"></div>
+    <div class="flex-between mt-2">
+      <div class="flex gap-2">
+        <span class="text-sm muted">Player to score:</span>
+        <select id="qPlayerSelect"></select>
+      </div>
+      <div class="flex gap-2" style="align-items:center;">
+        <span id="questionTimerDisplay" class="text-sm muted"></span><span id="buzzerCountdownDisplay" class="text-sm muted" style="margin-left:8px;"></span>
+        <button id="openBuzzersBtn" class="small secondary" type="button" style="display:none;">Open buzzers</button>
+      </div>
+    </div>
+    <div class="flex-between mt-2">
+      <button id="skipQuestionBtn" class="small secondary">Skip</button>
+      <div class="flex gap-2">
+        <button id="revealAnswerBtn" class="small secondary">Reveal</button>
+        <button id="markWrong" class="small secondary">Incorrect</button>
+        <button id="markCorrect" class="small">Correct</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="wdlg">
+    <div class="flex-between">
+      <h2 class="text-sm">Winner</h2>
+      <button id="wclose" class="small secondary">Close</button>
+    </div>
+    <div id="wName"></div>
+    <div id="wScore"></div>
+    <div id="wWins"></div>
+    <div id="wTieNote" class="text-sm muted"></div>
+    <div id="finalBoard"></div>
+    <div class="flex-between mt-2">
+      <button id="endGameBtn" class="small">End Game</button>
+    </div>
+  </dialog>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    // --- State ---
+    let xmlDoc = null;
+    let allCategories = [];
+    let boardCategories = [];
+    let bonusCategory = null;
+    const values = [100, 200, 300, 400, 500];
+    const tileMap = new Map();
+
+    let players = [];
+    let scores = {};
+    let wins = {};
+    let lastScoredPlayer = null;
+    let currentPlayerIdx = 0;
+    let scoringMode = "first"; // default: first to buzz
+    let currentTile = null;
+    let answerRevealed = false;
+    let lastSelectedCategoryNames = null;
+    let inBonusRound = false;
+    let bonusTiedPlayers = [];
+
+    let socket = null;
+    let joinedPlayers = [];
+    let playersDetailed = []; // Players with keys for kick functionality
+
+    let questionTimerId = null;
+    let questionIntervalId = null;
+    let timedQuestionsEnabled = false;
+    let questionTimeSeconds = 20;
+    let questionRemainingSeconds = 0;
+    let buzzerBehavior = "auto"; // auto | timed | manual
+    let timedBuzzerDelaySeconds = 3;
+    let themeMode = "dark";
+    let presetNamesEnabled = false;
+    let presetNames = [];
+    let usedPresetNames = new Set();
+
+    const STORAGE_KEY_PLAYERS = "jeopardy_players_v1";
+    const STORAGE_KEY_WINS = "jeopardy_wins_v1";
+
+    const el = id => document.getElementById(id);
+
+    const lobbyScreen = el("lobbyScreen");
+    const gameArea = el("gameArea");
+    const lobbyJoinLink = el("lobbyJoinLink");
+    const lobbyPlayerList = el("lobbyPlayerList");
+    const lobbyStatus = el("lobbyStatus");
+    const categorySelector = el("categorySelector");
+    const catCounterEl = el("catCounter");
+    const boardEl = el("board");
+    const boardInfoEl = el("boardInfo");
+    const playersEl = el("players");
+    const leaderNameEl = el("leaderName");
+    const leaderScoreEl = el("leaderScore");
+    const leaderWinsEl = el("leaderWins");
+    const xmlNameEl = el("xmlName");
+    const toastEl = el("toast");
+
+    const qdlg = el("qdlg");
+    const qcat = el("qcat");
+    const qvalue = el("qvalue");
+    const qtext = el("qtext");
+    const qanswer = el("qanswer");
+    const answerBox = el("answerBox");
+    const mediaArea = el("mediaArea");
+    const qPlayerSelect = el("qPlayerSelect");
+    const questionTimerDisplay = el("questionTimerDisplay");
+    const openBuzzersBtn = el("openBuzzersBtn");
+
+    const settingsDialog = el("settingsDialog");
+    const settingsBtn = el("settingsBtn");
+
+    const wdlg = el("wdlg");
+    const wNameEl = el("wName");
+    const wScoreEl = el("wScore");
+    const wWinsEl = el("wWins");
+    const wTieNoteEl = el("wTieNote");
+    const finalBoardEl = el("finalBoard");
+    const bonusOverlay = el("bonusOverlay");
+
+    function showToast(msg) {
+      toastEl.textContent = msg;
+      toastEl.classList.add("show");
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => toastEl.classList.remove("show"), 1600);
+    }
+
+    function clearTimers() {
+      if (questionTimerId) clearTimeout(questionTimerId);
+      if (questionIntervalId) clearInterval(questionIntervalId);
+      questionTimerId = null;
+      questionIntervalId = null;
+      if (questionTimerDisplay) questionTimerDisplay.textContent = "";
+      stopMediaPlayback();
+    }
+
+    function stopMediaPlayback() {
+      if (!mediaArea) return;
+      const medias = mediaArea.querySelectorAll("audio,video");
+      medias.forEach(m => {
+        try {
+          m.pause();
+          m.currentTime = 0;
+        } catch (e) { }
+      });
+    }
+
+    function updateTimerDisplay() {
+      if (!questionTimerDisplay) return;
+      if (!timedQuestionsEnabled || questionTimeSeconds <= 0 || questionTimerId === null) {
+        questionTimerDisplay.textContent = "";
+        return;
+      }
+      questionTimerDisplay.textContent = "Time left: " + questionRemainingSeconds + "s";
+    }
+
+    function startQuestionTimer() {
+      clearTimers();
+      if (!timedQuestionsEnabled || questionTimeSeconds <= 0) {
+        if (questionTimerDisplay) questionTimerDisplay.textContent = "";
+        return;
+      }
+      questionRemainingSeconds = questionTimeSeconds;
+      updateTimerDisplay();
+      questionIntervalId = setInterval(() => {
+        questionRemainingSeconds--;
+        if (questionRemainingSeconds < 0) questionRemainingSeconds = 0;
+        updateTimerDisplay();
+      }, 1000);
+      questionTimerId = setTimeout(() => {
+        handleTimeout();
+      }, questionTimeSeconds * 1000);
+    }
+
+    function nodeText(node, tag) {
+      const c = node.querySelector(tag);
+      return c ? c.textContent.trim() : "";
+    }
+
+    function renderMediaFromQuestion(qNode) {
+      mediaArea.innerHTML = "";
+      if (!qNode) return;
+      const m = qNode.querySelector("media");
+      if (!m) return;
+      const type = (m.getAttribute("type") || "").toLowerCase();
+      const src = m.getAttribute("src") || "";
+      if (!src) return;
+
+      if (type === "image") {
+        const img = document.createElement("img");
+        img.src = src;
+        img.alt = "Question image";
+        img.style.maxWidth = "100%";
+        img.style.borderRadius = "8px";
+        img.style.marginTop = "8px";
+        mediaArea.appendChild(img);
+      } else if (type === "audio") {
+        const audio = document.createElement("audio");
+        audio.controls = true;
+        audio.src = src;
+        audio.style.marginTop = "8px";
+        mediaArea.appendChild(audio);
+      } else if (type === "video") {
+        const video = document.createElement("video");
+        video.controls = true;
+        video.src = src;
+        video.style.maxWidth = "100%";
+        video.style.borderRadius = "8px";
+        video.style.marginTop = "8px";
+        video.playsInline = true;
+        video.setAttribute("playsinline", "true");
+        video.setAttribute("webkit-playsinline", "true");
+        video.preload = "metadata";
+        mediaArea.appendChild(video);
+      }
+    }
+
+    function loadPlayersFromStorage() {
+      try {
+        const ps = JSON.parse(localStorage.getItem(STORAGE_KEY_PLAYERS) || "[]");
+        if (Array.isArray(ps)) players = ps;
+      } catch (e) { }
+      try {
+        const ws = JSON.parse(localStorage.getItem(STORAGE_KEY_WINS) || "{}");
+        if (ws && typeof ws === "object") wins = ws;
+      } catch (e) { }
+      players.forEach(p => { if (!(p in scores)) scores[p] = 0; });
+    }
+
+    function savePlayersToStorage() {
+      try { localStorage.setItem(STORAGE_KEY_PLAYERS, JSON.stringify(players)); } catch (e) { }
+    }
+    function saveWinsToStorage() {
+      try { localStorage.setItem(STORAGE_KEY_WINS, JSON.stringify(wins)); } catch (e) { }
+    }
+
+    function renderLobbyPlayers() {
+      lobbyPlayerList.innerHTML = "";
+      if (players.length === 0) {
+        lobbyPlayerList.textContent = "No players joined yet.";
+        lobbyStatus.textContent = "Share the link so players can connect.";
+        return;
+      }
+
+      // Use detailed player info if available (has keys for kick)
+      if (playersDetailed.length > 0) {
+        playersDetailed.forEach(p => {
+          const row = document.createElement("div");
+          row.className = "player-row";
+          if (!p.connected) row.classList.add("player-disconnected");
+          if (p.joinedSession === false) row.classList.add("player-never-joined");
+          row.style.display = "flex";
+          row.style.justifyContent = "space-between";
+          row.style.alignItems = "center";
+
+          const info = document.createElement("span");
+          const connectionCircleClass = p.connected ? 'online' : 'offline';
+          const connectionCircle = `<span class="playerStatusCircle ${connectionCircleClass}"></span>`;
+          info.innerHTML = `${connectionCircle}${p.name}  |  ${wins[p.name] || 0} wins`;
+
+          const kickBtn = document.createElement("button");
+          kickBtn.textContent = "Kick";
+          kickBtn.className = "small secondary";
+          kickBtn.style.cssText = "padding:2px 8px; font-size:11px; color:#ef4444; border-color:#ef4444;";
+          kickBtn.onclick = () => kickPlayer(p.key, p.name);
+
+          row.appendChild(info);
+          row.appendChild(kickBtn);
+          lobbyPlayerList.appendChild(row);
+        });
+      } else {
+        // Fallback without kick buttons
+        players.forEach(name => {
+          const row = document.createElement("div");
+          row.className = "player-row";
+          row.textContent = name + "  |  " + (wins[name] || 0) + " wins";
+          lobbyPlayerList.appendChild(row);
+        });
+      }
+
+      const connectedCount = playersDetailed.length > 0
+        ? playersDetailed.filter(p => p.connected).length
+        : players.length;
+      lobbyStatus.textContent = connectedCount + " player" + (connectedCount !== 1 ? "s" : "") + " connected.";
+    }
+
+    function kickPlayer(playerKey, playerName) {
+      if (!confirm(`Remove ${playerName} from the game?`)) return;
+      if (socket) {
+        socket.emit('kickPlayer', { playerKey });
+      }
+    }
+
+    function renderPlayers() {
+      playersEl.innerHTML = "";
+      if (players.length === 0) {
+        playersEl.textContent = "Waiting for players to join.";
+        renderLobbyPlayers();
+        return;
+      }
+      const sorted = [...players].sort((a, b) => (scores[b] || 0) - (scores[a] || 0));
+      sorted.forEach(name => {
+        const row = document.createElement("div");
+        row.className = "player-row";
+        const left = document.createElement("span");
+        left.textContent = name;
+        const right = document.createElement("span");
+        right.textContent = "$" + (scores[name] || 0);
+        row.appendChild(left);
+        row.appendChild(right);
+        playersEl.appendChild(row);
+      });
+      renderLobbyPlayers();
+      renderLeader();
+    }
+
+    function renderLeader() {
+      if (players.length === 0) {
+        leaderNameEl.textContent = "No players";
+        leaderScoreEl.textContent = "$0";
+        leaderWinsEl.textContent = "0 lifetime wins";
+        return;
+      }
+      let best = players[0];
+      players.forEach(p => {
+        if ((scores[p] || 0) > (scores[best] || 0)) best = p;
+      });
+      leaderNameEl.textContent = best;
+      leaderScoreEl.textContent = "$" + (scores[best] || 0);
+      leaderWinsEl.textContent = (wins[best] || 0) + " lifetime wins";
+    }
+
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+    }
+
+    function buildCategorySelector() {
+      categorySelector.innerHTML = "";
+      bonusCategory = null;
+      allCategories = [];
+
+      if (!xmlDoc) {
+        categorySelector.textContent = "Load an XML first.";
+        catCounterEl.textContent = "0 selected (max 5 used in game)";
+        return;
+      }
+
+      const rawCats = Array.from(xmlDoc.querySelectorAll("category"));
+      const regular = [];
+      rawCats.forEach(cat => {
+        const name = (cat.getAttribute("name") || "").trim();
+        const upper = name.toUpperCase();
+        const typeAttr = (cat.getAttribute("type") || "").toLowerCase();
+        const bonusAttr = (cat.getAttribute("bonus") || "").toLowerCase();
+        const isBonus =
+          upper === "BONUS" ||
+          upper === "BONUS ROUND" ||
+          upper.includes("BONUS") ||
+          typeAttr === "bonus" ||
+          bonusAttr === "true";
+        if (isBonus) bonusCategory = cat;
+        else regular.push(cat);
+      });
+
+      allCategories = regular;
+      if (allCategories.length === 0) {
+        categorySelector.textContent = "No regular categories found.";
+        catCounterEl.textContent = "0 selected (max 5 used in game)";
+        return;
+      }
+
+      allCategories.forEach(cat => {
+        const name = cat.getAttribute("name") || "Category";
+        const row = document.createElement("label");
+        row.className = "text-sm";
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.value = name;
+        cb.checked = true;
+        cb.onchange = updateCategorySelectionCount;
+        row.appendChild(cb);
+        row.appendChild(document.createTextNode(" " + name));
+        const wrap = document.createElement("div");
+        wrap.appendChild(row);
+        categorySelector.appendChild(wrap);
+      });
+      updateCategorySelectionCount();
+    }
+
+    function updateCategorySelectionCount() {
+      const count = categorySelector.querySelectorAll("input[type=checkbox]:checked").length;
+      catCounterEl.textContent = count + " selected (max 5 used in game)";
+    }
+
+    function buildBoard(selectedNames) {
+      boardEl.innerHTML = "";
+      tileMap.clear();
+
+      if (!xmlDoc) return;
+      if (!allCategories || allCategories.length === 0) buildCategorySelector();
+      if (!allCategories || allCategories.length === 0) return;
+
+      const selectedUpper = (selectedNames || []).map(n => n.toUpperCase());
+      let candidates;
+      if (selectedUpper.length > 0) {
+        candidates = allCategories.filter(cat =>
+          selectedUpper.includes((cat.getAttribute("name") || "").toUpperCase())
+        );
+      } else {
+        candidates = allCategories;
+      }
+
+      if (candidates.length > 5) {
+        shuffle(candidates);
+        boardCategories = candidates.slice(0, 5);
+      } else {
+        boardCategories = candidates.slice(0, Math.min(5, candidates.length));
+      }
+
+      boardInfoEl.textContent = boardCategories.length + " categories in play";
+
+      // header row
+      boardCategories.forEach(cat => {
+        const div = document.createElement("div");
+        div.className = "cat";
+        div.textContent = cat.getAttribute("name") || "Category";
+        boardEl.appendChild(div);
+      });
+
+      values.forEach(val => {
+        boardCategories.forEach((cat, ci) => {
+          const cell = document.createElement("div");
+          cell.className = "tile";
+          cell.textContent = "$" + val;
+
+          const pool = cat.querySelector('pool[value="' + val + '"]');
+          if (!pool) {
+            cell.classList.add("used");
+          } else {
+            const qs = Array.from(pool.querySelectorAll("question"));
+            if (qs.length === 0) {
+              cell.classList.add("used");
+            } else {
+              const qNode = qs[Math.floor(Math.random() * qs.length)];
+              const tileId = "t_" + ci + "_" + val + "_" + Math.random().toString(36).slice(2);
+              tileMap.set(tileId, {
+                catName: cat.getAttribute("name") || "Category",
+                value: val,
+                qNode
+              });
+              cell.dataset.tid = tileId;
+              cell.onclick = () => openQuestion(tileId, cell);
+            }
+          }
+          boardEl.appendChild(cell);
+        });
+      });
+    }
+
+    function openQuestion(tileId, tileEl) {
+      if (tileEl && tileEl.classList.contains("used")) return;
+      const rec = tileMap.get(tileId);
+      if (!rec) return;
+      currentTile = { tileId, tileEl, rec };
+      answerRevealed = false;
+      inBonusRound = false;
+      bonusTiedPlayers = [];
+      clearTimers();
+      // Buzzer behavior
+      if (buzzerBehavior === "auto" || buzzerBehavior === "timed") {
+        if (socket) socket.emit("startQuestion"); // server handles timed delay if enabled
+        if (timedQuestionsEnabled) startQuestionTimer();
+        if (openBuzzersBtn) {
+          openBuzzersBtn.style.display = "none";
+          openBuzzersBtn.disabled = false;
+        }
+      } else {
+        if (openBuzzersBtn) {
+          openBuzzersBtn.style.display = "inline-block";
+          openBuzzersBtn.disabled = false;
+        }
+      }
+
+      qcat.textContent = rec.catName;
+      qvalue.textContent = "$" + rec.value;
+      qtext.textContent = nodeText(rec.qNode, "text");
+      qanswer.textContent = nodeText(rec.qNode, "answer");
+      answerBox.classList.add("hidden");
+      renderMediaFromQuestion(rec.qNode);
+
+      qPlayerSelect.innerHTML = "";
+      if (scoringMode === "first") {
+        const ph = document.createElement("option");
+        ph.value = "";
+        ph.textContent = "Waiting for buzzer...";
+        qPlayerSelect.appendChild(ph);
+      }
+      players.forEach(name => {
+        const opt = document.createElement("option");
+        opt.value = name;
+        opt.textContent = name;
+        qPlayerSelect.appendChild(opt);
+      });
+      if (scoringMode === "turn" && players.length > 0) {
+        if (lastScoredPlayer && players.includes(lastScoredPlayer)) {
+          qPlayerSelect.value = lastScoredPlayer;
+        } else {
+          qPlayerSelect.value = players[currentPlayerIdx % players.length];
+        }
+      }
+
+      if (!qdlg.open) qdlg.showModal();
+    }
+
+    function handleScore(isCorrect) {
+      if (!currentTile) return;
+      const name = qPlayerSelect.value;
+      if (!name) {
+        showToast("Select a player first.");
+        return;
+      }
+      const val = currentTile.rec.value || 0;
+      if (!(name in scores)) scores[name] = 0;
+      if (isCorrect) scores[name] += val;
+      else scores[name] = Math.max(0, scores[name] - val);
+      lastScoredPlayer = name;
+
+      if (!inBonusRound && currentTile.tileEl) {
+        currentTile.tileEl.classList.add("used");
+      }
+
+      if (scoringMode === "turn") {
+        const idx = players.indexOf(name);
+        if (idx !== -1) currentPlayerIdx = idx;
+      }
+
+      clearTimers();
+      if (socket) socket.emit("endQuestion");
+      qdlg.close();
+      renderPlayers();
+      savePlayersToStorage();
+      saveWinsToStorage();
+
+      if (inBonusRound) {
+        inBonusRound = false;
+        bonusTiedPlayers = [];
+        showWinner();
+      } else {
+        checkEnd();
+      }
+    }
+
+    function handleTimeout() {
+      if (!currentTile) return;
+      clearTimers();
+      if (socket) socket.emit("endQuestion");
+
+      const val = currentTile.rec.value || 0;
+      const name = qPlayerSelect.value;
+
+      if (scoringMode === "turn" && name) {
+        if (!(name in scores)) scores[name] = 0;
+        scores[name] = Math.max(0, scores[name] - val);
+      }
+
+      if (!inBonusRound && currentTile.tileEl) {
+        currentTile.tileEl.classList.add("used");
+      }
+
+      answerBox.classList.remove("hidden");
+      renderPlayers();
+      savePlayersToStorage();
+      saveWinsToStorage();
+
+      if (inBonusRound) {
+        inBonusRound = false;
+        bonusTiedPlayers = [];
+        showWinner();
+      } else {
+        checkEnd();
+      }
+    }
+
+    function checkEnd() {
+      const remaining = Array.from(boardEl.querySelectorAll(".tile")).filter(t => !t.classList.contains("used"));
+      if (remaining.length === 0) showWinner();
+    }
+
+
+    function showBonusAnimation(tiedPlayers, callback) {
+      if (!bonusOverlay) {
+        if (callback) callback();
+        return;
+      }
+      const sub = bonusOverlay.querySelector(".bonus-sub");
+      if (sub) {
+        if (tiedPlayers && tiedPlayers.length) {
+          sub.textContent = "Tie between " + tiedPlayers.join(", ");
+        } else {
+          sub.textContent = "Tie-breaker!";
+        }
+      }
+      bonusOverlay.classList.remove("hidden");
+      bonusOverlay.classList.add("show");
+      setTimeout(() => {
+        bonusOverlay.classList.remove("show");
+        bonusOverlay.classList.add("hidden");
+        if (callback) callback();
+      }, 1300);
+    }
+
+    function startBonusRound(tiedPlayers) {
+      showBonusAnimation(tiedPlayers, () => {
+        if (!bonusCategory) {
+          wTieNoteEl.textContent = "Tie detected, but no bonus category found. Resolve manually.";
+          if (!wdlg.open) wdlg.showModal();
+          return;
+        }
+
+        let qNode = null;
+        let value = 100;
+
+        const pools = Array.from(bonusCategory.querySelectorAll("pool"));
+        if (pools.length) {
+          const pool = pools[Math.floor(Math.random() * pools.length)];
+          const qs = Array.from(pool.querySelectorAll("question"));
+          if (!qs.length) {
+            wTieNoteEl.textContent = "Bonus category has no questions.";
+            if (!wdlg.open) wdlg.showModal();
+            return;
+          }
+          qNode = qs[Math.floor(Math.random() * qs.length)];
+          const valueAttr = parseInt(pool.getAttribute("value"), 10);
+          value = Number.isFinite(valueAttr) ? valueAttr : 100;
+        } else {
+          const qs = Array.from(bonusCategory.querySelectorAll("question"));
+          if (!qs.length) {
+            wTieNoteEl.textContent = "Bonus category has no questions.";
+            if (!wdlg.open) wdlg.showModal();
+            return;
+          }
+          qNode = qs[Math.floor(Math.random() * qs.length)];
+          value = 100;
+        }
+
+        currentTile = {
+          tileId: null,
+          tileEl: null,
+          rec: {
+            catName: bonusCategory.getAttribute("name") || "Bonus",
+            value,
+            qNode
+          }
+        };
+        inBonusRound = true;
+        bonusTiedPlayers = tiedPlayers.slice();
+        clearTimers();
+      // Buzzer behavior
+      if (buzzerBehavior === "auto" || buzzerBehavior === "timed") {
+        if (socket) socket.emit("startQuestion"); // server handles timed delay if enabled
+        if (timedQuestionsEnabled) startQuestionTimer();
+        if (openBuzzersBtn) {
+          openBuzzersBtn.style.display = "none";
+          openBuzzersBtn.disabled = false;
+        }
+      } else {
+        if (openBuzzersBtn) {
+          openBuzzersBtn.style.display = "inline-block";
+          openBuzzersBtn.disabled = false;
+        }
+      }
+
+        qcat.textContent = currentTile.rec.catName + " (Tie-breaker)";
+        qvalue.textContent = "Tie-breaker";
+        qtext.textContent = nodeText(qNode, "text");
+        qanswer.textContent = nodeText(qNode, "answer");
+        answerBox.classList.add("hidden");
+        renderMediaFromQuestion(qNode);
+
+        qPlayerSelect.innerHTML = "";
+        if (scoringMode === "first") {
+          const ph = document.createElement("option");
+          ph.value = "";
+          ph.textContent = "Waiting for buzzer...";
+          qPlayerSelect.appendChild(ph);
+        }
+        bonusTiedPlayers.forEach(name => {
+          const opt = document.createElement("option");
+          opt.value = name;
+          opt.textContent = name;
+          qPlayerSelect.appendChild(opt);
+        });
+        if (scoringMode === "turn" && bonusTiedPlayers.length > 0) {
+          qPlayerSelect.value = bonusTiedPlayers[0];
+        }
+
+        if (!qdlg.open) qdlg.showModal();
+        showToast("Bonus question for: " + bonusTiedPlayers.join(", "));
+      });
+    }
+
+    function showWinner() {
+      if (players.length === 0) {
+        showToast("No players.");
+        return;
+      }
+      let maxScore = -Infinity;
+      players.forEach(p => { maxScore = Math.max(maxScore, scores[p] || 0); });
+      const leaders = players.filter(p => (scores[p] || 0) === maxScore);
+
+      if (leaders.length > 1 && bonusCategory) {
+        startBonusRound(leaders);
+        return;
+      }
+
+      if (leaders.length === 1) {
+        const best = leaders[0];
+        wins[best] = (wins[best] || 0) + 1;
+        saveWinsToStorage();
+        wNameEl.textContent = best;
+        wScoreEl.textContent = "Final score: $" + (scores[best] || 0);
+        wWinsEl.textContent = "Lifetime wins: " + (wins[best] || 0);
+        wTieNoteEl.textContent = "";
+      } else {
+        wNameEl.textContent = leaders.join(", ");
+        wScoreEl.textContent = "Tied at $" + maxScore;
+        wWinsEl.textContent = "";
+        wTieNoteEl.textContent = "Tie and no bonus category. Resolve manually.";
+      }
+
+      finalBoardEl.innerHTML = "";
+      const sorted = [...players].sort((a, b) => (scores[b] || 0) - (scores[a] || 0));
+      sorted.forEach((p, idx) => {
+        const row = document.createElement("div");
+        row.className = "winner-row";
+        const left = document.createElement("span");
+        left.textContent = (idx + 1) + ". " + p;
+        const right = document.createElement("span");
+        right.textContent = "$" + (scores[p] || 0);
+        row.appendChild(left);
+        row.appendChild(right);
+        finalBoardEl.appendChild(row);
+      });
+
+      if (!wdlg.open) wdlg.showModal();
+      renderLeader();
+    }
+
+    function newGame() {
+      scores = {};
+      players.forEach(p => scores[p] = 0);
+      renderPlayers();
+      lastScoredPlayer = null;
+      inBonusRound = false;
+      bonusTiedPlayers = [];
+      clearTimers();
+      if (qdlg.open) qdlg.close();
+      if (wdlg.open) wdlg.close();
+
+      if (xmlDoc && lastSelectedCategoryNames && lastSelectedCategoryNames.length > 0) {
+        buildBoard(lastSelectedCategoryNames);
+      } else if (xmlDoc) {
+        buildBoard([]);
+      } else {
+        boardEl.innerHTML = "";
+        boardInfoEl.textContent = "Load XML and start game.";
+      }
+    }
+
+    function goToLobby() {
+      clearTimers();
+      if (qdlg.open) qdlg.close();
+      if (wdlg.open) wdlg.close();
+
+      scores = {};
+      players.forEach(p => { scores[p] = 0; });
+      renderPlayers();
+      savePlayersToStorage();
+
+      boardEl.innerHTML = "";
+      boardInfoEl.textContent = "Load XML and start game.";
+      lobbyScreen.style.display = "block";
+      gameArea.style.display = "none";
+    }
+
+    // Copy Link removed — players join through the main launcher only
+
+    function initSocket() {
+      if (typeof io === "undefined") return;
+      // Connect to game-specific namespace
+      const pathParts = window.location.pathname.split('/');
+      const gameId = pathParts[2]; // e.g., "jeopardy"
+      socket = io(gameId ? `/game/${gameId}` : '/');
+      socket.on("connect", () => {
+        socket.emit("registerHost");
+      });
+      socket.on("hostRegistered", () => {
+        // Push current buzzer settings to the server (for timed buzzer support)
+        socket.emit("setBuzzerSettings", { mode: buzzerBehavior, delaySeconds: timedBuzzerDelaySeconds });
+      });
+      socket.on("playersUpdated", names => {
+        joinedPlayers = names || [];
+        players = joinedPlayers.map(n => n.toUpperCase());
+        players.forEach(p => {
+          if (!(p in scores)) scores[p] = 0;
+          if (!(p in wins)) wins[p] = 0;
+        });
+
+        // Update used preset names
+        if (presetNamesEnabled) {
+          usedPresetNames = new Set(players.filter(p => presetNames.includes(p)));
+        }
+
+        renderPlayers();
+        savePlayersToStorage();
+        saveWinsToStorage();
+      });
+
+      // Detailed player update for host (includes keys for kick functionality)
+      socket.on("playersDetailedUpdate", playersData => {
+        playersDetailed = playersData || [];
+        renderLobbyPlayers();
+      });
+
+      // Host error messages
+      socket.on("hostError", ({ message }) => {
+        showToast(message || "An error occurred.");
+      });
+      socket.on("buzzWinner", ({ name }) => {
+        if (!name) return;
+        name = String(name || "").toUpperCase();
+        if (!players.includes(name)) {
+          players.push(name);
+          if (!(name in scores)) scores[name] = 0;
+          if (!(name in wins)) wins[name] = 0;
+          renderPlayers();
+          savePlayersToStorage();
+          saveWinsToStorage();
+        }
+        if (qPlayerSelect) {
+          let opt = Array.from(qPlayerSelect.options).find(o => o.value === name);
+          if (!opt) {
+            opt = document.createElement("option");
+            opt.value = name;
+            opt.textContent = name;
+            qPlayerSelect.appendChild(opt);
+          }
+          qPlayerSelect.value = name;
+        }
+        showToast(name + " buzzed in first!");
+      });
+
+
+      // Timed buzzer countdown events
+  socket.on("questionSelected", () => {
+          const disp = el("buzzerCountdownDisplay");
+          if (disp) {
+            disp.textContent = (buzzerBehavior === "timed") ? "Buzzer: waiting..." : "";
+          }
+        });
+
+        socket.on("buzzerCountdown", ({ remaining }) => {
+          const disp = el("buzzerCountdownDisplay");
+          if (!disp) return;
+          const r = parseInt(remaining, 10);
+          if (Number.isFinite(r) && r > 0) disp.textContent = "Buzzer in: " + r + "s";
+          else disp.textContent = "";
+        });
+
+        socket.on("questionStarted", () => {
+          const disp = el("buzzerCountdownDisplay");
+          if (disp) disp.textContent = "";
+        });
+
+        socket.on("questionEnded", () => {
+          const disp = el("buzzerCountdownDisplay");
+          if (disp) disp.textContent = "";
+        });
+
+        // Intro phase handlers
+        socket.on("introPhase", (data) => {
+          lobbyScreen.style.display = "none";
+          gameArea.style.display = "none";
+          introSection.classList.add("active");
+          startIntroAnimation(data.slides);
+        });
+
+        socket.on("introEnded", () => {
+          introSection.classList.remove("active");
+          clearIntroTimers();
+          buildBoard(lastSelectedCategoryNames);
+          gameArea.style.display = "block";
+        });
+
+    }
+
+      // --- UI wiring ---
+
+    document.getElementById("loadXmlBtn").onclick = () => {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = ".xml";
+
+      input.onchange = () => {
+        const file = input.files && input.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+
+        reader.onload = () => {
+          try {
+            const text = reader.result;
+            const parser = new DOMParser();
+
+            // Use 'text/xml' for best cross-browser behavior (incl. Safari)
+            const doc = parser.parseFromString(text, "text/xml");
+
+            // Safari sometimes injects <parsererror> even in a different namespace,
+            // so check by tag name instead of querySelector.
+            const errors = doc.getElementsByTagName("parsererror");
+            if (errors && errors.length > 0) {
+              const msg = errors[0].textContent || "";
+              console.error("XML parse error:", msg);
+              alert("Error parsing XML file. Check the console for details.");
+              return;
+            }
+
+            // Optional: sanity check for Jeopardy format
+            const cats = doc.getElementsByTagName("category");
+            if (!cats || !cats.length) {
+              console.warn("XML loaded but no <category> elements were found.");
+            }
+
+            xmlDoc = doc;
+            xmlNameEl.textContent = file.name || "Board";
+            buildCategorySelector();
+            boardInfoEl.textContent =
+              "XML loaded. Select categories and start game.";
+          } catch (e) {
+            console.error("Unexpected error reading XML:", e);
+            alert("Unable to read XML file. See console for details.");
+          }
+        };
+
+        reader.readAsText(file);
+      };
+
+      input.click();
+    };
+
+
+    async function autoLoadQuestionsXml() {
+      // Automatically load questions.xml from the same directory as index.html.
+      // Keeps "Load XML" as a fallback.
+      try {
+        const res = await fetch("/game/jeopardy/questions.xml", { cache: "no-store" });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const text = await res.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(text, "text/xml");
+
+        const errors = doc.getElementsByTagName("parsererror");
+        if (errors && errors.length > 0) {
+          const msg = errors[0].textContent || "";
+          console.error("questions.xml parse error:", msg);
+          throw new Error("XML parse error");
+        }
+
+        xmlDoc = doc;
+        xmlNameEl.textContent = "questions.xml";
+        buildCategorySelector();
+        boardInfoEl.textContent = "questions.xml loaded. Select categories and start game.";
+      } catch (e) {
+        console.warn("Auto-load questions.xml failed:", e);
+        boardInfoEl.textContent = "Place a questions.xml in the same folder as the game (or click Load XML).";
+      }
+    }
+
+
+    document.getElementById("newGameBtn").onclick = () => {
+      if (!xmlDoc) { alert("Load an XML first."); return; }
+      if (!confirm("Start a new game and reset scores?")) return;
+      newGame();
+    };
+
+    document.getElementById("backToLobbyBtn").onclick = () => goToLobby();
+
+    document.getElementById("returnToLauncherBtn").onclick = () => {
+      document.getElementById("returnToLauncherBtn").disabled = true;
+      socket.emit("host_return_to_menu");
+      const masterUrl = window.location.protocol + "//" + window.location.host + "/";
+      setTimeout(() => { window.location.href = masterUrl; }, 100);
+    };
+
+    document.getElementById("startGameBtn").onclick = () => {
+      if (!xmlDoc) { alert("Load an XML first."); return; }
+      const checked = Array.from(categorySelector.querySelectorAll("input[type=checkbox]:checked"));
+      if (checked.length < 5) { alert("Select at least 5 categories."); return; }
+      lastSelectedCategoryNames = checked.map(c => c.value);
+      // Show intro instead of immediately starting game
+      socket.emit("host_start_with_intro");
+    };
+
+    // --- Intro Animation System ---
+    const introSection = document.getElementById("introSection");
+    let introTimers = [];
+    let introSlidesVisible = { 1: false, 2: false, 3: false };
+
+    function clearIntroTimers() {
+      introTimers.forEach(t => clearTimeout(t));
+      introTimers = [];
+    }
+
+    function applyIntroVisibility() {
+      for (let i = 1; i <= 3; i++) {
+        const card = document.getElementById("introCard" + i);
+        const dot = document.getElementById("introDot" + i);
+        if (card) card.classList.toggle("visible", !!introSlidesVisible[i]);
+        if (dot) dot.classList.toggle("active", !!introSlidesVisible[i]);
+      }
+    }
+
+    function startIntroAnimation(slides) {
+      introSlidesVisible = { 1: false, 2: false, 3: false };
+      clearIntroTimers();
+
+      slides.forEach((slide, index) => {
+        const titleEl = document.getElementById("introTitle" + (index + 1));
+        const contentEl = document.getElementById("introContent" + (index + 1));
+        if (titleEl) titleEl.textContent = slide.title;
+        if (contentEl) contentEl.textContent = slide.content;
+      });
+
+      applyIntroVisibility();
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          introSlidesVisible[1] = true;
+          applyIntroVisibility();
+        });
+      });
+
+      introTimers.push(setTimeout(() => {
+        introSlidesVisible[2] = true;
+        applyIntroVisibility();
+      }, 1000));
+
+      introTimers.push(setTimeout(() => {
+        introSlidesVisible[3] = true;
+        applyIntroVisibility();
+      }, 2000));
+    }
+
+    document.getElementById("btnStartAfterIntro").onclick = () => {
+      if (socket) socket.emit("host_skip_intro");
+    };
+
+    document.getElementById("btnEndIntro").onclick = () => {
+      if (socket) socket.emit("host_skip_intro");
+      introSection.classList.remove("active");
+      clearIntroTimers();
+      lobbyScreen.style.display = "block";
+    };
+
+    document.getElementById("showWinnerBtn").onclick = () => showWinner();
+    document.getElementById("endGameBtn").onclick = () => { wdlg.close(); goToLobby(); };
+    document.getElementById("wclose").onclick = () => wdlg.close();
+
+    document.getElementById("qclose").onclick = () => {
+      clearTimers();
+      if (socket) socket.emit("endQuestion");
+      qdlg.close();
+    };
+    document.getElementById("revealAnswerBtn").onclick = () => {
+      answerBox.classList.remove("hidden");
+      answerRevealed = true;
+    };
+    document.getElementById("markCorrect").onclick = () => handleScore(true);
+    document.getElementById("markWrong").onclick = () => handleScore(false);
+    document.getElementById("skipQuestionBtn").onclick = () => {
+      if (!currentTile) return;
+      if (currentTile.tileEl && !inBonusRound) currentTile.tileEl.classList.add("used");
+      clearTimers();
+      if (socket) socket.emit("endQuestion");
+      qdlg.close();
+      if (inBonusRound) {
+        inBonusRound = false;
+        bonusTiedPlayers = [];
+        showWinner();
+      } else {
+        checkEnd();
+      }
+    };
+
+    document.getElementById("selectAllCatsBtn").onclick = () => {
+      categorySelector.querySelectorAll("input[type=checkbox]").forEach(cb => cb.checked = true);
+      updateCategorySelectionCount();
+    };
+    document.getElementById("deselectAllCatsBtn").onclick = () => {
+      categorySelector.querySelectorAll("input[type=checkbox]").forEach(cb => cb.checked = false);
+      updateCategorySelectionCount();
+    };
+
+    // copyLinkBtn handler removed — players join through the main launcher only
+
+    // --- Settings dialog wiring ---
+    const settingsCloseBtn = el("settingsCloseBtn");
+    const settingsTimedEl = el("settingsTimed");
+    const settingsTimeInputEl = el("settingsTimeInput");
+    const settingsThemeEl = el("settingsTheme");
+    const settingsResetWinsBtn = el("settingsResetWinsBtn");
+    const timedBuzzSettingsEl = el("timedBuzzSettings");
+    const settingsBuzzDelayInputEl = el("settingsBuzzDelayInput");
+
+    function syncSettingsDialog() {
+      const scoreRadio = document.querySelector('input[name="settingsScoreMode"][value="' + scoringMode + '"]');
+      if (scoreRadio) scoreRadio.checked = true;
+
+      if (settingsTimedEl) settingsTimedEl.checked = timedQuestionsEnabled;
+      if (settingsTimeInputEl) {
+        settingsTimeInputEl.value = String(questionTimeSeconds);
+      }
+
+      const buzzValue = buzzerBehavior || "auto";
+      const buzzRadio = document.querySelector('input[name="settingsBuzzMode"][value="' + buzzValue + '"]');
+      if (buzzRadio) buzzRadio.checked = true;
+
+      const timedWrap = el("timedBuzzSettings");
+      const delayInput = el("settingsBuzzDelayInput");
+      if (delayInput) delayInput.value = String(timedBuzzerDelaySeconds);
+      if (timedWrap) timedWrap.style.display = (buzzValue === "timed") ? "block" : "none";
+
+      if (settingsThemeEl) {
+        settingsThemeEl.checked = (themeMode === "light");
+      }
+
+      if (settingsPresetNamesEnabled) {
+        settingsPresetNamesEnabled.checked = presetNamesEnabled;
+        if (presetNamesSection) {
+          presetNamesSection.style.display = presetNamesEnabled ? "block" : "none";
+        }
+        renderPresetNamesList();
+      }
+    }
+
+    function applySettingsFromDialog() {
+      const scoreSel = document.querySelector('input[name="settingsScoreMode"]:checked');
+      if (scoreSel) scoringMode = scoreSel.value;
+
+      if (settingsTimedEl) timedQuestionsEnabled = settingsTimedEl.checked;
+      if (settingsTimeInputEl) {
+        let v = parseInt(settingsTimeInputEl.value, 10);
+        if (!Number.isFinite(v) || v <= 0) v = 20;
+        if (v > 600) v = 600;
+        questionTimeSeconds = v;
+        settingsTimeInputEl.value = String(questionTimeSeconds);
+      }
+
+      const buzzSel = document.querySelector('input[name="settingsBuzzMode"]:checked');
+      buzzerBehavior = (buzzSel && buzzSel.value) ? buzzSel.value : "auto";
+
+      const timedWrap = el("timedBuzzSettings");
+      if (timedWrap) timedWrap.style.display = (buzzerBehavior === "timed") ? "block" : "none";
+
+      const delayInput = el("settingsBuzzDelayInput");
+      if (buzzerBehavior === "timed" && delayInput) {
+        let dv = parseInt(delayInput.value, 10);
+        if (!Number.isFinite(dv) || dv < 0) dv = 0;
+        if (dv > 60) dv = 60;
+        timedBuzzerDelaySeconds = dv;
+        delayInput.value = String(timedBuzzerDelaySeconds);
+      }
+
+      if (socket) socket.emit("setBuzzerSettings", { mode: buzzerBehavior, delaySeconds: timedBuzzerDelaySeconds });
+
+      if (settingsThemeEl) {
+        themeMode = settingsThemeEl.checked ? "light" : "dark";
+        document.body.classList.toggle("light-mode", themeMode === "light");
+      }
+
+      if (settingsPresetNamesEnabled) {
+        presetNamesEnabled = settingsPresetNamesEnabled.checked;
+        // Send preset names settings to server
+        if (socket) {
+          socket.emit("setPresetNames", { enabled: presetNamesEnabled, names: presetNames });
+        }
+      }
+    }
+
+    function refreshTimedBuzzVisibility() {
+      const buzzSel = document.querySelector('input[name="settingsBuzzMode"]:checked');
+      const mode = (buzzSel && buzzSel.value) ? buzzSel.value : (buzzerBehavior || "auto");
+      if (timedBuzzSettingsEl) timedBuzzSettingsEl.style.display = (mode === "timed") ? "block" : "none";
+    }
+
+    // Show/hide timed buzzer delay input live while the dialog is open
+    Array.from(document.querySelectorAll('input[name="settingsBuzzMode"]')).forEach(r => {
+      r.addEventListener("change", refreshTimedBuzzVisibility);
+    });
+
+    // --- Preset Names Management ---
+    const settingsPresetNamesEnabled = el("settingsPresetNamesEnabled");
+    const presetNamesSection = el("presetNamesSection");
+    const presetNameInput = el("presetNameInput");
+    const presetNamesList = el("presetNamesList");
+    const presetNamesError = el("presetNamesError");
+
+    function renderPresetNamesList() {
+      if (!presetNamesList) return;
+      presetNamesList.innerHTML = "";
+
+      if (presetNames.length === 0) {
+        presetNamesList.innerHTML = '<div class="text-sm muted" style="padding:4px;">No names added yet.</div>';
+        return;
+      }
+
+      presetNames.forEach((name, idx) => {
+        const row = document.createElement("div");
+        row.style.cssText = "display:flex; justify-content:space-between; align-items:center; padding:4px 6px; margin-bottom:2px; background:#020617; border-radius:6px;";
+
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = name;
+        nameSpan.style.fontSize = "13px";
+
+        const removeBtn = document.createElement("button");
+        removeBtn.textContent = "Remove";
+        removeBtn.className = "small secondary";
+        removeBtn.style.cssText = "padding:2px 8px; font-size:11px;";
+        removeBtn.onclick = () => {
+          presetNames.splice(idx, 1);
+          renderPresetNamesList();
+          if (presetNamesError) presetNamesError.textContent = "";
+        };
+
+        row.appendChild(nameSpan);
+        row.appendChild(removeBtn);
+        presetNamesList.appendChild(row);
+      });
+    }
+
+    function addPresetName() {
+      if (!presetNameInput) return;
+      const rawName = presetNameInput.value.trim();
+
+      if (!rawName) {
+        if (presetNamesError) presetNamesError.textContent = "";
+        return;
+      }
+
+      // Validate name (letters and spaces only)
+      if (!/^[A-Za-z ]+$/.test(rawName)) {
+        if (presetNamesError) presetNamesError.textContent = "Special characters are not allowed.";
+        return;
+      }
+
+      const normalizedName = rawName.toUpperCase();
+
+      // Check for duplicates
+      if (presetNames.some(n => n === normalizedName)) {
+        if (presetNamesError) presetNamesError.textContent = "This name is already added.";
+        return;
+      }
+
+      presetNames.push(normalizedName);
+      presetNameInput.value = "";
+      if (presetNamesError) presetNamesError.textContent = "";
+      renderPresetNamesList();
+    }
+
+    if (presetNameInput) {
+      presetNameInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          addPresetName();
+        }
+      });
+    }
+
+    if (settingsPresetNamesEnabled) {
+      settingsPresetNamesEnabled.addEventListener("change", () => {
+        if (presetNamesSection) {
+          presetNamesSection.style.display = settingsPresetNamesEnabled.checked ? "block" : "none";
+        }
+      });
+    }
+
+    if (settingsBtn && settingsDialog && settingsCloseBtn) {
+      settingsBtn.onclick = () => {
+        syncSettingsDialog();
+        refreshTimedBuzzVisibility();
+        if (!settingsDialog.open) settingsDialog.showModal();
+      };
+      settingsCloseBtn.onclick = () => {
+        applySettingsFromDialog();
+        settingsDialog.close();
+      };
+    }
+
+    if (settingsResetWinsBtn) {
+      settingsResetWinsBtn.onclick = () => {
+        if (!confirm("Reset all lifetime wins?")) return;
+        wins = {};
+        players.forEach(p => { wins[p] = 0; });
+        saveWinsToStorage();
+        renderPlayers();
+        renderLobbyPlayers();
+        showToast("All lifetime wins reset.");
+      };
+    }
+
+    if (openBuzzersBtn) {
+      openBuzzersBtn.onclick = () => {
+        if (openBuzzersBtn.disabled) return;
+        openBuzzersBtn.disabled = true;
+        if (socket) socket.emit("startQuestion");
+        if (timedQuestionsEnabled) startQuestionTimer();
+      };
+    }
+
+    // --- init ---
+    loadPlayersFromStorage();
+    renderPlayers();
+    autoLoadQuestionsXml();
+    initSocket();
+  </script>
+</body>
+
+</html>

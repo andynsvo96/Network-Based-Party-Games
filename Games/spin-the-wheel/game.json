@@ -1,0 +1,8 @@
+{
+  "id": "spin-the-wheel",
+  "name": "SPIN THE WHEEL",
+  "minPlayers": 0,
+  "maxPlayers": 20,
+  "description": "Spin a weighted wheel to select random words!",
+  "icon": "icon.png"
+}

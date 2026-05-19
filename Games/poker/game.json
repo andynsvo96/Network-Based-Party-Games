@@ -1,0 +1,8 @@
+{
+  "id": "poker",
+  "name": "Poker",
+  "minPlayers": 2,
+  "maxPlayers": 8,
+  "description": "Texas Hold'em style poker",
+  "icon": "icon.png"
+}

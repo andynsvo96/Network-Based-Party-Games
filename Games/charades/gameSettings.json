@@ -1,0 +1,35 @@
+{
+  "selectedCategories": [
+    "location",
+    "object",
+    "person",
+    "action"
+  ],
+  "soundEnabled": true,
+  "soundTimerTick": true,
+  "soundVolume": 0.8,
+  "charadeLinesTimer": 10,
+  "charadeLinesWinTarget": 2,
+  "charadesLinesContinuousTieBreaker": true,
+  "headsUpTimer": 5,
+  "headsUpWinTarget": 10,
+  "headsUpAllowSkip": true,
+  "pictionaryTimer": 60,
+  "pictionaryPoints": [
+    3,
+    2,
+    1
+  ],
+  "pictionaryHintsEnabled": true,
+  "pictionaryHintInterval": 10,
+  "classicTimer": 20,
+  "classicWinTarget": 10,
+  "classicMode": "individual",
+  "classicPenalty": true,
+  "classicSoloHintsEnabled": true,
+  "classicSoloHintInterval": 10,
+  "classicContinuousTieBreaker": true,
+  "usePresetNames": false,
+  "presetNames": [],
+  "charadeLinesPrep": 10
+}

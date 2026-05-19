@@ -1,0 +1,8 @@
+{
+  "id": "jeopardy",
+  "name": "Jeopardy",
+  "minPlayers": 2,
+  "maxPlayers": 20,
+  "description": "Classic trivia game show with categories and point values",
+  "icon": "icon.png"
+}

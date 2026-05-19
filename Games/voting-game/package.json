@@ -1,0 +1,20 @@
+{
+  "name": "voting-game-server",
+  "version": "1.0.0",
+  "description": "Local IP Multiplayer Voting Game",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [
+    "socket.io",
+    "express",
+    "game"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.19.2",
+    "socket.io": "^4.7.5"
+  }
+}

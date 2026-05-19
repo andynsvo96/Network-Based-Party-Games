@@ -1,0 +1,2644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mafia Party Game – Player</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --bg: #020617;
+      --bg-alt: #0f172a;
+      --card: #020617;
+      --accent: #f59e0b;
+      --accent-soft: rgba(245, 158, 11, 0.18);
+      --danger: #ef4444;
+      --success: #22c55e;
+      --muted: #9ca3af;
+      --border-subtle: rgba(55, 65, 81, 0.85);
+      --text: #e5e7eb;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: radial-gradient(circle at top, #111827, #020617 55%);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+        "Segoe UI", sans-serif;
+    }
+
+    body {
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+    }
+
+    #app {
+      width: 100%;
+      max-width: 1100px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    header {
+      background: rgba(15, 23, 42, 0.95);
+      border-radius: 16px;
+      padding: 10px 14px;
+      box-shadow: 0 14px 28px rgba(0, 0, 0, 0.55);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 22px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #e5e7eb;
+    }
+
+    .header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    #playerNameLabel {
+      font-size: 16px;
+      color: var(--muted);
+    }
+
+    .header-row .badge {
+      font-size: 13px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.75);
+      background: rgba(15, 23, 42, 0.9);
+    }
+
+    .badge.phase {
+      border-color: rgba(59, 130, 246, 0.9);
+      color: #bfdbfe;
+      background: rgba(15, 23, 42, 0.95);
+    }
+
+    .badge.role {
+      border-color: rgba(156, 163, 175, 0.9);
+      color: #e5e7eb;
+    }
+
+    .badge.role.mafia {
+      border-color: rgba(248, 113, 113, 0.9);
+      color: #fecaca;
+    }
+
+    .badge.role.doctor {
+      border-color: rgba(34, 197, 94, 0.9);
+      color: #bbf7d0;
+    }
+
+    .badge.role.detective {
+      border-color: rgba(59, 130, 246, 0.9);
+      color: #bfdbfe;
+    }
+
+    .badge.role.boxer {
+      border-color: rgba(168, 85, 247, 0.9);
+      color: #e9d5ff;
+    }
+
+    .badge.role.civilian {
+      border-color: rgba(234, 179, 8, 0.9);
+      color: #fde68a;
+    }
+
+
+    .subtitle {
+      margin-top: 4px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      min-height: 0;
+    }
+
+    #mainContent {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .card {
+      background: linear-gradient(
+          135deg,
+          rgba(15, 23, 42, 0.96),
+          rgba(15, 23, 42, 0.92)
+        ),
+        radial-gradient(circle at top left, rgba(248, 250, 252, 0.04), transparent);
+      border-radius: 18px;
+      padding: 14px 16px 14px;
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.8);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .card h2 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #f9fafb;
+    }
+
+    .card h3 {
+      margin: 0;
+      font-size: 16px;
+      color: #e5e7eb;
+    }
+
+    p {
+      margin: 2px 0;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    ul {
+      margin: 4px 0 4px 18px;
+      padding: 0;
+    }
+
+    li {
+      font-size: 13px;
+      margin-bottom: 2px;
+    }
+
+    .label {
+      margin-top: 8px;
+      margin-bottom: 4px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #d1d5db;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    input[type="text"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 8px 9px;
+      border-radius: 10px;
+      border: 1px solid rgba(75, 85, 99, 0.95);
+      background: rgba(15, 23, 42, 0.95);
+      color: #e5e7eb;
+      font-size: 14px;
+      outline: none;
+    }
+
+    input[type="text"]:focus,
+    select:focus,
+    textarea:focus {
+      border-color: rgba(248, 250, 252, 0.5);
+      box-shadow: 0 0 0 1px rgba(248, 250, 252, 0.3);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    button {
+      border-radius: 999px;
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      background: rgba(15, 23, 42, 0.9);
+      color: #e5e7eb;
+      padding: 7px 12px;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: transform 0.12s ease, background 0.12s ease,
+        border-color 0.12s ease, opacity 0.12s ease;
+      width: auto;
+    }
+
+    button.primary {
+      background: #facc15;
+      color: #020617;
+      border: none;
+      width: 100%;
+    }
+
+    button.secondary {
+      background: rgba(15, 23, 42, 0.96);
+      color: var(--text);
+      border: 1px solid rgba(148, 163, 184, 0.9);
+      width: 100%;
+    }
+
+    button.danger {
+      background: rgba(239, 68, 68, 0.16);
+      color: #fecaca;
+      border-color: rgba(248, 113, 113, 0.9);
+    }
+
+    button.small {
+      padding: 6px 10px;
+      font-size: 13px;
+    }
+
+    button.full {
+      width: 100%;
+    }
+
+    button:hover:not(:disabled) {
+      transform: translateY(-1px);
+      background: rgba(31, 41, 55, 0.96);
+      border-color: rgba(148, 163, 184, 1);
+    }
+
+    button.primary:hover:not(:disabled) {
+      background: #fbbf24;
+    }
+
+    button.danger:hover:not(:disabled) {
+      background: rgba(248, 113, 113, 0.25);
+    }
+
+    button:disabled {
+      opacity: 0.4;
+      cursor: default;
+      box-shadow: none;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+
+    .btn-row > button {
+      flex: 1;
+    }
+
+    .subtle {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .hint {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .results-points {
+      margin-top: 12px;
+      font-size: 14px;
+    }
+
+    .results-points ul {
+      margin: 6px 0 0 18px;
+      padding: 0;
+    }
+
+    .results-points li {
+      margin-bottom: 2px;
+    }
+
+    .error {
+      margin-top: 8px;
+      padding: 6px 10px;
+      border-radius: 10px;
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.6);
+      font-size: 13px;
+      color: #fecaca;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      border: 1px solid rgba(75, 85, 99, 0.85);
+      background: rgba(15, 23, 42, 0.96);
+    }
+
+    .status-pill.alive {
+      border-color: rgba(34, 197, 94, 0.9);
+      color: #bbf7d0;
+    }
+
+    .status-pill.dead {
+      border-color: rgba(239, 68, 68, 0.9);
+      color: #fecaca;
+    }
+
+    .status-pill.pending {
+      border-color: rgba(234, 179, 8, 0.9);
+      color: #fef3c7;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .info-row span strong {
+      color: #e5e7eb;
+    }
+
+    .night-summary {
+      margin-top: 4px;
+      padding: 6px 8px;
+      border-radius: 10px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px dashed rgba(55, 65, 81, 0.9);
+      font-size: 13px;
+    }
+
+    .list {
+      margin-top: 4px;
+      padding-left: 18px;
+      font-size: 13px;
+    }
+
+    .list li {
+      margin-bottom: 1px;
+    }
+
+    .name-input-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .name-input-row input {
+      flex: 2;
+    }
+    .name-input-row select {
+      flex: 2;
+    }
+
+    /* Preset name dropdown should stand out more than normal inputs */
+    .preset-select {
+      border: 1px solid rgba(245, 158, 11, 0.85);
+      background: linear-gradient(
+        135deg,
+        rgba(245, 158, 11, 0.22),
+        rgba(15, 23, 42, 0.98)
+      );
+      box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.12),
+        0 12px 26px rgba(0, 0, 0, 0.65);
+      font-weight: 600;
+      color: #fef3c7;
+    }
+
+    .preset-select:focus {
+      border-color: rgba(245, 158, 11, 0.95);
+      box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.32),
+        0 16px 34px rgba(0, 0, 0, 0.72);
+    }
+
+    .preset-select:disabled {
+      opacity: 0.6;
+      filter: saturate(0.75);
+      cursor: not-allowed;
+    }
+
+
+/* Ensure dropdown items remain readable when the native menu opens (Chrome/Windows can inherit light text) */
+.preset-select option {
+  background: #f3f4f6;
+  color: #111827;
+}
+.preset-select option:checked {
+  background: #e5e7eb;
+  color: #111827;
+}
+.preset-select option:disabled {
+  color: #6b7280;
+}
+
+
+    .name-input-row button {
+      flex: 1;
+    }
+
+    .timeline {
+      margin-top: 8px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      background: rgba(15, 23, 42, 0.98);
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      max-height: 260px;
+      overflow-y: auto;
+    }
+
+    .timeline h3 {
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+
+    .timeline-entry {
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+
+    .timeline-entry span {
+      font-weight: 600;
+    }
+
+    .badge-small {
+      display: inline-flex;
+      padding: 2px 6px;
+      border-radius: 999px;
+      font-size: 11px;
+      border: 1px solid rgba(75, 85, 99, 0.85);
+      color: var(--muted);
+      margin-left: 4px;
+    }
+
+    .badge-small.mafia {
+      border-color: rgba(248, 113, 113, 0.9);
+      color: #fecaca;
+    }
+
+    .badge-small.doctor {
+      border-color: rgba(34, 197, 94, 0.9);
+      color: #bbf7d0;
+    }
+
+    .badge-small.detective {
+      border-color: rgba(59, 130, 246, 0.9);
+      color: #bfdbfe;
+    }
+    .badge.role.civilian {
+      border-color: rgba(234, 179, 8, 0.9);
+      color: #fde68a;
+    }
+
+    .vote-options {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .vote-option {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 9px;
+      border-radius: 10px;
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      background: rgba(15, 23, 42, 0.96);
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.12s ease, border-color 0.12s ease;
+    }
+
+    .vote-option.selected {
+      background: rgba(248, 250, 252, 0.06);
+      border-color: rgba(248, 250, 252, 0.7);
+    }
+
+    .vote-option.disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+
+    .vote-option span.name {
+      font-weight: 500;
+      color: #e5e7eb;
+    }
+
+    .vote-option span.meta {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .timer {
+      margin-top: 6px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    \.timer strong {
+      color: #e5e7eb;
+    }
+
+    @keyframes timerFlash {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.25; }
+    }
+
+    .timer.critical {
+      color: var(--danger);
+      animation: timerFlash 1s linear infinite;
+    }
+
+    .timer.critical strong {
+      color: var(--danger);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .timer.critical {
+        animation: none;
+      }
+    }
+
+    .day-number {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .night-hint {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    .investigation-log {
+      margin-top: 8px;
+      padding: 6px 8px;
+      border-radius: 10px;
+      background: rgba(15, 23, 42, 0.96);
+      border: 1px dashed rgba(59, 130, 246, 0.7);
+      font-size: 13px;
+    }
+
+    .investigation-log h3 {
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 6px;
+      border-radius: 999px;
+      font-size: 11px;
+      border: 1px solid rgba(75, 85, 99, 0.85);
+      color: var(--muted);
+    }
+
+    .pill.good {
+      border-color: rgba(34, 197, 94, 0.9);
+      color: #bbf7d0;
+    }
+
+    .pill.bad {
+      border-color: rgba(239, 68, 68, 0.9);
+      color: #fecaca;
+    }
+
+    @media (max-width: 720px) {
+      header h1 {
+        font-size: 18px;
+      }
+
+      .card {
+        padding: 12px 12px 12px;
+      }
+
+      .card h2 {
+        font-size: 18px;
+      }
+
+      p,
+      li {
+        font-size: 13px;
+      }
+
+      button {
+        font-size: 13px;
+      }
+
+      .header-row {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+
+    /* Utility text colors */
+    .text-yellow { color: #facc15; font-weight: 700; }
+    .text-red { color: var(--danger); font-weight: 700; }
+    .text-green { color: var(--success); font-weight: 700; }
+    .results-name { color: #facc15; font-weight: 800; }
+    .num-pos { color: var(--success); font-weight: 700; }
+    .num-neg { color: var(--danger); font-weight: 700; }
+
+    .playerStatusCircle {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+    .playerStatusCircle.online { background: #10b981; }
+    .playerStatusCircle.offline {
+      background: transparent;
+      border: 2px solid #6b7280;
+    }
+
+  </style>
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1>Mafia – Player</h1>
+      <div class="header-row">
+        <div id="playerNameLabel"></div>
+        <div style="display:flex; gap:6px; align-items:center;">
+          <span class="badge phase" id="phaseBadge">LOBBY</span>
+          <span class="badge role" id="roleBadge">No Role</span>
+        </div>
+      </div>
+      <div class="subtitle" id="subtitle"></div>
+    </header>
+
+    <main id="mainContent">
+      <!-- filled by JS -->
+    </main>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    // ---------- Storage Manager (Private Browsing Support) ----------
+    const StorageManager = {
+      _memoryStore: {},
+      _useMemory: false,
+      init() {
+        try {
+          localStorage.setItem('_test', '1');
+          localStorage.removeItem('_test');
+          this._useMemory = false;
+        } catch (e) {
+          console.warn('localStorage unavailable (private browsing?), using in-memory storage');
+          this._useMemory = true;
+        }
+      },
+      setItem(key, value) {
+        if (this._useMemory) {
+          this._memoryStore[key] = value;
+        } else {
+          try { localStorage.setItem(key, value); }
+          catch (e) { this._memoryStore[key] = value; }
+        }
+      },
+      getItem(key) {
+        if (this._useMemory) {
+          return this._memoryStore[key] || null;
+        } else {
+          try { return localStorage.getItem(key); }
+          catch (e) { return this._memoryStore[key] || null; }
+        }
+      },
+      removeItem(key) {
+        if (this._useMemory) {
+          delete this._memoryStore[key];
+        } else {
+          try { localStorage.removeItem(key); }
+          catch (e) { delete this._memoryStore[key]; }
+        }
+      }
+    };
+    StorageManager.init();
+
+    const PHASES = {
+      LOBBY: "lobby",
+      INTRO: "intro",
+      NIGHT: "night",
+      DAY: "day",
+      VOTE: "vote",
+      RESULTS: "results",
+    };
+
+    let socket;
+    let playerId = null;
+    let playerName = "";
+
+// Persisted identity so players can refresh/rejoin the lobby without losing lifetime points
+const PLAYER_UID_KEY = "mafia_player_uid";
+const PLAYER_NAME_KEY = "mafia_player_name";
+let playerUid = null;
+
+// Check for launcher credentials in URL params
+const urlParams = new URLSearchParams(window.location.search);
+const launcherKey = urlParams.get("launcherKey");
+const launcherName = urlParams.get("launcherName");
+
+// If coming from launcher, store credentials for auto-join
+if (launcherKey) {
+  try { StorageManager.setItem(PLAYER_UID_KEY, launcherKey); } catch (e) {}
+}
+if (launcherName) {
+  try { StorageManager.setItem(PLAYER_NAME_KEY, launcherName.toUpperCase()); } catch (e) {}
+}
+
+try {
+  playerUid = StorageManager.getItem(PLAYER_UID_KEY);
+  if (!playerUid) {
+    // crypto.randomUUID is supported in modern browsers; fallback included
+    playerUid =
+      (window.crypto && window.crypto.randomUUID && window.crypto.randomUUID()) ||
+      "uid_" + Math.random().toString(36).slice(2) + Date.now().toString(36);
+    StorageManager.setItem(PLAYER_UID_KEY, playerUid);
+  }
+
+  const storedName = StorageManager.getItem(PLAYER_NAME_KEY);
+  if (storedName && !playerName) {
+    playerName = storedName;
+  }
+} catch (e) {
+  // localStorage unavailable (private mode, etc.) — proceed without persistence
+}
+    let role = null;
+    let alive = true;
+    let points = 0;
+    let pointsDetail = {
+      mafia: 0,
+      civilian: 0,
+      doctor: 0,
+      detective: 0,
+      lost: 0,
+      total: 0,
+    };
+
+    let currentPhase = PHASES.LOBBY;
+    let currentDay = 0;
+    let currentNight = 0;
+    let currentSettings = {
+  mafiaCanSkipKill: false,
+  detectiveRememberMafia: true,
+  anonymousVoting: false,
+  timedVote: false,
+  voteDurationSeconds: 60,
+};
+
+    let allPlayers = [];
+    let mafiaPeers = [];
+    let mafiaVoteSignals = [];
+    let aliveMafiaCount = 0;
+    let mafiaCoordEnabled = false;
+    let mafiaHasVoted = false;
+    let lastMafiaVotedTargetId = null;
+    let detectiveMemory = [];
+    let detectiveLastResult = null;
+    let detectiveCancelMessage = null;
+    let detectiveCancelHistory = [];
+    let nightTargets = [];
+    let nightStatus = [];
+    let nightSummary = null;
+    let daySummary = null;
+    let voteOptions = [];
+    let voteStatus = [];
+    let voteTimer = null;
+    let voteRemainingSeconds = 0;
+
+    let nightActionLocked = false;
+    let nightSelection = {
+      targetId: null, // mafia/doctor/detective
+      skipKill: false, // mafia skip
+      suspectId: null, // civilian note
+      trustId: null, // civilian note
+    };
+
+    let voteActionLocked = false;
+    let voteSelection = null;
+
+    let lastError = null;
+    let lastGameSummary = null;
+
+    function $(id) {
+      return document.getElementById(id);
+    }
+
+    function normalizePointsDetail(raw, fallbackTotal) {
+      const base = {
+        mafia: 0,
+        civilian: 0,
+        doctor: 0,
+        detective: 0,
+        lost: 0,
+        total: 0,
+      };
+      if (!raw) {
+        base.total = typeof fallbackTotal === "number" ? fallbackTotal : 0;
+        return base;
+      }
+      const result = Object.assign({}, base, raw);
+      if (typeof result.total !== "number") {
+        const gained =
+          (result.mafia || 0) +
+          (result.civilian || 0) +
+          (result.doctor || 0) +
+          (result.detective || 0);
+        const lost = result.lost || 0;
+        result.total =
+          typeof fallbackTotal === "number"
+            ? fallbackTotal
+            : gained - lost;
+      }
+      return result;
+    }
+
+    function isPlayerDead(p) {
+      if (!p) return false;
+      if (p.alive === false) return true;
+      if (p.isAlive === false) return true;
+      if (p.dead === true || p.isDead === true || p.eliminated === true) return true;
+
+      const status = (p.status || p.state || "").toString().toLowerCase();
+      if (status === "dead" || status === "eliminated" || status === "killed") return true;
+
+      return false;
+    }
+
+    function isPlayerAlive(p) {
+      if (!p) return false;
+      if (isPlayerDead(p)) return false;
+
+      // Explicitly alive
+      if (p.alive === true || p.isAlive === true) return true;
+
+      // If the server doesn't send alive flags, assume alive unless explicitly dead.
+      const hasAnyLifeFlag =
+        p.alive !== undefined ||
+        p.isAlive !== undefined ||
+        p.dead !== undefined ||
+        p.isDead !== undefined ||
+        p.eliminated !== undefined ||
+        p.status !== undefined ||
+        p.state !== undefined;
+
+      return !hasAnyLifeFlag;
+    }
+
+    function filteredAlivePlayers() {
+      return (allPlayers || []).filter((p) => isPlayerAlive(p));
+    }
+
+    function filteredTargetsForMafia() {
+      const isMafia = role === "mafia";
+      if (!isMafia) return [];
+      const mafiaIds = new Set(
+        mafiaPeers.map((p) => p.id).concat([playerId]).filter(Boolean)
+      );
+      return filteredAlivePlayers().filter((p) => !mafiaIds.has(p.id));
+    }
+
+    function filteredTargetsForDoctor() {
+      if (role !== "doctor") return [];
+      return filteredAlivePlayers();
+    }
+
+    function filteredTargetsForDetective() {
+      if (role !== "detective") return [];
+      return filteredAlivePlayers().filter((p) => p.id !== playerId);
+    }
+
+    function allPlayersForCivilianNotes() {
+      return filteredAlivePlayers();
+    }
+
+    function updateHeader() {
+      const nameLabel = $("playerNameLabel");
+      const phaseBadge = $("phaseBadge");
+      const roleBadge = $("roleBadge");
+
+      // Apply role color class for readability
+      roleBadge.className = "badge role";
+      const subtitle = $("subtitle");
+
+      nameLabel.textContent = playerName
+        ? "You are: " + playerName
+        : "Enter your name to join.";
+
+      phaseBadge.textContent =
+        currentPhase === PHASES.LOBBY
+          ? "LOBBY"
+          : currentPhase === PHASES.INTRO
+          ? "INTRO"
+          : currentPhase === PHASES.NIGHT
+          ? "NIGHT"
+          : currentPhase === PHASES.DAY
+          ? "DAY"
+          : currentPhase === PHASES.VOTE
+          ? "VOTE"
+          : "RESULTS";
+
+      if (!role) {
+        roleBadge.textContent = "No Role yet";
+      } else {
+        const r =
+          role === "mafia"
+            ? "Mafia"
+            : role === "doctor"
+            ? "Doctor"
+            : role === "detective"
+            ? "Detective"
+            : role === "boxer"
+            ? "Boxer"
+            : "Civilian";
+        roleBadge.textContent = r;
+        roleBadge.classList.add(role);
+      }
+
+      if (currentPhase === PHASES.LOBBY) {
+        subtitle.textContent =
+          "Join with a unique name and wait for the host to start the game.";
+      } else if (currentPhase === PHASES.INTRO) {
+        subtitle.textContent =
+          "Introduction – read carefully to understand how to play.";
+      } else if (currentPhase === PHASES.NIGHT) {
+        subtitle.textContent = alive
+          ? "Night – perform your secret action on this screen."
+          : "Night – you are dead. Watch the game unfold.";
+      } else if (currentPhase === PHASES.DAY) {
+        subtitle.textContent = alive
+          ? "Day – listen and discuss. Voting comes next."
+          : "Day – you are dead. You can’t vote anymore.";
+      } else if (currentPhase === PHASES.VOTE) {
+        subtitle.textContent = alive
+          ? "Vote – choose who you think is Mafia, or skip."
+          : "Vote – you are dead and cannot vote.";
+      } else if (currentPhase === PHASES.RESULTS) {
+        subtitle.textContent = "Round over – see the outcome and your points.";
+      }
+    }
+
+    function renderError(container) {
+      if (!lastError) return;
+      const div = document.createElement("div");
+      div.className = "error";
+      div.textContent = lastError;
+      container.appendChild(div);
+    }
+
+    // ===== LOBBY RENDER =====
+
+    function renderLobby() {
+      const main = $("mainContent");
+      main.innerHTML = "";
+
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const hasJoined = !!playerId;
+
+      const title = document.createElement("h2");
+      title.textContent = hasJoined ? "Lobby" : "Join via Launcher";
+      card.appendChild(title);
+
+      // If player hasn't joined yet, show launcher redirect
+      if (!hasJoined) {
+        const msg = document.createElement("p");
+        msg.style.textAlign = "center";
+        msg.style.color = "#aaa";
+        msg.textContent = "Players must join through the main launcher.";
+        card.appendChild(msg);
+
+        const link = document.createElement("a");
+        link.href = "/";
+        link.className = "primary small";
+        link.style.cssText = "display:inline-block;text-align:center;text-decoration:none;padding:10px 24px;border-radius:6px;background:var(--accent,#4a90d9);color:#fff;";
+        link.textContent = "Go to Launcher";
+        const linkWrap = document.createElement("div");
+        linkWrap.style.textAlign = "center";
+        linkWrap.style.margin = "12px 0";
+        linkWrap.appendChild(link);
+        card.appendChild(linkWrap);
+
+        renderError(card);
+        main.appendChild(card);
+        return;
+      }
+
+      const usePresetNames = !!(currentSettings && currentSettings.usePresetNames);
+      const rawPresetNames = (currentSettings && currentSettings.presetNames) || [];
+      const presetNames = Array.isArray(rawPresetNames)
+        ? rawPresetNames
+        : String(rawPresetNames || "")
+            .split(/[\n,]/g)
+            .map((s) => s.trim())
+            .filter(Boolean);
+
+      const p = document.createElement("p");
+      if (usePresetNames) {
+        if (presetNames.length > 0) {
+          p.textContent = "Select a name from the preset list. Your selection joins/renames immediately.";
+        } else {
+          p.textContent =
+            "Preset names are enabled, but no names have been added yet. Ask the host to add preset names.";
+        }
+      } else {
+        p.textContent =
+          "You can rename yourself below. Wait for the host to start.";
+      }
+      card.appendChild(p);
+
+      const row = document.createElement("div");
+      row.className = "name-input-row";
+
+      let inputElement;
+
+      if (usePresetNames) {
+        // Show dropdown (even if the preset list is currently empty)
+        const select = document.createElement("select");
+        select.className = "preset-select";
+
+        const hasPresetList = presetNames.length > 0;
+
+        const defaultOption = document.createElement("option");
+        defaultOption.value = "";
+        defaultOption.textContent = hasPresetList
+          ? "-- Select a name --"
+          : "-- No preset names available --";
+        defaultOption.disabled = true;
+        defaultOption.selected = true;
+        select.appendChild(defaultOption);
+
+        if (hasPresetList) {
+          // Filter out names that are already taken (ignore disconnected players; ignore yourself)
+          const takenNames = (allPlayers || [])
+            .filter((p) => p && !p.disconnected && p.id !== playerId)
+            .map((p) => (p.name || "").toLowerCase());
+
+          presetNames.forEach((name) => {
+            const opt = document.createElement("option");
+            opt.value = name;
+            opt.textContent = name;
+
+            // Disable if name is already taken
+            const isTaken = takenNames.includes(String(name).toLowerCase());
+            if (isTaken) {
+              opt.disabled = true;
+              opt.textContent = name + " — Already taken";
+            }
+
+            select.appendChild(opt);
+          });
+        } else {
+          // Don't allow joining via free-form name when "Use preset names only" is enabled
+          select.disabled = true;
+        }
+
+        // Auto-join / auto-rename when choosing a preset name
+        // If you already have a name, preselect it (case-insensitive match)
+        if (hasPresetList && playerName) {
+          const match = presetNames.find(
+            (n) => String(n).toLowerCase() === String(playerName).toLowerCase()
+          );
+          if (match) select.value = match;
+        }
+
+        select.onchange = () => {
+          if (select.disabled) return;
+          const chosen = (select.value || "").trim();
+          if (!chosen) return;
+          joinGame(chosen);
+        };
+
+        inputElement = select;
+        row.appendChild(select);
+      } else {
+        // Show text input
+        const input = document.createElement("input");
+        input.type = "text";
+        input.placeholder = "Your name";
+        input.maxLength = 18;
+        input.value = playerName;
+        input.onkeydown = (e) => {
+          if (e.key === "Enter") joinGame(input.value.trim());
+        };
+
+        inputElement = input;
+
+        const btn = document.createElement("button");
+        btn.className = (hasJoined ? "secondary" : "primary") + " small";
+        btn.textContent = hasJoined ? "Rename" : "Join";
+        btn.onclick = () => joinGame(input.value.trim());
+
+        row.appendChild(input);
+        row.appendChild(btn);
+      }
+
+      card.appendChild(row);
+
+      const hint = document.createElement("div");
+      hint.className = "hint";
+      if (usePresetNames) {
+        if (presetNames.length > 0) {
+          hint.textContent =
+            "Select an available name from the list. Choosing a name will join/rename automatically. Names marked as 'Already taken' are already in use.";
+        } else {
+          hint.textContent =
+            "Preset names are enabled, but the host hasn't added any names yet.";
+        }
+      } else {
+        hint.textContent =
+          "Once you're in, wait for the host to start. If your name is taken, you'll see an error.";
+      }
+      card.appendChild(hint);
+
+      renderError(card);
+      main.appendChild(card);
+    }
+
+    // ===== INTRO RENDER =====
+
+    function renderIntro() {
+      const main = $("mainContent");
+      main.innerHTML = "";
+
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const title = document.createElement("h2");
+      title.textContent = "Introduction";
+      card.appendChild(title);
+
+      const p = document.createElement("p");
+      p.innerHTML =
+        "Your secret role has been assigned. Read this overview while the host presents the introduction.";
+      card.appendChild(p);
+
+      const roleBlock = document.createElement("div");
+      roleBlock.className = "night-summary";
+
+      if (!role) {
+        roleBlock.textContent =
+          "Your role will be revealed once the host starts Night 1.";
+      } else if (role === "mafia") {
+        roleBlock.innerHTML =
+          "<strong>You are Mafia.</strong> Work with other Mafias to eliminate everyone else without getting caught.";
+      } else if (role === "doctor") {
+        roleBlock.innerHTML =
+          "<strong>You are Doctor.</strong> Each night you can protect one player (including yourself). If the Mafia targets them, they survive.";
+      } else if (role === "detective") {
+        roleBlock.innerHTML =
+          "<strong>You are Detective.</strong> Each night you can investigate one player and learn if they are Mafia.";
+      } else if (role === "boxer") {
+        roleBlock.innerHTML =
+          "<strong>You are Boxer.</strong> Each night you can cancel one player’s night action. You can’t pick the same person two nights in a row.";
+      } else {
+        roleBlock.innerHTML =
+          "<strong>You are a Civilian.</strong> You can write anonymous alibi notes for all to see.";
+      }
+
+      card.appendChild(roleBlock);
+
+      const phases = document.createElement("div");
+      phases.className = "timeline";
+      phases.innerHTML = `
+        <h3>Round Structure</h3>
+        <div class="timeline-entry"><span>Night:</span> Mafia kills, Doctor protects, Detective investigates, Boxer cancels, Civilian writes.</div>
+        <div class="timeline-entry"><span>Day:</span> The host reveals who died (if anyone) and shows the anonymous alibi notes for discussion.</div>
+        <div class="timeline-entry"><span>Vote:</span> Everyone votes on who to eliminate or chooses to skip. The player with the most votes is eliminated or skipped.</div>
+        <div class="timeline-entry"><span>Win Conditions:</span> Townfolks wins when all Mafias are dead. Mafia win when equal to remaining townfolks.</div>
+      `;
+      card.appendChild(phases);
+
+      const hint = document.createElement("div");
+      hint.className = "hint";
+      hint.textContent =
+        "Watch the main screen for the animated introduction. When the host starts the game, you’ll automatically move to Night 1.";
+      card.appendChild(hint);
+
+      renderError(card);
+      main.appendChild(card);
+    }
+
+    // ===== NIGHT RENDER =====
+
+    function renderNight() {
+      const main = $("mainContent");
+      main.innerHTML = "";
+
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const title = document.createElement("h2");
+      title.textContent = alive ? "Night Phase" : "Night Phase – You Are Dead";
+      card.appendChild(title);
+
+      const infoRow = document.createElement("div");
+      infoRow.className = "info-row";
+      const leftInfo = document.createElement("span");
+      leftInfo.innerHTML =
+        "<strong>Night " + currentNight + "</strong>" +
+        (currentDay > 0 ? " (after Day " + currentDay + ")" : "");
+      const rightInfo = document.createElement("span");
+      rightInfo.innerHTML =
+        "<strong>Role:</strong> " +
+        (role
+          ? role === "mafia"
+            ? "Mafia"
+            : role === "doctor"
+            ? "Doctor"
+            : role === "detective"
+            ? "Detective"
+            : "Civilian"
+          : "Unknown");
+      infoRow.appendChild(leftInfo);
+      infoRow.appendChild(rightInfo);
+      card.appendChild(infoRow);
+
+      if (!alive) {
+        const deadMsg = document.createElement("p");
+        deadMsg.innerHTML =
+          "You are dead and can no longer act or vote. You may still watch the game progress on the main screen.";
+        card.appendChild(deadMsg);
+        renderError(card);
+        main.appendChild(card);
+        return;
+      }
+
+      if (!role) {
+        const noRole = document.createElement("p");
+        noRole.textContent =
+          "Your role is not available. Please wait for the host to reset or reconnect.";
+        card.appendChild(noRole);
+        renderError(card);
+        main.appendChild(card);
+        return;
+      }
+
+      // Role-specific night UI
+      if (role === "mafia") {
+        const inferredMafiaCount = (Array.isArray(mafiaPeers) && mafiaPeers.length > 0) ? (mafiaPeers.length + 1) : 0;
+        const mafiaCountForCoord = Math.max((typeof aliveMafiaCount === "number" ? aliveMafiaCount : 0), inferredMafiaCount);
+        const hasPeers = !!(mafiaCoordEnabled || mafiaCountForCoord >= 2);
+
+        const p = document.createElement("p");
+        if (currentSettings.mafiaCanSkipKill) {
+          p.innerHTML =
+            "Choose a non-Mafia player to <strong>kill</strong>, or select <strong>Skip</strong> if allowed. " +
+            (hasPeers
+              ? "Use <strong>VOTE</strong> to coordinate, then press <strong>KILL</strong> to lock in your final action."
+              : "Press <strong>KILL</strong> to confirm your action.");
+        } else {
+          p.innerHTML =
+            "Choose a non-Mafia player to <strong>kill</strong>. " +
+            (hasPeers
+              ? "Use <strong>VOTE</strong> to coordinate, then press <strong>KILL</strong> to lock in your final action."
+              : "Press <strong>KILL</strong> to confirm your action.");
+        }
+        card.appendChild(p);
+
+        if (hasPeers) {
+          const peers = document.createElement("p");
+          peers.innerHTML =
+            "<strong>Your fellow Mafias:</strong> " +
+            mafiaPeers.map((m) => m.name).join(", ");
+          card.appendChild(peers);
+
+          // Coordination votes (separate from the actual KILL confirmation)
+          const voteBox = document.createElement("div");
+          voteBox.className = "night-summary";
+          const voteTitle = document.createElement("div");
+          voteTitle.innerHTML = "<strong>Mafia votes (for coordination):</strong>";
+          voteBox.appendChild(voteTitle);
+
+          const allMafias = []
+            .concat({ id: playerId, name: playerName || "You" })
+            .concat(mafiaPeers || [])
+            .filter((m) => m && m.id);
+
+          const votesByVoter = new Map();
+          (mafiaVoteSignals || []).forEach((v) => {
+            if (v && v.voterId) votesByVoter.set(v.voterId, v);
+          });
+
+          let anyVote = false;
+          allMafias.forEach((m) => {
+            const line = document.createElement("div");
+            const strong = document.createElement("strong");
+            strong.textContent = (m.name || "Mafia") + ": ";
+            line.appendChild(strong);
+
+            const v = votesByVoter.get(m.id);
+            let targetName = "—";
+            if (v && v.targetName) {
+              targetName = v.targetName;
+            } else if (v && v.targetId) {
+              const target = (allPlayers || []).find((p) => p.id === v.targetId);
+              if (target && target.name) targetName = target.name;
+            }
+
+            if (targetName !== "—") anyVote = true;
+            line.appendChild(document.createTextNode(targetName));
+            voteBox.appendChild(line);
+          });
+
+          if (!anyVote) {
+            const none = document.createElement("div");
+            none.className = "subtle";
+            none.textContent = "No votes yet.";
+            voteBox.appendChild(none);
+          }
+
+          card.appendChild(voteBox);
+        }
+
+        const label = document.createElement("div");
+        label.className = "label";
+        label.textContent = "Target to kill";
+        card.appendChild(label);
+
+        const select = document.createElement("select");
+        select.disabled = nightActionLocked;
+        const optNone = document.createElement("option");
+        optNone.value = "";
+        optNone.textContent = "-- Select player --";
+        select.appendChild(optNone);
+
+        const SKIP_VALUE = "__SKIP__";
+        if (currentSettings.mafiaCanSkipKill) {
+          const optSkip = document.createElement("option");
+          optSkip.value = SKIP_VALUE;
+          optSkip.textContent = "Skip kill (no one dies)";
+          select.appendChild(optSkip);
+        }
+
+        filteredTargetsForMafia().forEach((p) => {
+          const opt = document.createElement("option");
+          opt.value = p.id;
+          opt.textContent = p.name;
+          select.appendChild(opt);
+        });
+
+        // Restore current selection (target or skip)
+        select.value = nightSelection.skipKill
+          ? SKIP_VALUE
+          : nightSelection.targetId || "";
+
+        select.onchange = () => {
+          const val = select.value || "";
+          if (val === SKIP_VALUE) {
+            nightSelection.skipKill = true;
+            nightSelection.targetId = null;
+          } else {
+            nightSelection.skipKill = false;
+            nightSelection.targetId = val ? val : null;
+          }
+          renderNight();
+        };
+        card.appendChild(select);
+
+        if (currentSettings.mafiaCanSkipKill) {
+          const hint = document.createElement("div");
+          hint.className = "hint";
+          hint.textContent =
+            "If all Mafias select Skip, no one will die tonight.";
+          card.appendChild(hint);
+        }
+
+        const buttons = document.createElement("div");
+        buttons.className = "btn-row";
+
+        // VOTE (coordination) button — only when 2+ Mafias are alive
+        if (hasPeers) {
+          const voteBtn = document.createElement("button");
+          voteBtn.className = "primary";
+          voteBtn.textContent = mafiaHasVoted ? "RE-VOTE" : "VOTE";
+
+          const voteDisabled =
+            nightActionLocked ||
+            nightSelection.skipKill ||
+            !nightSelection.targetId ||
+            (mafiaHasVoted && nightSelection.targetId === lastMafiaVotedTargetId);
+
+          voteBtn.disabled = voteDisabled;
+
+          voteBtn.onclick = () => {
+            if (voteBtn.disabled) return;
+            socket.emit("mafia_vote_signal", { targetId: nightSelection.targetId });
+            mafiaHasVoted = true;
+            lastMafiaVotedTargetId = nightSelection.targetId;
+            renderNight();
+          };
+
+          buttons.appendChild(voteBtn);
+        }
+
+        // KILL (final confirmation) button
+        const killBtn = document.createElement("button");
+        killBtn.className = "danger";
+        killBtn.textContent = nightActionLocked
+          ? "KILL Confirmed"
+          : nightSelection.skipKill
+          ? "CONFIRM SKIP"
+          : (hasPeers ? "KILL" : "KILL CONFIRM");
+
+        killBtn.disabled =
+          nightActionLocked || (!nightSelection.targetId && !nightSelection.skipKill);
+
+        killBtn.onclick = () => {
+          if (nightActionLocked) return;
+          const payload = {
+            type: "mafia",
+            targetId: nightSelection.targetId,
+            skipKill: !!nightSelection.skipKill,
+          };
+          socket.emit("player_night_action", payload);
+          nightActionLocked = true;
+          renderNight();
+        };
+        buttons.appendChild(killBtn);
+
+        card.appendChild(buttons);
+
+        const nh = document.createElement("div");
+        nh.className = "night-hint";
+        nh.textContent = hasPeers
+          ? "Use VOTE to coordinate with other Mafias. Press KILL to finalize your action; once you KILL, both buttons lock for the night."
+          : "Press KILL to finalize your action. Once you KILL, your action locks for the night.";
+        card.appendChild(nh);
+      } else if (role === "doctor") {
+        const p = document.createElement("p");
+        p.innerHTML =
+          "Choose one player to protect tonight. If the Mafia targets that player, they will survive.";
+        card.appendChild(p);
+
+        const label = document.createElement("div");
+        label.className = "label";
+        label.textContent = "Who do you want to save?";
+        card.appendChild(label);
+
+        const select = document.createElement("select");
+        select.disabled = nightActionLocked;
+        const optNone = document.createElement("option");
+        optNone.value = "";
+        optNone.textContent = "-- Select player --";
+        select.appendChild(optNone);
+
+        filteredTargetsForDoctor().forEach((p) => {
+          const opt = document.createElement("option");
+          opt.value = p.id;
+          opt.textContent = p.name;
+          select.appendChild(opt);
+        });
+
+        select.value = nightSelection.targetId || "";
+        select.onchange = () => {
+          nightSelection.targetId = select.value || null;
+          renderNight();
+        };
+        card.appendChild(select);
+
+        const confirm = document.createElement("button");
+        confirm.className = "primary";
+        confirm.textContent = nightActionLocked
+          ? "Action Confirmed"
+          : "Confirm Night Action";
+        confirm.disabled = nightActionLocked || !nightSelection.targetId;
+        confirm.onclick = () => {
+          if (nightActionLocked) return;
+          const payload = {
+            type: "doctor",
+            targetId: nightSelection.targetId,
+          };
+          socket.emit("player_night_action", payload);
+          nightActionLocked = true;
+          renderNight();
+        };
+        card.appendChild(confirm);
+
+        const nh = document.createElement("div");
+        nh.className = "night-hint";
+        nh.textContent =
+          "You can even protect yourself. You won’t be told exactly who the Mafia targeted—only whether someone died.";
+        card.appendChild(nh);
+      } else if (role === "detective") {
+        const p = document.createElement("p");
+        p.innerHTML =
+          "Choose a player to investigate. You will learn whether they are Mafia or not.";
+        card.appendChild(p);
+
+        const label = document.createElement("div");
+        label.className = "label";
+        label.textContent = "Who do you want to investigate?";
+        card.appendChild(label);
+
+        const select = document.createElement("select");
+        select.disabled = nightActionLocked;
+        const optNone = document.createElement("option");
+        optNone.value = "";
+        optNone.textContent = "-- Select player --";
+        select.appendChild(optNone);
+
+        filteredTargetsForDetective().forEach((p) => {
+          const opt = document.createElement("option");
+          opt.value = p.id;
+          opt.textContent = p.name;
+          select.appendChild(opt);
+        });
+
+        select.value = nightSelection.targetId || "";
+        select.onchange = () => {
+          nightSelection.targetId = select.value || null;
+          renderNight();
+        };
+        card.appendChild(select);
+
+        const confirm = document.createElement("button");
+        confirm.className = "primary";
+        confirm.textContent = nightActionLocked
+          ? "Action Confirmed"
+          : "Confirm Night Action";
+        confirm.disabled = nightActionLocked || !nightSelection.targetId;
+        confirm.onclick = () => {
+          if (nightActionLocked) return;
+          const payload = {
+            type: "detective",
+            targetId: nightSelection.targetId,
+          };
+          socket.emit("player_night_action", payload);
+          nightActionLocked = true;
+          renderNight();
+        };
+        card.appendChild(confirm);
+
+        const nh = document.createElement("div");
+        nh.className = "night-hint";
+        nh.textContent =
+          "You’ll learn if they are Mafia. If “remember Mafia” is enabled by the host, you’ll see a log of each investigation.";
+        card.appendChild(nh);
+
+        if (currentSettings.detectiveRememberMafia && detectiveMemory.length > 0) {
+          const log = document.createElement("div");
+          log.className = "investigation-log";
+          const h3 = document.createElement("h3");
+          h3.textContent = "Investigation Log";
+          log.appendChild(h3);
+
+          detectiveMemory.forEach((entry) => {
+            const line = document.createElement("div");
+            const isMafia = entry.isMafia;
+            line.innerHTML =
+              "<strong>Night " +
+              entry.night +
+              ":</strong> <strong>" +
+              entry.name +
+              "</strong> — " +
+              (isMafia
+                ? '<span class="pill bad">Mafia</span>'
+                : '<span class="pill good">Not Mafia</span>');
+            log.appendChild(line);
+          });
+
+          card.appendChild(log);
+        }
+      } else if (role === "boxer") {
+        const p = document.createElement("p");
+        p.innerHTML =
+          "Choose one alive player to cancel tonight. You can’t cancel the same person two nights in a row.";
+        card.appendChild(p);
+
+        const label = document.createElement("div");
+        label.className = "label";
+        label.textContent = "Who do you want to cancel?";
+        card.appendChild(label);
+
+        const select = document.createElement("select");
+        select.disabled = nightActionLocked;
+
+        const optNone = document.createElement("option");
+        optNone.value = "";
+        optNone.textContent = "-- Select player --";
+        select.appendChild(optNone);
+
+        const optNoAction = document.createElement("option");
+        optNoAction.value = "NO_ONE";
+        optNoAction.textContent = "No action";
+        select.appendChild(optNoAction);
+
+        (Array.isArray(nightTargets) ? nightTargets : [])
+          .filter((t) => t && t.id && t.id !== playerId)
+          .forEach((t) => {
+            const opt = document.createElement("option");
+            opt.value = t.id;
+            opt.textContent = t.name;
+            select.appendChild(opt);
+          });
+
+        select.onchange = () => {
+          nightSelection.targetId = select.value || null;
+          renderNight();
+        };
+
+        if (nightSelection.targetId) select.value = nightSelection.targetId;
+        card.appendChild(select);
+
+        const confirm = document.createElement("button");
+        confirm.className = "btn primary";
+        confirm.textContent = "Confirm Action";
+        confirm.disabled = nightActionLocked || !nightSelection.targetId;
+        confirm.onclick = () => {
+          if (nightActionLocked) return;
+          const payload = {
+            type: "boxer",
+            targetId: nightSelection.targetId,
+          };
+          socket.emit("player_night_action", payload);
+          nightActionLocked = true;
+          renderNight();
+        };
+        card.appendChild(confirm);
+
+        const nh = document.createElement("div");
+        nh.className = "night-hint";
+        nh.textContent =
+          "If you cancel a Mafia and they do not have a 2+ coordinated kill, no one dies. If you cancel the Doctor or Detective, their action is cancelled.";
+        card.appendChild(nh);
+      } else {
+        const p = document.createElement("p");
+        p.innerHTML =
+          'You are a Civilian. Submit your anonymous alibi note: who you suspect is Mafia, and who you trust.';
+        card.appendChild(p);
+
+        const label1 = document.createElement("div");
+        label1.className = "label";
+        label1.textContent = "I think this player is Mafia:";
+        card.appendChild(label1);
+
+        const suspectSelect = document.createElement("select");
+        suspectSelect.disabled = nightActionLocked;
+        const optSNone = document.createElement("option");
+        optSNone.value = "";
+        optSNone.textContent = "-- Select suspect --";
+        suspectSelect.appendChild(optSNone);
+        const optSNoOne = document.createElement("option");
+        optSNoOne.value = "NO_ONE";
+        optSNoOne.textContent = "No one";
+        suspectSelect.appendChild(optSNoOne);
+
+        allPlayersForCivilianNotes().forEach((p) => {
+          const opt = document.createElement("option");
+          opt.value = p.id;
+          opt.textContent = p.name;
+          suspectSelect.appendChild(opt);
+        });
+        suspectSelect.value = nightSelection.suspectId || "";
+        suspectSelect.onchange = () => {
+          nightSelection.suspectId = suspectSelect.value || null;
+          renderNight();
+        };
+        card.appendChild(suspectSelect);
+
+        const label2 = document.createElement("div");
+        label2.className = "label";
+        label2.textContent = "But I trust this player:";
+        card.appendChild(label2);
+
+        const trustSelect = document.createElement("select");
+        trustSelect.disabled = nightActionLocked;
+        const optTNone = document.createElement("option");
+        optTNone.value = "";
+        optTNone.textContent = "-- Select who you trust --";
+        trustSelect.appendChild(optTNone);
+        const optTNoOne = document.createElement("option");
+        optTNoOne.value = "NO_ONE";
+        optTNoOne.textContent = "No one";
+        trustSelect.appendChild(optTNoOne);
+
+        allPlayersForCivilianNotes().forEach((p) => {
+          const opt = document.createElement("option");
+          opt.value = p.id;
+          opt.textContent = p.name;
+          trustSelect.appendChild(opt);
+        });
+        trustSelect.value = nightSelection.trustId || "";
+        trustSelect.onchange = () => {
+          nightSelection.trustId = trustSelect.value || null;
+          renderNight();
+        };
+        card.appendChild(trustSelect);
+
+        const confirm = document.createElement("button");
+        confirm.className = "primary";
+        confirm.textContent = nightActionLocked
+          ? "Note Submitted"
+          : "Submit Alibi Note";
+        confirm.disabled =
+          nightActionLocked ||
+          !nightSelection.suspectId ||
+          !nightSelection.trustId;
+        confirm.onclick = () => {
+          if (nightActionLocked) return;
+          const payload = {
+            type: "civilian",
+            suspectId: nightSelection.suspectId,
+            trustId: nightSelection.trustId,
+          };
+          socket.emit("player_night_action", payload);
+          nightActionLocked = true;
+          renderNight();
+        };
+        card.appendChild(confirm);
+
+        const nh = document.createElement("div");
+        nh.className = "night-hint";
+        nh.textContent =
+          "Your note will appear on the host screen as an anonymous sticky note during the Day phase.";
+        card.appendChild(nh);
+      }
+
+      if (nightSummary) {
+        const summaryBlock = document.createElement("div");
+        summaryBlock.className = "night-summary";
+        summaryBlock.innerHTML =
+          "<strong>Night summary:</strong> " + nightSummary;
+        card.appendChild(summaryBlock);
+      }
+
+      renderError(card);
+      main.appendChild(card);
+    }
+
+    // ===== DAY RENDER =====
+
+    function renderDay() {
+      const main = $("mainContent");
+      main.innerHTML = "";
+
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const title = document.createElement("h2");
+      title.textContent = alive ? "Day Phase" : "Day Phase – You Are Dead";
+      card.appendChild(title);
+
+      const dayInfo = document.createElement("div");
+      dayInfo.className = "day-number";
+      dayInfo.textContent = "Day " + currentDay;
+      card.appendChild(dayInfo);
+
+      if (!alive) {
+        const p = document.createElement("p");
+        p.textContent =
+          "You have been eliminated. You can no longer vote, but you can still watch what happens.";
+        card.appendChild(p);
+      } else {
+        const p = document.createElement("p");
+        p.textContent =
+          "Listen to the discussion and pay attention to the anonymous alibi notes on the main screen. Voting will start soon.";
+        card.appendChild(p);
+      }
+
+      if (daySummary) {
+        const summary = document.createElement("div");
+        summary.className = "night-summary";
+        summary.innerHTML = "<strong>What happened:</strong> " + daySummary;
+        card.appendChild(summary);
+      }
+
+      // Detective investigation result (visible during Day only)
+      if (role === "detective" && alive) {
+        // If your action was cancelled by a Boxer, show that during Day.
+        if (detectiveCancelMessage) {
+          const msg = document.createElement("div");
+          msg.className = "night-summary";
+
+          const strong = document.createElement("strong");
+          strong.textContent = "Investigation:";
+          msg.appendChild(strong);
+          msg.appendChild(document.createTextNode(" "));
+
+          const pill = document.createElement("span");
+          pill.className = "pill bad";
+          pill.textContent = "Cancelled";
+          msg.appendChild(pill);
+
+          msg.appendChild(document.createElement("br"));
+          msg.appendChild(document.createTextNode(detectiveCancelMessage));
+
+          card.appendChild(msg);
+        }
+
+        if (currentSettings.detectiveRememberMafia) {
+          const items = [];
+
+          if (Array.isArray(detectiveMemory)) {
+            detectiveMemory.forEach((entry) => {
+              if (!entry) return;
+              items.push({
+                night: Number(entry.night || 0),
+                type: "investigation",
+                name: entry.name || "Unknown",
+                isMafia: !!entry.isMafia,
+              });
+            });
+          }
+
+          if (Array.isArray(detectiveCancelHistory)) {
+            detectiveCancelHistory.forEach((h) => {
+              if (!h) return;
+              items.push({
+                night: Number(h.night || 0),
+                type: "cancel",
+                message: h.message || "Your actions has been cancelled by a boxer.",
+              });
+            });
+          }
+
+          items.sort((a, b) => (a.night || 0) - (b.night || 0));
+
+          if (items.length > 0) {
+            const log = document.createElement("div");
+            log.className = "investigation-log";
+            const h3 = document.createElement("h3");
+            h3.textContent = "Investigation Log";
+            log.appendChild(h3);
+
+            items.forEach((it) => {
+              const line = document.createElement("div");
+
+              if (it.type === "cancel") {
+                const left = document.createElement("span");
+                left.innerHTML = "<strong>Night " + it.night + ":</strong> ";
+                line.appendChild(left);
+
+                const pill2 = document.createElement("span");
+                pill2.className = "pill bad";
+                pill2.textContent = "Cancelled";
+                line.appendChild(pill2);
+
+                line.appendChild(document.createTextNode(" " + it.message));
+              } else {
+                const isMafia = !!it.isMafia;
+                line.innerHTML =
+                  "<strong>Night " +
+                  it.night +
+                  ":</strong> <strong>" +
+                  it.name +
+                  "</strong> — " +
+                  (isMafia
+                    ? '<span class="pill bad">Mafia</span>'
+                    : '<span class="pill good">Not Mafia</span>');
+              }
+
+              log.appendChild(line);
+            });
+
+            card.appendChild(log);
+          }
+        } else if (!detectiveCancelMessage && detectiveLastResult && detectiveLastResult.targetName) {
+          const res = document.createElement("div");
+          res.className = "night-summary";
+          const isMafia = !!detectiveLastResult.isMafia;
+          res.innerHTML =
+            "<strong>Investigation result:</strong> You investigated <strong>" +
+            detectiveLastResult.targetName +
+            "</strong> — " +
+            (isMafia
+              ? '<span class="pill bad">Mafia</span>'
+              : '<span class="pill good">Not Mafia</span>');
+          card.appendChild(res);
+        }
+      }
+
+
+const hint = document.createElement("div");
+      hint.className = "hint";
+      hint.textContent =
+        "Keep your phone handy. When the host begins the vote, your screen will switch to the voting interface.";
+      card.appendChild(hint);
+
+      renderError(card);
+      main.appendChild(card);
+    }
+
+    // ===== VOTE RENDER =====
+
+    function renderVote() {
+      const main = $("mainContent");
+      main.innerHTML = "";
+
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const title = document.createElement("h2");
+      title.textContent = alive ? "Vote Phase" : "Vote Phase – You Are Dead";
+      card.appendChild(title);
+
+      const dayInfo = document.createElement("div");
+      dayInfo.className = "day-number";
+      dayInfo.textContent = "Day " + currentDay;
+      card.appendChild(dayInfo);
+
+      if (!alive) {
+        const p = document.createElement("p");
+        p.innerHTML =
+          'You are <span class="text-red"><strong>dead</strong></span> and cannot vote.';
+        card.appendChild(p);
+      }
+
+      if (alive) {
+        if (!voteOptions || voteOptions.length === 0) {
+          const p = document.createElement("p");
+          p.textContent = "Voting is not available right now.";
+          card.appendChild(p);
+          renderError(card);
+          main.appendChild(card);
+          return;
+        }
+
+        const p = document.createElement("p");
+        p.textContent =
+          "Select a player you believe is Mafia, or choose Skip if you’re unsure.";
+        card.appendChild(p);
+
+        const voteList = document.createElement("div");
+        voteList.className = "vote-options";
+
+        voteOptions.forEach((opt) => {
+          const isSkip = opt.type === "skip";
+          const isDeadOpt = opt.alive === false; // forward-compatible if server includes dead players
+
+          const row = document.createElement("div");
+          row.className = "vote-option";
+
+          if (voteActionLocked || isDeadOpt) {
+            row.classList.add("disabled");
+          }
+
+          if (voteSelection && voteSelection === opt.id) {
+            row.classList.add("selected");
+          }
+
+          const nameSpan = document.createElement("span");
+          nameSpan.className = "name";
+          nameSpan.textContent = isSkip ? "Skip Vote" : opt.name;
+
+          const metaSpan = document.createElement("span");
+          metaSpan.className = "meta";
+          if (isSkip) {
+            metaSpan.textContent = "No one is eliminated";
+          } else if (isDeadOpt) {
+            metaSpan.innerHTML = '<span class="text-red"><strong>DEAD</strong></span>';
+          } else {
+            metaSpan.textContent = "Eliminate this player";
+          }
+
+          row.appendChild(nameSpan);
+          row.appendChild(metaSpan);
+
+          row.onclick = () => {
+            if (voteActionLocked || isDeadOpt) return;
+            voteSelection = opt.id;
+            renderVote();
+          };
+
+          voteList.appendChild(row);
+        });
+
+        card.appendChild(voteList);
+
+        const btnRow = document.createElement("div");
+        btnRow.className = "btn-row";
+
+        const submit = document.createElement("button");
+        submit.className = "primary";
+        submit.textContent = voteActionLocked ? "Vote Submitted" : "Submit Vote";
+        submit.disabled = voteActionLocked || !voteSelection;
+        submit.onclick = () => {
+          if (voteActionLocked || !voteSelection) return;
+          socket.emit("player_vote", { voteId: voteSelection });
+          voteActionLocked = true;
+          renderVote();
+        };
+
+        btnRow.appendChild(submit);
+        card.appendChild(btnRow);
+      }
+
+      if (currentSettings.timedVote && voteRemainingSeconds > 0) {
+        const timer = document.createElement("div");
+        timer.className = "timer";
+        if (voteRemainingSeconds <= 10) timer.classList.add("critical");
+        timer.innerHTML =
+          "Time remaining: <strong>" + voteRemainingSeconds + "s</strong>";
+        card.appendChild(timer);
+      }
+
+      renderError(card);
+      main.appendChild(card);
+    }
+
+    // ===== RESULTS RENDER =====
+
+    function renderResults(summary) {
+      const main = $("mainContent");
+      main.innerHTML = "";
+
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const title = document.createElement("h2");
+      title.textContent = "Game Over";
+      card.appendChild(title);
+
+      if (!summary || !summary.players || !Array.isArray(summary.players)) {
+        const p = document.createElement("p");
+        p.textContent = "Game summary is unavailable.";
+        card.appendChild(p);
+        renderError(card);
+        main.appendChild(card);
+        return;
+      }
+
+      const winner = summary.winner;
+      const winnerLine = document.createElement("p");
+      winnerLine.innerHTML =
+        "Final outcome: <strong>" +
+        (winner === "civilian"
+          ? '<span class="text-green">Civilians</span>'
+          : '<span class="text-red">Mafia</span>') +
+        " win!</strong>";
+      card.appendChild(winnerLine);
+
+      const youInfo = summary.players.find((pl) => pl.id === playerId);
+      const youLine = document.createElement("p");
+      if (youInfo) {
+        youLine.innerHTML =
+          "You were <strong>" + (youInfo.role || "Unknown") + "</strong>.";
+      } else {
+        youLine.textContent = "Your role summary is unavailable.";
+      }
+      card.appendChild(youLine);
+
+      // Round-only points (preferred). Falls back gracefully if server hasn't been updated yet.
+      let roundDelta = null;
+      let roundDetail = null;
+
+      if (youInfo && typeof youInfo.roundDelta === "number") {
+        roundDelta = youInfo.roundDelta;
+      } else if (youInfo && youInfo.roundPoints && typeof youInfo.roundPoints.total === "number") {
+        roundDelta = youInfo.roundPoints.total;
+        roundDetail = youInfo.roundPoints;
+      } else if (youInfo && typeof youInfo.pointsDelta === "number") {
+        roundDelta = youInfo.pointsDelta;
+      }
+
+      const pointsBlock = document.createElement("div");
+      pointsBlock.className = "results-points";
+
+      if (roundDelta === null) {
+        pointsBlock.innerHTML =
+          "<p><strong>Points this game:</strong> <span class=\"subtle\">(will appear after the server update)</span></p>";
+      } else {
+        const cls = roundDelta > 0 ? "num-pos" : roundDelta < 0 ? "num-neg" : "";
+        const sign = roundDelta > 0 ? "+" : "";
+        pointsBlock.innerHTML =
+          "<p><strong>Points this game:</strong> <span class=\"" +
+          cls +
+          "\"><strong>" +
+          sign +
+          roundDelta +
+          "</strong></span></p>";
+      }
+
+      // Optional round breakdown (if provided by server later)
+      if (roundDetail && typeof roundDetail === "object") {
+        const ul = document.createElement("ul");
+        const li = (label, val, klass) => {
+          const item = document.createElement("li");
+          item.innerHTML =
+            label + ': <span class="' + (klass || "") + '"><strong>' + val + "</strong></span>";
+          return item;
+        };
+        ul.appendChild(li("Mafia gains", roundDetail.mafia || 0, "num-pos"));
+        ul.appendChild(li("Civilian gains", roundDetail.civilian || 0, "num-pos"));
+        ul.appendChild(li("Doctor gains", roundDetail.doctor || 0, "num-pos"));
+        ul.appendChild(li("Detective gains", roundDetail.detective || 0, "num-pos"));
+        ul.appendChild(li("Points lost", roundDetail.lost || 0, "num-neg"));
+        pointsBlock.appendChild(ul);
+      }
+
+      card.appendChild(pointsBlock);
+
+      // Timeline
+      const nameById = {};
+      summary.players.forEach((pl) => {
+        nameById[pl.id] = pl.name || "Unknown";
+      });
+
+      const timelineWrap = document.createElement("div");
+      timelineWrap.className = "timeline";
+
+      const tlTitle = document.createElement("h3");
+      tlTitle.textContent = "Timeline";
+      timelineWrap.appendChild(tlTitle);
+
+      const timeline = Array.isArray(summary.timeline) ? summary.timeline : [];
+      if (timeline.length === 0) {
+        const empty = document.createElement("div");
+        empty.className = "timeline-entry";
+        empty.textContent = "No timeline data.";
+        timelineWrap.appendChild(empty);
+      } else {
+        timeline.forEach((entry) => {
+          const line = document.createElement("div");
+          line.className = "timeline-entry";
+
+          if (entry.type === "night") {
+            const nightNum = entry.night || 0;
+            const killedId = entry.info && entry.info.killedId;
+            const killedName = killedId ? (nameById[killedId] || "Unknown") : null;
+
+            let txt = "Night " + nightNum + ": ";
+            if (killedName) txt += "Killed " + killedName;
+            else txt += "No one died";
+
+            // Detective result (if present)
+            if (entry.info && entry.info.detectiveResult && entry.info.detectiveResult.targetName) {
+              const dr = entry.info.detectiveResult;
+              txt +=
+                " • Detective checked " +
+                dr.targetName +
+                " — " +
+                (dr.isMafia ? "Mafia" : "Not Mafia");
+            }
+
+            // Civilian notes (if any)
+            if (entry.info && Array.isArray(entry.info.notes) && entry.info.notes.length) {
+              const notes = entry.info.notes
+                .map((n) => "Suspect: " + n.suspectName + ", Trust: " + n.trustName)
+                .join(" | ");
+              txt += " • Notes: " + notes;
+            }
+
+            line.textContent = txt;
+          } else if (entry.type === "vote") {
+            const dayNum = entry.day || 0;
+            const skipped = !!(entry.info && entry.info.skipped);
+            const elimId = entry.info && entry.info.eliminatedId;
+            const elimName = elimId ? (nameById[elimId] || "Unknown") : null;
+
+            let txt = "Day " + dayNum + " Vote: ";
+            if (skipped) txt += "Skipped";
+            else if (elimName) txt += "Eliminated " + elimName;
+            else txt += "No elimination";
+
+            const votes = entry.info && Array.isArray(entry.info.votes) ? entry.info.votes : [];
+            if (votes.length) {
+              const compact = votes
+                .map((v) => v.voterName + "→" + v.targetName)
+                .join(", ");
+              txt += " • " + compact;
+            }
+
+            line.textContent = txt;
+          } else {
+            line.textContent = "Event: " + (entry.type || "unknown");
+          }
+
+          timelineWrap.appendChild(line);
+        });
+      }
+
+      card.appendChild(timelineWrap);
+
+      renderError(card);
+      main.appendChild(card);
+    }
+
+    // ===== RENDER SWITCH =====
+
+    function renderPhase() {
+      updateHeader();
+
+      if (currentPhase === PHASES.LOBBY) {
+        renderLobby();
+      } else if (currentPhase === PHASES.INTRO) {
+        renderIntro();
+      } else if (currentPhase === PHASES.NIGHT) {
+        renderNight();
+      } else if (currentPhase === PHASES.DAY) {
+        renderDay();
+      } else if (currentPhase === PHASES.VOTE) {
+        renderVote();
+      } else if (currentPhase === PHASES.RESULTS) {
+        renderResults(lastGameSummary);
+      }
+    }
+
+    // ===== JOIN & RESET LOGIC =====
+
+    function joinGame(name) {
+      const trimmed = (name || "").trim();
+      if (!trimmed) {
+        lastError = "Please enter a name first.";
+        renderPhase();
+        return;
+      }
+
+      // Enforce unique names (case-insensitive) based on the latest lobby info we have
+      // Match server behavior: only treat *connected* players (non-disconnected) as taking a name.
+      const existingNames = (allPlayers || [])
+        .filter((p) => p && !p.disconnected && p.id !== playerId)
+        .map((p) => (p.name || "").toLowerCase());
+      if (existingNames.includes(trimmed.toLowerCase())) {
+        lastError = "That name is already taken. Please choose another one.";
+        renderPhase();
+        return;
+      }
+
+      lastError = null;
+      playerName = trimmed;
+      try { StorageManager.setItem(PLAYER_NAME_KEY, trimmed); } catch (e) {}
+      socket.emit("player_join", { name: trimmed, playerUid });
+    }
+
+    function resetForLobby(data) {
+      // Called when host resets / ends game or sends lobby state
+      currentPhase = PHASES.LOBBY;
+      currentDay = 0;
+      currentNight = 0;
+      role = null;
+      alive = true;
+      mafiaPeers = [];
+      detectiveMemory = [];
+      mafiaVoteSignals = [];
+      mafiaHasVoted = false;
+      lastMafiaVotedTargetId = null;
+      lastError = null;
+      allPlayers = data && data.players ? data.players : allPlayers;
+      // Keep settings in sync with host changes (e.g., preset-name-only toggle)
+      if (data && data.settings) {
+        currentSettings = Object.assign(currentSettings, data.settings || {});
+      }
+
+      // If host switches to preset-name-only and your current name isn't in the preset list,
+      // prompt you to pick from the dropdown so you aren't stuck.
+      try {
+        if (data && data.settings && data.settings.usePresetNames) {
+          const raw = data.settings.presetNames || [];
+          const list = Array.isArray(raw)
+            ? raw
+            : String(raw || "")
+                .split(/[\n,]/g)
+                .map((s) => s.trim())
+                .filter(Boolean);
+          if (list.length > 0 && playerName) {
+            const ok = list.some((n) => String(n).toLowerCase() === String(playerName).toLowerCase());
+            if (!ok) {
+              lastError = "Host enabled preset names. Please choose a name from the dropdown.";
+            }
+          }
+        }
+      } catch (e) {}
+      nightActionLocked = false;
+      nightSelection = {
+        targetId: null,
+        skipKill: false,
+        suspectId: null,
+        trustId: null,
+      };
+      voteActionLocked = false;
+      voteSelection = null;
+      nightStatus = [];
+      nightSummary = null;
+      daySummary = null;
+      voteOptions = [];
+      voteStatus = [];
+      voteRemainingSeconds = 0;
+      lastGameSummary = null;
+      renderPhase();
+    }
+
+    // ===== SOCKET SETUP =====
+
+    let wasEverConnected = false;
+
+    function setupSocket() {
+      // Connect to game namespace
+      const pathParts = window.location.pathname.split('/');
+      const gameId = pathParts[2]; // e.g., "mafia"
+      socket = io(gameId ? `/game/${gameId}` : '/', {
+        transports: ["websocket", "polling"],
+        reconnection: true,
+        reconnectionAttempts: 3,
+        reconnectionDelay: 500,
+        reconnectionDelayMax: 1000
+      });
+
+      let identityRetryTimer = null;
+
+      function stopIdentityRetry() {
+        if (identityRetryTimer) {
+          clearInterval(identityRetryTimer);
+          identityRetryTimer = null;
+        }
+      }
+
+      // Redirect to launcher if game server is unreachable after all reconnection attempts
+      socket.io.on("reconnect_failed", () => {
+        if (typeof toast === "function") {
+          toast("warn", "Game Ended", "Returning to lobby...");
+        }
+        setTimeout(() => {
+          const launcherUrl = window.location.protocol + "//" + window.location.host + "/players";
+          window.location.href = launcherUrl;
+        }, 1500);
+      });
+
+      // Immediate redirect if game server is unreachable on initial connection
+      socket.io.on("error", () => {
+        if (!wasEverConnected) {
+          console.log("Game server unreachable, returning to launcher...");
+          const launcherUrl = window.location.protocol + "//" + window.location.host + "/players";
+          window.location.href = launcherUrl;
+        }
+      });
+
+      function sendIdentityToServer() {
+        wasEverConnected = true;
+        // If we have a stored name, try to rejoin the lobby automatically (server will reject if game already started)
+        const stored = (playerName || "").trim();
+        if (stored) {
+          socket.emit("player_join", { name: stored, playerUid });
+        } else {
+          socket.emit("player_connect", { knownId: playerId, name: playerName, playerUid });
+        }
+      }
+
+      function startIdentityRetry() {
+        stopIdentityRetry();
+        let attempts = 0;
+        identityRetryTimer = setInterval(() => {
+          attempts++;
+          if (playerId || attempts > 20) {
+            stopIdentityRetry();
+            return;
+          }
+          if (socket && socket.connected) {
+            sendIdentityToServer();
+          }
+        }, 250);
+      }
+
+      socket.on("connect", () => {
+        sendIdentityToServer();
+        startIdentityRetry();
+      });
+
+      if (socket.connected) {
+        sendIdentityToServer();
+      }
+      startIdentityRetry();
+
+      socket.on("disconnect", () => {
+        lastError =
+          "Disconnected from server. Check the host device and your connection.";
+        renderPhase();
+      });
+
+      // Initial payload from server
+      socket.on("player_init", (data) => {
+        stopIdentityRetry();
+        playerId = data.id;
+        playerName = data.name || playerName;
+        pointsDetail = normalizePointsDetail(data.pointsDetail, data.points);
+        points = pointsDetail.total;
+        currentPhase = data.phase || PHASES.LOBBY;
+        role = data.role || null;
+        alive = data.alive !== false;
+        currentDay = data.day || 0;
+        currentNight = data.night || 0;
+        currentSettings = Object.assign(currentSettings, data.settings || {});
+        allPlayers = data.players || allPlayers;
+        mafiaPeers = data.mafiaPeers || [];
+        aliveMafiaCount = (typeof data.aliveMafiaCount === "number") ? data.aliveMafiaCount : aliveMafiaCount;
+        mafiaCoordEnabled = !!data.mafiaCoordEnabled;
+        detectiveMemory = data.detectiveMemory || [];
+        detectiveLastResult = data.detectiveLastResult || null;
+        nightActionLocked = false;
+        voteActionLocked = false;
+        lastError = null;
+        renderPhase();
+      });
+
+      // Intro phase for this player
+      socket.on("intro_phase_player", (data) => {
+        currentPhase = PHASES.INTRO;
+        currentDay = data.day || currentDay;
+        currentNight = data.night || currentNight;
+        role = data.role || role;
+        detectiveMemory = data.detectiveMemory || detectiveMemory;
+        lastError = null;
+        renderPhase();
+      });
+
+      // Night phase for this player
+      socket.on("night_phase_player", (data) => {
+        currentPhase = PHASES.NIGHT;
+        currentNight = data.night || currentNight;
+        currentDay = data.day || currentDay;
+        role = data.role || role;
+        currentSettings = Object.assign(currentSettings, data.settings || {});
+        if (Array.isArray(data.players)) allPlayers = data.players;
+        nightTargets = Array.isArray(data.nightTargets) ? data.nightTargets : [];
+        detectiveLastResult = null;
+        detectiveCancelMessage = null;
+        alive = data.alive !== undefined ? data.alive : alive;
+        mafiaPeers = data.mafiaPeers || mafiaPeers;
+        aliveMafiaCount = (typeof data.aliveMafiaCount === "number") ? data.aliveMafiaCount : aliveMafiaCount;
+        mafiaCoordEnabled = !!data.mafiaCoordEnabled;
+        mafiaVoteSignals = data.mafiaVoteSignals || mafiaVoteSignals || [];
+        // Restore (or clear) local vote lock state for Mafia vote coordination UI
+        mafiaHasVoted = false;
+        lastMafiaVotedTargetId = null;
+        if ((data.role || role) === "mafia" && Array.isArray(mafiaVoteSignals) && playerId) {
+          const mine = mafiaVoteSignals.find((v) => v && v.voterId === playerId && v.targetId);
+          if (mine) {
+            mafiaHasVoted = true;
+            lastMafiaVotedTargetId = mine.targetId;
+          }
+        }
+        detectiveMemory = data.detectiveMemory || detectiveMemory;
+        nightStatus = data.nightStatus || nightStatus;
+        nightSummary = data.nightSummary || null;
+        nightActionLocked = data.locked || false;
+        nightSelection = {
+          targetId: null,
+          skipKill: false,
+          suspectId: null,
+          trustId: null,
+        };
+        lastError = null;
+        renderPhase();
+      });
+
+      // Live updates for Mafia "VOTE/RE-VOTE" coordination signals during Night
+      socket.on("mafia_vote_signal_update", (data) => {
+        mafiaVoteSignals = (data && Array.isArray(data.votes)) ? data.votes : [];
+        // Keep our local "already voted" lock in sync if the server includes our vote.
+        mafiaHasVoted = false;
+        lastMafiaVotedTargetId = null;
+        if (role === "mafia" && Array.isArray(mafiaVoteSignals) && playerId) {
+          const mine = mafiaVoteSignals.find((v) => v && v.voterId === playerId && v.targetId);
+          if (mine) {
+            mafiaHasVoted = true;
+            lastMafiaVotedTargetId = mine.targetId;
+          }
+        }
+        if (currentPhase === PHASES.NIGHT && role === "mafia") {
+          renderPhase();
+        }
+      });
+
+
+      // Day phase for this player
+      socket.on("day_phase_player", (data) => {
+        currentPhase = PHASES.DAY;
+        currentDay = data.day || currentDay;
+        currentNight = data.night || currentNight;
+        role = data.role || role;
+        alive = data.alive !== undefined ? data.alive : alive;
+        currentSettings = Object.assign(currentSettings, data.settings || {});
+        if (Array.isArray(data.players)) allPlayers = data.players;
+        daySummary = data.daySummary || daySummary;
+
+        // Detective-only info (shown during Day only)
+        detectiveLastResult = data.detectiveLastResult || null;
+        detectiveCancelMessage = data.detectiveCancelMessage || null;
+        detectiveCancelHistory = Array.isArray(data.detectiveCancelHistory) ? data.detectiveCancelHistory : [];
+        detectiveMemory = data.detectiveMemory || detectiveMemory;
+
+        lastError = null;
+        renderPhase();
+      });
+
+      // Vote phase for this player
+      socket.on("vote_phase_player", (data) => {
+        detectiveLastResult = null;
+        currentPhase = PHASES.VOTE;
+        currentDay = data.day || currentDay;
+        currentNight = data.night || currentNight;
+        alive = data.alive !== undefined ? data.alive : alive;
+        if (Array.isArray(data.players)) allPlayers = data.players;
+        voteOptions = data.options || [];
+        voteStatus = data.status || [];
+        voteSelection = null;
+        voteActionLocked = false;
+        voteRemainingSeconds = data.remainingSeconds || 0;
+
+        if (voteTimer) {
+          clearInterval(voteTimer);
+          voteTimer = null;
+        }
+        if (data.timed && voteRemainingSeconds > 0) {
+          voteTimer = setInterval(() => {
+            if (voteRemainingSeconds > 0) {
+              voteRemainingSeconds--;
+              if (currentPhase === PHASES.VOTE) {
+                renderPhase();
+              }
+            } else {
+              clearInterval(voteTimer);
+              voteTimer = null;
+            }
+          }, 1000);
+        }
+
+        lastError = null;
+        renderPhase();
+      });
+
+      // Game over summary
+      socket.on("game_over", (summary) => {
+        currentPhase = PHASES.RESULTS;
+        lastGameSummary = summary;
+        const you = summary.players.find((p) => p.id === playerId);
+        if (you) {
+          pointsDetail = normalizePointsDetail(you.pointsDetail, you.points);
+          points = pointsDetail.total;
+        }
+        lastError = null;
+        renderPhase();
+      });
+
+      // Host reset / lobby update
+      socket.on("lobby_update", (data) => {
+        resetForLobby(data);
+      });
+
+      // Force reselect when host switches to preset mode
+      socket.on("forceReselect", (data) => {
+        // Clear stored name so player can pick a new one
+        StorageManager.removeItem(PLAYER_NAME_KEY);
+        playerName = null;
+        playerId = null;
+        currentPhase = PHASES.LOBBY;
+        lastError = data?.reason || "Please select a name from the preset list.";
+        renderPhase();
+      });
+
+      // Errors specific to this player
+      socket.on("player_error", (msg) => {
+        lastError = msg || "An unknown error occurred.";
+        renderPhase();
+      });
+
+      // Kicked by host handler
+      socket.on("kicked", ({ message }) => {
+        // Reset player completely
+        StorageManager.removeItem(PLAYER_UID_KEY);
+        StorageManager.removeItem(PLAYER_NAME_KEY);
+        playerUid = null;
+        playerName = "";
+        joined = false;
+        lastError = message || "You have been removed from the game by the host.";
+        renderPhase();
+      });
+
+      // FIX 7: Return to launcher with acknowledgment for graceful shutdown
+      socket.on("returned_to_menu", (data) => {
+        if (data && data.shutdownId) {
+          socket.emit("player_ack_return_to_menu", { shutdownId: data.shutdownId });
+        }
+        // Small delay to ensure ack is sent before disconnect
+        setTimeout(() => {
+          socket.disconnect();
+          const masterUrl = window.location.protocol + "//" + window.location.host + "/players";
+          window.location.href = masterUrl;
+        }, 50);
+      });
+    }
+
+    setupSocket();
+    renderPhase();
+  </script>
+</body>
+</html>

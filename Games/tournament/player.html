@@ -1,0 +1,2430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Mini Games Tournament - Player</title>
+  <link rel="stylesheet" href="/shared/game-ui.css">
+  <style>
+    :root {
+      --accent: #8b5cf6;
+      --accent-hover: #a78bfa;
+      --accent-glow: rgba(139, 92, 246, 0.4);
+      --bg-primary: #0a0e1a;
+      --bg-secondary: #111827;
+      --bg-tertiary: #1f2937;
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --gold: #fbbf24;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --border-subtle: rgba(55, 65, 81, 0.5);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+      touch-action: manipulation;
+    }
+
+    /* Screens */
+    .screen {
+      display: none;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .screen.active {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* Join Screen */
+    .join-container {
+      width: min(450px, 95vw);
+      background: var(--bg-secondary);
+      border: 2px solid var(--border-subtle);
+      border-radius: 20px;
+      padding: 40px 30px;
+      text-align: center;
+    }
+
+    .join-title {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .join-subtitle {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      margin-bottom: 30px;
+    }
+
+    .join-input {
+      width: 100%;
+      padding: 16px;
+      font-size: 1.1rem;
+      background: var(--bg-tertiary);
+      border: 2px solid var(--border-subtle);
+      border-radius: 10px;
+      color: var(--text-primary);
+      text-align: center;
+      margin-bottom: 20px;
+      transition: all 0.3s;
+    }
+
+    .join-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .join-button {
+      width: 100%;
+      padding: 16px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: white;
+      background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 4px 12px var(--accent-glow);
+    }
+
+    .join-button:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px var(--accent-glow);
+    }
+
+    .join-button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .error-message {
+      color: var(--danger);
+      font-size: 0.9rem;
+      margin-top: 10px;
+      min-height: 20px;
+    }
+
+    /* Waiting Screen */
+    .waiting-container {
+      text-align: center;
+      max-width: 500px;
+    }
+
+    .waiting-title {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .waiting-text {
+      font-size: 1.2rem;
+      color: var(--text-secondary);
+      margin-bottom: 30px;
+    }
+
+    .waiting-spinner {
+      width: 60px;
+      height: 60px;
+      border: 4px solid var(--bg-tertiary);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Game Container */
+    .game-container {
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .game-header {
+      background: var(--bg-secondary);
+      border: 2px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    .opponent-name {
+      font-size: 1.1rem;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .game-name {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .game-content {
+      background: var(--bg-secondary);
+      border: 2px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 24px;
+      min-height: 400px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Voting Interface */
+    .voting-container {
+      width: 100%;
+      max-width: 500px;
+    }
+
+    .voting-title {
+      font-size: 1.8rem;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 10px;
+      color: var(--accent);
+    }
+
+    .voting-subtitle {
+      text-align: center;
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+    }
+
+    .voting-options {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .vote-button {
+      width: 100%;
+      padding: 18px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      text-align: left;
+      color: var(--text-primary);
+      background: var(--bg-secondary);
+      border: 2px solid var(--border-subtle);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .vote-button:hover:not(:disabled) {
+      border-color: var(--accent);
+      background: rgba(139, 92, 246, 0.1);
+      transform: translateX(4px);
+    }
+
+    .vote-button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .vote-button.selected {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    .vote-checkmark {
+      font-size: 1.3rem;
+    }
+
+    /* Spectator View */
+    .spectator-container {
+      width: 100%;
+      max-width: 600px;
+    }
+
+    .spectator-title {
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 20px;
+    }
+
+    .placement-badge {
+      text-align: center;
+      padding: 12px 20px;
+      background: var(--bg-secondary);
+      border: 2px solid var(--border-subtle);
+      border-radius: 10px;
+      margin-bottom: 20px;
+      font-size: 1.1rem;
+    }
+
+    .placement-badge.gold {
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+
+    .placement-badge.silver {
+      border-color: var(--silver);
+      color: var(--silver);
+    }
+
+    .placement-badge.bronze {
+      border-color: var(--bronze);
+      color: var(--bronze);
+    }
+
+    .spectator-feed {
+      background: var(--bg-secondary);
+      border: 2px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      min-height: 300px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .spectator-match-info {
+      font-size: 1.1rem;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+    }
+
+    .spectator-players {
+      display: flex;
+      justify-content: space-around;
+      width: 100%;
+      margin-top: 20px;
+    }
+
+    .spectator-player {
+      flex: 1;
+      text-align: center;
+    }
+
+    .spectator-player-name {
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .spectator-player-status {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+
+    /* Game Over */
+    .gameover-player-container {
+      text-align: center;
+      max-width: 500px;
+    }
+
+    .gameover-title {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+
+    .gameover-placement {
+      font-size: 4rem;
+      font-weight: 900;
+      margin-bottom: 20px;
+    }
+
+    .gameover-placement.first {
+      color: var(--gold);
+      text-shadow: 0 0 20px rgba(251, 191, 36, 0.5);
+    }
+
+    .gameover-placement.second {
+      color: var(--silver);
+    }
+
+    .gameover-placement.third {
+      color: var(--bronze);
+    }
+
+    .gameover-message {
+      font-size: 1.2rem;
+      color: var(--text-secondary);
+      margin-top: 20px;
+    }
+
+    /* Utility */
+    .hidden {
+      display: none !important;
+    }
+
+    .text-center {
+      text-align: center;
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .join-title {
+        font-size: 1.6rem;
+      }
+
+      .waiting-title {
+        font-size: 2rem;
+      }
+
+      .voting-title {
+        font-size: 1.5rem;
+      }
+
+      .game-name {
+        font-size: 1.2rem;
+      }
+    }
+
+    /* ===== MINI-GAME SPECIFIC STYLES ===== */
+
+    /* Tap Race */
+    .tap-button {
+      width: 100%;
+      max-width: 400px;
+      height: 200px;
+      font-size: 3rem;
+      font-weight: 900;
+      background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+      border: none;
+      border-radius: 20px;
+      color: white;
+      cursor: pointer;
+      touch-action: manipulation;
+      user-select: none;
+      transition: transform 0.1s;
+      box-shadow: 0 8px 20px var(--accent-glow);
+    }
+
+    .tap-button:active {
+      transform: scale(0.95);
+    }
+
+    .progress-bar-container {
+      width: 100%;
+      height: 40px;
+      background: var(--bg-tertiary);
+      border-radius: 20px;
+      margin: 20px 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--danger), var(--accent));
+      transition: width 0.3s;
+      border-radius: 20px;
+    }
+
+    .score-display {
+      font-size: 2rem;
+      font-weight: 700;
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    /* Cowboy Duel */
+    .cowboy-status {
+      font-size: 3rem;
+      font-weight: 900;
+      text-align: center;
+      margin: 40px 0;
+      min-height: 100px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .cowboy-fire-button {
+      width: 100%;
+      max-width: 300px;
+      height: 150px;
+      font-size: 2.5rem;
+      font-weight: 900;
+      background: var(--danger);
+      border: none;
+      border-radius: 20px;
+      color: white;
+      cursor: pointer;
+      touch-action: manipulation;
+      box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4);
+    }
+
+    .cowboy-fire-button:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    /* Grid Games (Tic Tac Toe, Connect Four, Whack-a-Mole, etc) */
+    .game-grid {
+      display: grid;
+      gap: 8px;
+      margin: 20px auto;
+      touch-action: manipulation;
+      width: 100%;
+    }
+
+    .grid-3x3 {
+      grid-template-columns: repeat(3, 1fr);
+      max-width: 300px;
+    }
+
+    .grid-6x7 {
+      grid-template-columns: repeat(7, 1fr);
+      max-width: 350px;
+    }
+
+    .grid-5x5 {
+      grid-template-columns: repeat(5, 1fr);
+      max-width: 300px;
+    }
+
+    .grid-cell {
+      aspect-ratio: 1;
+      background: var(--bg-tertiary);
+      border: 2px solid var(--border-subtle);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      touch-action: manipulation;
+      user-select: none;
+    }
+
+    .grid-cell:hover:not(.occupied):not(.disabled) {
+      border-color: var(--accent);
+      background: rgba(139, 92, 246, 0.1);
+    }
+
+    .grid-cell.occupied {
+      cursor: default;
+    }
+
+    .grid-cell.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .grid-cell.red {
+      background: var(--danger);
+      color: white;
+    }
+
+    .grid-cell.yellow {
+      background: var(--gold);
+      color: white;
+    }
+
+    .grid-cell.target {
+      background: var(--accent);
+      animation: popup 0.3s;
+    }
+
+    @keyframes popup {
+      0% { transform: scale(0); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+
+    /* Math Dash */
+    .math-question {
+      font-size: 2.5rem;
+      font-weight: 700;
+      text-align: center;
+      margin: 30px 0;
+      min-height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .math-input {
+      width: 100%;
+      max-width: 200px;
+      padding: 16px;
+      font-size: 2rem;
+      text-align: center;
+      background: var(--bg-tertiary);
+      border: 2px solid var(--border-subtle);
+      border-radius: 10px;
+      color: var(--text-primary);
+      margin: 20px auto;
+      display: block;
+    }
+
+    .math-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .math-submit {
+      width: 100%;
+      max-width: 200px;
+      padding: 16px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      background: var(--accent);
+      border: none;
+      border-radius: 10px;
+      color: white;
+      cursor: pointer;
+      display: block;
+      margin: 0 auto;
+    }
+
+    /* Memory Sequence */
+    .memory-instruction {
+      text-align: center;
+      font-size: 1.2rem;
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+    }
+
+    .memory-grid {
+      display: grid;
+      gap: 10px;
+      margin: 20px auto;
+      max-width: 300px;
+      touch-action: manipulation;
+      width: 100%;
+    }
+
+    .memory-grid.size-3 {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .memory-grid.size-4 {
+      grid-template-columns: repeat(4, 1fr);
+    }
+
+    .memory-grid.size-5 {
+      grid-template-columns: repeat(5, 1fr);
+    }
+
+    .memory-card {
+      aspect-ratio: 1;
+      background: var(--bg-tertiary);
+      border: 2px solid var(--border-subtle);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      cursor: pointer;
+      transition: all 0.3s;
+      user-select: none;
+    }
+
+    .memory-card.revealed {
+      background: var(--accent);
+      border-color: var(--accent);
+      cursor: default;
+    }
+
+    .memory-card.hidden {
+      background: var(--bg-tertiary);
+    }
+
+    /* Blackjack */
+    .blackjack-hand {
+      margin: 20px 0;
+    }
+
+    .blackjack-cards {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin: 10px 0;
+    }
+
+    .card {
+      width: 60px;
+      height: 84px;
+      background: white;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: black;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+
+    .card.red {
+      color: var(--danger);
+    }
+
+    .card.face-down {
+      background: linear-gradient(135deg, #1a1a2e, #16213e);
+      color: var(--text-secondary);
+      font-size: 1.8rem;
+      border: 2px solid var(--accent);
+    }
+
+    .blackjack-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-top: 10px;
+    }
+
+    .blackjack-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    .blackjack-button {
+      padding: 16px 32px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .blackjack-button.hit {
+      background: var(--accent);
+      color: white;
+    }
+
+    .blackjack-button.stand {
+      background: var(--success);
+      color: white;
+    }
+
+    .blackjack-button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Battleship */
+    .battleship-phase {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 1.1rem;
+      color: var(--text-secondary);
+    }
+
+    .battleship-grids {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .battleship-grid-container {
+      width: 100%;
+    }
+
+    .battleship-grid-title {
+      text-align: center;
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: var(--accent);
+    }
+
+    .battleship-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    .battleship-button {
+      padding: 12px 24px;
+      font-size: 1rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      color: white;
+    }
+
+    .battleship-button.clear {
+      background: var(--accent);
+    }
+
+    .battleship-button.defuse {
+      background: var(--danger);
+    }
+
+    /* Minesweeper */
+    .minesweeper-info {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .minesweeper-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    .minesweeper-button {
+      padding: 12px 24px;
+      font-size: 1rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      color: white;
+    }
+
+    .minesweeper-button.clear {
+      background: var(--success);
+    }
+
+    .minesweeper-button.defuse {
+      background: var(--danger);
+    }
+
+    .grid-cell.revealed {
+      background: var(--bg-secondary);
+      cursor: default;
+    }
+
+    .grid-cell.bomb {
+      background: var(--danger);
+      color: white;
+    }
+
+    /* Status Messages */
+    .status-message {
+      text-align: center;
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin: 20px 0;
+      padding: 16px;
+      background: var(--bg-secondary);
+      border-radius: 10px;
+      border: 2px solid var(--border-subtle);
+    }
+
+    .status-message.success {
+      border-color: var(--success);
+      color: var(--success);
+    }
+
+    .status-message.error {
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+
+    .status-message.info {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+  <!-- Join Screen -->
+  <div class="screen active" id="joinScreen">
+    <div class="join-container">
+      <h1 class="join-title">🎮 Mini Games Tournament</h1>
+      <p class="join-subtitle">Enter your name to join the competition</p>
+      <input
+        type="text"
+        id="nameInput"
+        class="join-input"
+        placeholder="Your Name"
+        maxlength="20"
+        autocomplete="off"
+      >
+      <button class="join-button" id="joinButton">Join Tournament</button>
+      <div class="error-message" id="errorMessage"></div>
+    </div>
+  </div>
+
+  <!-- Waiting Screen -->
+  <div class="screen" id="waitingScreen">
+    <div class="waiting-container">
+      <h1 class="waiting-title">⏳ Waiting...</h1>
+      <p class="waiting-text" id="waitingText">Waiting for the tournament to start</p>
+      <div class="waiting-spinner"></div>
+    </div>
+  </div>
+
+  <!-- Active Game Screen -->
+  <div class="screen" id="gameScreen">
+    <div class="game-container">
+      <div class="game-header">
+        <div class="opponent-name" id="opponentName">vs Opponent</div>
+        <div class="game-name" id="gameName">Game Name</div>
+      </div>
+      <div class="game-content" id="gameContent">
+        <!-- Game-specific UI will be injected here -->
+        <p style="color: var(--text-secondary);">Game loading...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Voting Screen -->
+  <div class="screen" id="votingScreen">
+    <div class="voting-container">
+      <h2 class="voting-title">🗳️ Vote for Next Game</h2>
+      <p class="voting-subtitle">Choose which mini-game the remaining players will compete in</p>
+      <div class="voting-options" id="votingOptions">
+        <!-- Voting options will be populated here -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Spectator Screen -->
+  <div class="screen" id="spectatorScreen">
+    <div class="spectator-container">
+      <h2 class="spectator-title">👀 Spectating</h2>
+      <div class="placement-badge" id="placementBadge">
+        You placed 5th
+      </div>
+      <div class="spectator-feed" id="spectatorFeed">
+        <div class="spectator-match-info" id="spectatorMatchInfo">
+          Watching current matches...
+        </div>
+        <div class="spectator-players" id="spectatorPlayers">
+          <!-- Spectator view will be populated here -->
+        </div>
+      </div>
+      <div id="spectatorVoting" class="hidden">
+        <!-- Voting interface will be shown here when active -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Over Screen -->
+  <div class="screen" id="gameoverScreen">
+    <div class="gameover-player-container">
+      <div class="gameover-title">Tournament Complete!</div>
+      <div class="gameover-placement first" id="gameoverPlacement">
+        1st Place
+      </div>
+      <div class="gameover-message" id="gameoverMessage">
+        Congratulations, Champion!
+      </div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const pathParts = window.location.pathname.split('/');
+    const gameId = pathParts[2];
+    const socket = io(gameId ? `/game/${gameId}` : '/');
+
+    // Launcher integration
+    const urlParams = new URLSearchParams(window.location.search);
+    const launcherKey = urlParams.get('launcherKey');
+    const launcherName = urlParams.get('launcherName');
+
+    // State
+    let playerKey = launcherKey || localStorage.getItem('tournament_playerKey');
+    let playerName = launcherName || localStorage.getItem('tournament_playerName');
+    let currentPhase = 'join';
+    let isEliminated = false;
+    let placement = null;
+    let selectedVote = null;
+
+    // Initialize
+    function init() {
+      console.log('[Player] Initializing...');
+
+      // Pre-fill name from launcher
+      if (launcherName) {
+        document.getElementById('nameInput').value = launcherName;
+      }
+
+      // Auto-reconnect if we have credentials
+      if (playerKey && playerName) {
+        autoReconnect();
+      }
+
+      setupEventListeners();
+    }
+
+    // Auto-reconnect
+    function autoReconnect() {
+      console.log('[Player] Auto-reconnecting as:', playerName);
+      showScreen('waitingScreen');
+      socket.emit('registerPlayer', { name: playerName, playerKey: playerKey }, handleJoinResponse);
+    }
+
+    // Event listeners
+    function setupEventListeners() {
+      // Join button
+      document.getElementById('joinButton').addEventListener('click', handleJoin);
+
+      // Enter key on name input
+      document.getElementById('nameInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          handleJoin();
+        }
+      });
+    }
+
+    // Handle join
+    function handleJoin() {
+      const nameInput = document.getElementById('nameInput');
+      const name = nameInput.value.trim();
+
+      if (!name) {
+        showError('Please enter your name');
+        return;
+      }
+
+      if (name.length < 2) {
+        showError('Name must be at least 2 characters');
+        return;
+      }
+
+      // Disable button while joining
+      document.getElementById('joinButton').disabled = true;
+      showError('');
+
+      // Send join request
+      socket.emit('registerPlayer', { name, playerKey }, handleJoinResponse);
+    }
+
+    // Handle join response
+    function handleJoinResponse(response) {
+      console.log('[Player] Join response:', response);
+
+      if (!response.ok) {
+        showError(response.error || 'Failed to join');
+        document.getElementById('joinButton').disabled = false;
+        return;
+      }
+
+      // Save credentials
+      playerKey = response.playerKey;
+      playerName = document.getElementById('nameInput').value.trim();
+      localStorage.setItem('tournament_playerKey', playerKey);
+      localStorage.setItem('tournament_playerName', playerName);
+
+      // Show waiting screen
+      showScreen('waitingScreen');
+    }
+
+    // Show error
+    function showError(message) {
+      document.getElementById('errorMessage').textContent = message;
+    }
+
+    // Show screen
+    function showScreen(screenId) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      const screen = document.getElementById(screenId);
+      if (screen) screen.classList.add('active');
+    }
+
+    // Handle voting
+    window.handleVote = function(gameId) {
+      if (selectedVote === gameId) return; // Already selected
+
+      selectedVote = gameId;
+
+      // Update UI
+      document.querySelectorAll('.vote-button').forEach(btn => {
+        btn.classList.remove('selected');
+      });
+      document.querySelector(`[data-game-id="${gameId}"]`).classList.add('selected');
+
+      // Send vote to server
+      socket.emit('vote:submit', { gameName: gameId });
+      console.log('[Player] Voted for:', gameId);
+    };
+
+    // Render voting options
+    function renderVotingOptions(games) {
+      const container = document.getElementById('votingOptions');
+      container.innerHTML = games.map(game => `
+        <button
+          class="vote-button"
+          data-game-id="${game.id}"
+          onclick="handleVote('${game.id}')"
+        >
+          <span>${game.name}</span>
+          <span class="vote-checkmark hidden">✓</span>
+        </button>
+      `).join('');
+    }
+
+    // Socket events
+    socket.on('phase:update', (data) => {
+      console.log('[Player] Phase update:', data);
+      currentPhase = data.phase;
+
+      switch (currentPhase) {
+        case 'lobby':
+          showScreen('waitingScreen');
+          document.getElementById('waitingText').textContent = 'Waiting for the tournament to start';
+          break;
+
+        case 'intro':
+          showScreen('waitingScreen');
+          document.getElementById('waitingText').textContent = 'Tournament is starting...';
+          break;
+
+        case 'bracket':
+          if (isEliminated) {
+            showScreen('spectatorScreen');
+          } else {
+            showScreen('waitingScreen');
+            document.getElementById('waitingText').textContent = 'Waiting for your match...';
+          }
+          break;
+
+        case 'mini_game':
+          if (isEliminated) {
+            showScreen('spectatorScreen');
+          } else {
+            showScreen('gameScreen');
+          }
+          break;
+
+        case 'game_over':
+          showScreen('gameoverScreen');
+          if (data.placement) {
+            renderGameOver(data.placement);
+          }
+          break;
+      }
+    });
+
+    socket.on('match:start', (data) => {
+      console.log('[Player] Match starting:', data);
+      showScreen('gameScreen');
+
+      if (data.opponentName) {
+        document.getElementById('opponentName').textContent = `vs ${data.opponentName}`;
+      }
+
+      if (data.gameName) {
+        document.getElementById('gameName').textContent = data.gameName;
+      }
+    });
+
+    socket.on('voting:start', (data) => {
+      console.log('[Player] Voting started:', data);
+      selectedVote = null;
+
+      if (isEliminated) {
+        // Show voting interface in spectator screen
+        showScreen('spectatorScreen');
+        // For now, just show in main voting screen
+        showScreen('votingScreen');
+
+        if (data.games && data.games.length > 0) {
+          renderVotingOptions(data.games);
+        }
+      }
+    });
+
+    socket.on('voting:results', (data) => {
+      console.log('[Player] Voting results:', data);
+      // Show results briefly before next round
+    });
+
+    socket.on('spectator:update', (data) => {
+      console.log('[Player] Spectator update:', data);
+
+      if (data.placement) {
+        placement = data.placement;
+        const badge = document.getElementById('placementBadge');
+
+        let ordinal = placement + 'th';
+        if (placement === 1) ordinal = '1st';
+        else if (placement === 2) ordinal = '2nd';
+        else if (placement === 3) ordinal = '3rd';
+
+        badge.textContent = `You placed ${ordinal}`;
+
+        // Style based on placement
+        badge.className = 'placement-badge';
+        if (placement === 1) badge.classList.add('gold');
+        else if (placement === 2) badge.classList.add('silver');
+        else if (placement === 3) badge.classList.add('bronze');
+      }
+
+      // Update spectator feed
+      if (data.matches) {
+        // TODO: Render active matches
+      }
+    });
+
+    socket.on('eliminated', (data) => {
+      console.log('[Player] You were eliminated');
+      isEliminated = true;
+      placement = data.placement;
+      showScreen('spectatorScreen');
+    });
+
+    socket.on('disconnect', () => {
+      console.log('[Player] Disconnected from server');
+      // Don't change screen - let reconnection handle it
+    });
+
+    socket.on('connect', () => {
+      console.log('[Player] Connected to server');
+
+      // Auto-reconnect if we have credentials
+      if (playerKey && playerName && currentPhase !== 'join') {
+        autoReconnect();
+      }
+    });
+
+    socket.on('kicked', (data) => {
+      // Clear localStorage
+      localStorage.removeItem('tournament_playerKey');
+      localStorage.removeItem('tournament_playerName');
+
+      // Reset state
+      playerKey = null;
+      playerName = null;
+
+      // Show error message
+      showError(data.message || 'You have been removed from the game by the host.');
+
+      // Clear input and return to join screen
+      document.getElementById('nameInput').value = '';
+      showScreen('joinScreen');
+    });
+
+    socket.on('returned_to_menu', (data) => {
+      if (data && data.shutdownId) {
+        socket.emit('player_ack_return_to_menu', { shutdownId: data.shutdownId });
+      }
+      setTimeout(() => {
+        socket.disconnect();
+        const masterUrl = window.location.protocol + "//" + window.location.host + "/players";
+        window.location.href = masterUrl;
+      }, 50);
+    });
+
+    // Render game over
+    function renderGameOver(playerPlacement) {
+      placement = playerPlacement;
+
+      const placementEl = document.getElementById('gameoverPlacement');
+      const messageEl = document.getElementById('gameoverMessage');
+
+      let ordinal = placement + 'th';
+      let className = '';
+      let message = '';
+
+      if (placement === 1) {
+        ordinal = '1st';
+        className = 'first';
+        message = '🏆 Congratulations, Champion! 🏆';
+      } else if (placement === 2) {
+        ordinal = '2nd';
+        className = 'second';
+        message = '🥈 Great job! You came so close!';
+      } else if (placement === 3) {
+        ordinal = '3rd';
+        className = 'third';
+        message = '🥉 Excellent performance!';
+      } else {
+        message = 'Thanks for competing!';
+      }
+
+      placementEl.textContent = ordinal + ' Place';
+      placementEl.className = 'gameover-placement ' + className;
+      messageEl.textContent = message;
+    }
+
+    // ===== MINI-GAME RENDERING FUNCTIONS =====
+
+    // 1. TAP RACE
+    function renderTapRace() {
+      const gameContent = document.getElementById('gameContent');
+      gameContent.innerHTML = `
+        <div class="score-display" id="tapScore">0</div>
+        <div class="progress-bar-container">
+          <div class="progress-bar" id="tapProgress" style="width: 50%;"></div>
+        </div>
+        <button class="tap-button" id="tapButton">TAP!</button>
+      `;
+
+      document.getElementById('tapButton').addEventListener('click', () => {
+        socket.emit('taprace:tap');
+      });
+    }
+
+    socket.on('taprace:start', (data) => {
+      console.log('[TapRace] Game started:', data);
+      renderTapRace();
+    });
+
+    socket.on('taprace:update', (data) => {
+      const scoreEl = document.getElementById('tapScore');
+      const progressEl = document.getElementById('tapProgress');
+
+      if (scoreEl) scoreEl.textContent = data.yourTaps || 0;
+      if (progressEl) {
+        // Progress is -100 to +100, convert to 0-100%
+        const percentage = 50 + (data.progress * 0.5);
+        progressEl.style.width = percentage + '%';
+      }
+    });
+
+    socket.on('taprace:end', (data) => {
+      console.log('[TapRace] Game ended:', data);
+      const gameContent = document.getElementById('gameContent');
+      gameContent.innerHTML = `
+        <div class="status-message ${data.result === 'win' ? 'success' : 'error'}">
+          <div style="font-size: 2rem; margin-bottom: 10px;">
+            ${data.result === 'win' ? '🏆 YOU WIN!' : '😔 YOU LOSE'}
+          </div>
+          <div>Your taps: ${data.yourTaps}</div>
+          <div>Opponent taps: ${data.opponentTaps}</div>
+        </div>
+      `;
+    });
+
+    // 2. COWBOY DUEL
+    let cowboyCanFire = false;
+
+    function renderCowboyDuel() {
+      const gameContent = document.getElementById('gameContent');
+      gameContent.innerHTML = `
+        <div class="score-display" id="cowboyScore">Round 1</div>
+        <div class="cowboy-status" id="cowboyStatus">Get Ready...</div>
+        <button class="cowboy-fire-button" id="cowboyFireButton" disabled>🔫 FIRE!</button>
+      `;
+
+      document.getElementById('cowboyFireButton').addEventListener('click', () => {
+        socket.emit('cowboy:tap');
+        document.getElementById('cowboyFireButton').disabled = true;
+      });
+    }
+
+    socket.on('cowboy:start', (data) => {
+      console.log('[Cowboy] Game started:', data);
+      renderCowboyDuel();
+      cowboyCanFire = false;
+    });
+
+    socket.on('cowboy:round_start', (data) => {
+      const statusEl = document.getElementById('cowboyStatus');
+      const buttonEl = document.getElementById('cowboyFireButton');
+      const scoreEl = document.getElementById('cowboyScore');
+
+      if (statusEl) statusEl.textContent = 'WAIT...';
+      if (buttonEl) {
+        buttonEl.disabled = false;
+        cowboyCanFire = false;
+      }
+      if (scoreEl && data.roundNumber) {
+        scoreEl.textContent = `Round ${data.roundNumber}`;
+      }
+    });
+
+    socket.on('cowboy:fire_signal', (data) => {
+      const statusEl = document.getElementById('cowboyStatus');
+      if (statusEl) statusEl.textContent = '🔥 FIRE!!!';
+      cowboyCanFire = true;
+    });
+
+    socket.on('cowboy:opponent_fired', (data) => {
+      const statusEl = document.getElementById('cowboyStatus');
+      const buttonEl = document.getElementById('cowboyFireButton');
+      if (buttonEl) buttonEl.disabled = true;
+      if (statusEl) statusEl.textContent = '💨 Too slow!';
+    });
+
+    socket.on('cowboy:misfire', (data) => {
+      const statusEl = document.getElementById('cowboyStatus');
+      const buttonEl = document.getElementById('cowboyFireButton');
+      if (buttonEl) buttonEl.disabled = true;
+      if (statusEl) statusEl.textContent = '💥 MISFIRE! You shot too early!';
+    });
+
+    socket.on('cowboy:opponent_misfire', (data) => {
+      const statusEl = document.getElementById('cowboyStatus');
+      const buttonEl = document.getElementById('cowboyFireButton');
+      if (buttonEl) buttonEl.disabled = true;
+      if (statusEl) statusEl.textContent = '🎯 Opponent misfired!';
+    });
+
+    socket.on('cowboy:round_result', (data) => {
+      const statusEl = document.getElementById('cowboyStatus');
+      if (statusEl) {
+        if (data.result === 'win') statusEl.textContent = '✓ YOU WON THIS ROUND!';
+        else statusEl.textContent = '✗ YOU LOST THIS ROUND';
+      }
+    });
+
+    socket.on('cowboy:end', (data) => {
+      console.log('[Cowboy] Game ended:', data);
+      const gameContent = document.getElementById('gameContent');
+      gameContent.innerHTML = `
+        <div class="status-message ${data.result === 'win' ? 'success' : 'error'}">
+          <div style="font-size: 2rem; margin-bottom: 10px;">
+            ${data.result === 'win' ? '🏆 YOU WIN!' : '😔 YOU LOSE'}
+          </div>
+          <div>Rounds won: ${data.roundsWon} - ${data.opponentRoundsWon}</div>
+        </div>
+      `;
+    });
+
+    // 3. TIC TAC TOE
+    let ticTacToeBoard = [];
+
+    function renderTicTacToe() {
+      const gameContent = document.getElementById('gameContent');
+      gameContent.innerHTML = `
+        <div class="score-display" id="tttScore">Round 1 | 0 - 0</div>
+        <div class="status-message info" id="tttStatus">Waiting...</div>
+        <div class="game-grid grid-3x3" id="tttGrid"></div>
+      `;
+      updateTicTacToeGrid();
+    }
+
+    function updateTicTacToeGrid() {
+      const grid = document.getElementById('tttGrid');
+      if (!grid) return;
+
+      grid.innerHTML = '';
+      for (let i = 0; i < 9; i++) {
+        const row = Math.floor(i / 3);
+        const col = i % 3;
+        const cell = document.createElement('div');
+        cell.className = 'grid-cell';
+        cell.textContent = ticTacToeBoard[row]?.[col] || '';
+
+        if (ticTacToeBoard[row]?.[col]) {
+          cell.classList.add('occupied');
+        } else {
+          cell.addEventListener('click', () => {
+            socket.emit('tictactoe:place', { row, col });
+          });
+        }
+
+        grid.appendChild(cell);
+      }
+    }
+
+    socket.on('tictactoe:start', (data) => {
+      console.log('[TicTacToe] Game started:', data);
+      ticTacToeBoard = Array(3).fill(null).map(() => Array(3).fill(null));
+      renderTicTacToe();
+    });
+
+    socket.on('tictactoe:update', (data) => {
+      if (data.board) {
+        ticTacToeBoard = data.board;
+      }
+      updateTicTacToeGrid();
+
+      const statusEl = document.getElementById('tttStatus');
+      if (statusEl) {
+        statusEl.textContent = data.yourTurn ? 'Your Turn!' : "Opponent's Turn";
+        statusEl.className = data.yourTurn ? 'status-message success' : 'status-message info';
+      }
+
+      const scoreEl = document.getElementById('tttScore');
+      if (scoreEl && data.score) {
+        scoreEl.textContent = data.score;
+      }
+    });
+
+    socket.on('tictactoe:round_win', (data) => {
+      const statusEl = document.getElementById('tttStatus');
+      if (statusEl) {
+        statusEl.textContent = data.result === 'win' ? 'You won this round!' : 'You lost this round!';
+        statusEl.className = data.result === 'win' ? 'status-message success' : 'status-message error';
+      }
+
+      const scoreEl = document.getElementById('tttScore');
+      if (scoreEl) {
+        scoreEl.textContent = `Rounds won: ${data.roundsWon} / ${data.roundsNeeded}`;
+      }
+    });
+
+    socket.on('tictactoe:round_tie', (data) => {
+      const statusEl = document.getElementById('tttStatus');
+      if (statusEl) {
+        statusEl.textContent = 'Round tied! New round starting...';
+        statusEl.className = 'status-message info';
+      }
+    });
+
+    socket.on('tictactoe:invalid_move', (data) => {
+      const statusEl = document.getElementById('tttStatus');
+      if (statusEl) {
+        statusEl.textContent = 'Invalid move - try again';
+        statusEl.className = 'status-message error';
+      }
+    });
+
+    socket.on('tictactoe:new_round', (data) => {
+      ticTacToeBoard = Array(3).fill(null).map(() => Array(3).fill(null));
+      updateTicTacToeGrid();
+
+      const scoreEl = document.getElementById('tttScore');
+      if (scoreEl) {
+        scoreEl.textContent = `Round ${data.roundNumber} | ${data.yourRoundsWon || 0} - ${data.opponentRoundsWon || 0}`;
+      }
+    });
+
+    socket.on('tictactoe:match_end', (data) => {
+      console.log('[TicTacToe] Game ended:', data);
+      const gameContent = document.getElementById('gameContent');
+      gameContent.innerHTML = `
+        <div class="status-message ${data.result === 'win' ? 'success' : 'error'}">
+          <div style="font-size: 2rem; margin-bottom: 10px;">
+            ${data.result === 'win' ? '🏆 YOU WIN!' : '😔 YOU LOSE'}
+          </div>
+          <div>Final Score: ${data.finalScore || ''}</div>
+        </div>
+      `;
+    });
+
+    // 4. MATH DASH
+    let currentMathQuestion = '';
+
+    function renderMathDash() {
+      const gameContent = document.getElementById('gameContent');
+      gameContent.innerHTML = `
+        <div class="score-display" id="mathScore">Score: 0</div>
+        <div class="math-question" id="mathQuestion">Loading...</div>
+        <input type="number" class="math-input" id="mathInput" placeholder="Answer">
+        <button class="math-submit" id="mathSubmit">Submit</button>
+        <div class="status-message info" id="mathStatus"></div>
+      `;
+
+      const submitAnswer = () => {
+        const input = document.getElementById('mathInput');
+        const answer = input.value.trim();
+        if (answer) {
+          socket.emit('mathdash:answer', { answer: parseFloat(answer) });
+          input.value = '';
+        }
+      };
+
+      document.getElementById('mathSubmit').addEventListener('click', submitAnswer);
+      document.getElementById('mathInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') submitAnswer();
+      });
+    }
+
+    socket.on('mathdash:start', (data) => {
+      console.log('[MathDash] Game started:', data);
+      renderMathDash();
+    });
+
+    socket.on('mathdash:question', (data) => {
+      currentMathQuestion = data.question;
+      const questionEl = document.getElementById('mathQuestion');
+      const scoreEl = document.getElementById('mathScore');
+
+      if (questionEl) questionEl.textContent = data.question + ' = ?';
+      if (scoreEl) scoreEl.textContent = `Score: ${data.score} | Opponent: ${data.opponentScore}`;
+
+      // Clear and focus input
+      const input = document.getElementById('mathInput');
+      if (input) {
+        input.value = '';
+        input.focus();
+      }
+    });
+
+    socket.on('mathdash:correct', (data) => {
+      const statusEl = document.getElementById('mathStatus');
+      if (statusEl) {
+        statusEl.textContent = '✓ Correct!';
+        statusEl.className = 'status-message success';
+        setTimeout(() => statusEl.textContent = '', 1000);
+      }
+    });
+
+    socket.on('mathdash:incorrect', (data) => {
+      const statusEl = document.getElementById('mathStatus');
+      if (statusEl) {
+        statusEl.textContent = `✗ Wrong! Answer: ${data.correctAnswer}`;
+        statusEl.className = 'status-message error';
+        setTimeout(() => statusEl.textContent = '', 2000);
+      }
+    });
+
+    socket.on('mathdash:end', (data) => {
+      console.log('[MathDash] Game ended:', data);
+      const gameContent = document.getElementById('gameContent');
+      gameContent.innerHTML = `
+        <div class="status-message ${data.result === 'win' ? 'success' : 'error'}">
+          <div style="font-size: 2rem; margin-bottom: 10px;">
+            ${data.result === 'win' ? '🏆 YOU WIN!' : '😔 YOU LOSE'}
+          </div>
+          <div>Final Score: ${data.finalScore} - ${data.opponentScore}</div>
+        </div>
+      `;
+    });
+
+    // 5. WHACK-A-MOLE
+    let whackTargetsByPosition = new Map(); // gridPosition -> targetId
+
+    function renderWhackAMole() {
+      const gameContent = document.getElementById('gameContent');
+      gameContent.innerHTML = `
+        <div class="score-display" id="whackScore">Score: 0 - 0</div>
+        <div class="game-grid grid-3x3" id="whackGrid"></div>
+      `;
+
+      const grid = document.getElementById('whackGrid');
+      for (let i = 0; i < 9; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'grid-cell';
+        cell.dataset.position = i;
+        cell.addEventListener('click', () => {
+          const targetId = whackTargetsByPosition.get(i);
+          if (targetId !== undefined) {
+            socket.emit('whackmole:hit', { targetId: targetId });
+            whackTargetsByPosition.delete(i);
+            cell.classList.remove('target');
+            cell.textContent = '';
+          }
+        });
+        grid.appendChild(cell);
+      }
+    }
+
+    socket.on('whackmole:start', (data) => {
+      console.log('[WhackAMole] Game started:', data);
+      whackTargetsByPosition.clear();
+      renderWhackAMole();
+    });
+
+    socket.on('whackmole:target', (data) => {
+      whackTargetsByPosition.set(data.gridPosition, data.targetId);
+      const cell = document.querySelector(`[data-position="${data.gridPosition}"]`);
+      if (cell) {
+        cell.classList.add('target');
+        cell.textContent = '👾';
+      }
+
+      setTimeout(() => {
+        // Only clear if this target is still the active one at this position
+        if (whackTargetsByPosition.get(data.gridPosition) === data.targetId) {
+          whackTargetsByPosition.delete(data.gridPosition);
+          if (cell) {
+            cell.classList.remove('target');
+            cell.textContent = '';
+          }
+        }
+      }, data.duration);
+    });
+
+    socket.on('whackmole:hit_success', (data) => {
+      const scoreEl = document.getElementById('whackScore');
+      if (scoreEl) scoreEl.textContent = `Score: ${data.score} - ${data.opponentScore}`;
+    });
+
+    socket.on('whackmole:miss', (data) => {
+      // Target expired or was already hit
+    });
+
+    socket.on('whackmole:end', (data) => {
+      console.log('[WhackAMole] Game ended:', data);
+      const gameContent = document.getElementById('gameContent');
+      gameContent.innerHTML = `
+        <div class="status-message ${data.result === 'win' ? 'success' : 'error'}">
+          <div style="font-size: 2rem; margin-bottom: 10px;">
+            ${data.result === 'win' ? '🏆 YOU WIN!' : '😔 YOU LOSE'}
+          </div>
+          <div>Final Score: ${data.finalScore} - ${data.opponentScore}</div>
+        </div>
+      `;
+    });
+
+    // 6. CONNECT FOUR
+    let connectFourBoard = [];
+
+    function renderConnectFour() {
+      const gameContent = document.getElementById('gameContent');
+      gameContent.innerHTML = `
+        <div class="score-display" id="c4Score">Game 1</div>
+        <div class="status-message info" id="c4Status">Waiting...</div>
+        <div class="game-grid grid-6x7" id="c4Grid"></div>
+      `;
+
+      const grid = document.getElementById('c4Grid');
+      connectFourBoard = Array(6).fill(null).map(() => Array(7).fill(null));
+
+      // Create cells (6 rows × 7 columns)
+      for (let row = 0; row < 6; row++) {
+        for (let col = 0; col < 7; col++) {
+          const cell = document.createElement('div');
+          cell.className = 'grid-cell';
+          cell.dataset.row = row;
+          cell.dataset.col = col;
+
+          cell.addEventListener('click', () => {
+            socket.emit('connectfour:place', { col });
+          });
+
+          grid.appendChild(cell);
+        }
+      }
+    }
+
+    socket.on('connectfour:start', (data) => {
+      console.log('[ConnectFour] Game started:', data);
+      renderConnectFour();
+    });
+
+    socket.on('connectfour:player_info', (data) => {
+      const statusEl = document.getElementById('c4Status');
+      if (statusEl) {
+        statusEl.textContent = data.yourTurn ? 'Your Turn!' : "Opponent's Turn";
+        statusEl.className = data.yourTurn ? 'status-message success' : 'status-message info';
+      }
+    });
+
+    socket.on('connectfour:move', (data) => {
+      connectFourBoard[data.row][data.col] = data.symbol;
+      const cell = document.querySelector(`[data-row="${data.row}"][data-col="${data.col}"]`);
+      if (cell) {
+        cell.textContent = '●';
+        cell.classList.add('occupied', data.symbol);
+      }
+    });
+
+    socket.on('connectfour:turn', (data) => {
+      const statusEl = document.getElementById('c4Status');
+      if (statusEl) {
+        statusEl.textContent = data.yourTurn ? 'Your Turn!' : `${data.currentPlayer}'s Turn`;
+        statusEl.className = data.yourTurn ? 'status-message success' : 'status-message info';
+      }
+    });
+
+    socket.on('connectfour:tie', (data) => {
+      const statusEl = document.getElementById('c4Status');
+      if (statusEl) statusEl.textContent = 'Tie! Restarting...';
+    });
+
+    socket.on('connectfour:reset', (data) => {
+      connectFourBoard = Array(6).fill(null).map(() => Array(7).fill(null));
+      document.querySelectorAll('#c4Grid .grid-cell').forEach(cell => {
+        cell.textContent = '';
+        cell.className = 'grid-cell';
+      });
+
+      const scoreEl = document.getElementById('c4Score');
+      if (scoreEl) scoreEl.textContent = `Game ${data.gameNumber}`;
+    });
+
+    socket.on('connectfour:invalid_move', (data) => {
+      const statusEl = document.getElementById('c4Status');
+      if (statusEl) {
+        statusEl.textContent = 'Invalid move - try another column';
+        statusEl.className = 'status-message error';
+      }
+    });
+
+    socket.on('connectfour:end', (data) => {
+      console.log('[ConnectFour] Game ended:', data);
+      const gameContent = document.getElementById('gameContent');
+      gameContent.innerHTML = `
+        <div class="status-message ${data.result === 'win' ? 'success' : 'error'}">
+          <div style="font-size: 2rem; margin-bottom: 10px;">
+            ${data.result === 'win' ? '🏆 YOU WIN!' : '😔 YOU LOSE'}
+          </div>
+          <div>Games played: ${data.gamesPlayed}</div>
+        </div>
+      `;
+    });
+
+    // 7. MEMORY SEQUENCE
+    let memoryBoardSize = 3;
+    let memoryPositions = {};
+    let memoryPhase = 'reveal';
+
+    function renderMemorySequence() {
+      const gameContent = document.getElementById('gameContent');
+      gameContent.innerHTML = `
+        <div class="score-display" id="memoryScore">Round 1</div>
+        <div class="memory-instruction" id="memoryInstruction">Memorize the positions...</div>
+        <div class="memory-grid size-${memoryBoardSize}" id="memoryGrid"></div>
+      `;
+
+      updateMemoryGrid();
+    }
+
+    function updateMemoryGrid() {
+      const grid = document.getElementById('memoryGrid');
+      if (!grid) return;
+
+      grid.innerHTML = '';
+      grid.className = `memory-grid size-${memoryBoardSize}`;
+
+      const totalCells = memoryBoardSize * memoryBoardSize;
+      for (let i = 0; i < totalCells; i++) {
+        const cell = document.createElement('div');
+        cell.className = memoryPhase === 'reveal' ? 'memory-card revealed' : 'memory-card hidden';
+        cell.textContent = memoryPositions[i] || '';
+        cell.dataset.position = i;
+
+        if (memoryPhase === 'playing') {
+          cell.addEventListener('click', () => {
+            socket.emit('memory:select', { position: i });
+          });
+        }
+
+        grid.appendChild(cell);
+      }
+    }
+
+    socket.on('memory:start', (data) => {
+      console.log('[Memory] Game started:', data);
+      memoryBoardSize = data.boardSize;
+      renderMemorySequence();
+    });
+
+    socket.on('memory:reveal', (data) => {
+      memoryPhase = 'reveal';
+      memoryBoardSize = data.boardSize;
+      memoryPositions = data.emojiPositions;
+
+      const scoreEl = document.getElementById('memoryScore');
+      if (scoreEl) scoreEl.textContent = `Round ${data.roundNumber}`;
+
+      const instructionEl = document.getElementById('memoryInstruction');
+      if (instructionEl) instructionEl.textContent = 'Memorize the positions...';
+
+      updateMemoryGrid();
+    });
+
+    socket.on('memory:play', (data) => {
+      memoryPhase = 'playing';
+      const instructionEl = document.getElementById('memoryInstruction');
+      if (instructionEl) instructionEl.textContent = `${data.currentPlayer}'s turn - Select unique positions`;
+
+      updateMemoryGrid();
+    });
+
+    socket.on('memory:selected', (data) => {
+      const cell = document.querySelector(`[data-position="${data.position}"]`);
+      if (cell) {
+        cell.textContent = data.emoji;
+        cell.classList.add('revealed');
+      }
+    });
+
+    socket.on('memory:correct', (data) => {
+      const instructionEl = document.getElementById('memoryInstruction');
+      if (instructionEl) instructionEl.textContent = '✓ Correct! Continue...';
+    });
+
+    socket.on('memory:mistake', (data) => {
+      const instructionEl = document.getElementById('memoryInstruction');
+      if (instructionEl) {
+        instructionEl.textContent = `✗ Mistake! (${data.consecutiveMistakes}/2)`;
+      }
+    });
+
+    socket.on('memory:turn', (data) => {
+      const instructionEl = document.getElementById('memoryInstruction');
+      if (instructionEl) {
+        instructionEl.textContent = data.yourTurn
+          ? "Your turn - Select unique positions"
+          : `${data.currentPlayer}'s turn - waiting...`;
+      }
+    });
+
+    socket.on('memory:already_revealed', (data) => {
+      const cell = document.querySelector(`[data-position="${data.position}"]`);
+      if (cell) {
+        cell.style.animation = 'none';
+        cell.offsetHeight;
+        cell.style.animation = 'shake 0.3s ease';
+      }
+    });
+
+    socket.on('memory:tie', (data) => {
+      memoryBoardSize = data.newBoardSize;
+      const scoreEl = document.getElementById('memoryScore');
+      if (scoreEl) scoreEl.textContent = `Round ${data.roundNumber}`;
+      const instructionEl = document.getElementById('memoryInstruction');
+      if (instructionEl) instructionEl.textContent = data.message;
+    });
+
+    socket.on('memory:end', (data) => {
+      console.log('[Memory] Game ended:', data);
+      const gameContent = document.getElementById('gameContent');
+      gameContent.innerHTML = `
+        <div class="status-message ${data.result === 'win' ? 'success' : 'error'}">
+          <div style="font-size: 2rem; margin-bottom: 10px;">
+            ${data.result === 'win' ? '🏆 YOU WIN!' : '😔 YOU LOSE'}
+          </div>
+          <div>${data.reason || 'Game Over'}</div>
+          <div>Rounds: ${data.roundsPlayed}</div>
+        </div>
+      `;
+    });
+
+    // 8. BLACKJACK
+    let bjOpponentName = 'Opponent';
+
+    function renderBlackjack() {
+      const gameContent = document.getElementById('gameContent');
+      gameContent.innerHTML = `
+        <div class="score-display" id="bjScore">Rounds: 0 - 0</div>
+        <div class="blackjack-hand">
+          <div style="text-align: center; margin-bottom: 10px; color: var(--text-secondary);" id="bjOpponentLabel">Opponent</div>
+          <div class="blackjack-cards" id="bjOpponentCards"></div>
+          <div class="blackjack-value" id="bjOpponentValue" style="text-align: center;"></div>
+        </div>
+        <div class="blackjack-hand">
+          <div style="text-align: center; margin-bottom: 10px; color: var(--accent);">Your Hand</div>
+          <div class="blackjack-cards" id="bjYourCards"></div>
+          <div class="blackjack-value" id="bjYourValue" style="text-align: center;"></div>
+        </div>
+        <div class="blackjack-actions" id="bjActions"></div>
+      `;
+    }
+
+    function renderCard(card) {
+      const isRed = card.suit === '♥' || card.suit === '♦';
+      return `<div class="card ${isRed ? 'red' : ''}">${card.rank}${card.suit}</div>`;
+    }
+
+    function renderFaceDownCard() {
+      return '<div class="card face-down">?</div>';
+    }
+
+    socket.on('blackjack:start', (data) => {
+      console.log('[Blackjack] Game started:', data);
+      renderBlackjack();
+    });
+
+    socket.on('blackjack:deal', (data) => {
+      const opponentCards = document.getElementById('bjOpponentCards');
+      const yourCards = document.getElementById('bjYourCards');
+      const opponentValue = document.getElementById('bjOpponentValue');
+      const yourValue = document.getElementById('bjYourValue');
+      const scoreEl = document.getElementById('bjScore');
+      const opponentLabel = document.getElementById('bjOpponentLabel');
+
+      bjOpponentName = data.opponentName || 'Opponent';
+      if (opponentLabel) opponentLabel.textContent = bjOpponentName;
+
+      // Show opponent's visible cards + one face-down hidden card
+      if (opponentCards && data.opponentVisibleCards) {
+        opponentCards.innerHTML = renderFaceDownCard() + data.opponentVisibleCards.map(renderCard).join('');
+      }
+      if (opponentValue) opponentValue.textContent = `Visible: ${data.opponentVisibleValue}`;
+
+      if (yourCards && data.yourHand) {
+        yourCards.innerHTML = data.yourHand.map(renderCard).join('');
+      }
+      if (yourValue) yourValue.textContent = `Value: ${data.yourValue}`;
+
+      if (scoreEl) {
+        scoreEl.textContent = `Round ${data.roundNumber} | Wins: ${data.roundsWon} - ${data.opponentRoundsWon}`;
+      }
+    });
+
+    socket.on('blackjack:your_turn', (data) => {
+      const actions = document.getElementById('bjActions');
+      if (actions) {
+        actions.innerHTML = `
+          <button class="blackjack-button hit" onclick="socket.emit('blackjack:hit')">HIT</button>
+          <button class="blackjack-button stand" onclick="socket.emit('blackjack:stand')">STAND</button>
+        `;
+      }
+    });
+
+    socket.on('blackjack:opponent_turn', (data) => {
+      const actions = document.getElementById('bjActions');
+      if (actions) actions.innerHTML = `<div class="status-message info">${data.opponentName}'s turn...</div>`;
+    });
+
+    socket.on('blackjack:hit_result', (data) => {
+      const yourCards = document.getElementById('bjYourCards');
+      const yourValue = document.getElementById('bjYourValue');
+
+      if (yourCards && data.yourHand) {
+        yourCards.innerHTML = data.yourHand.map(renderCard).join('');
+      }
+      if (yourValue) yourValue.textContent = `Value: ${data.yourValue}`;
+    });
+
+    socket.on('blackjack:opponent_hit', (data) => {
+      const opponentCards = document.getElementById('bjOpponentCards');
+      const opponentValue = document.getElementById('bjOpponentValue');
+
+      // Redraw: face-down card + all visible cards
+      if (opponentCards && data.opponentVisibleCards) {
+        opponentCards.innerHTML = renderFaceDownCard() + data.opponentVisibleCards.map(renderCard).join('');
+      }
+      if (opponentValue) opponentValue.textContent = `Visible: ${data.opponentVisibleValue}`;
+    });
+
+    socket.on('blackjack:bust', (data) => {
+      const actions = document.getElementById('bjActions');
+      if (actions) actions.innerHTML = '<div class="status-message error">BUST! Waiting for opponent...</div>';
+    });
+
+    socket.on('blackjack:stand_confirm', (data) => {
+      const actions = document.getElementById('bjActions');
+      if (actions) actions.innerHTML = '<div class="status-message info">Standing. Waiting for opponent...</div>';
+    });
+
+    socket.on('blackjack:opponent_stood', (data) => {
+      // Opponent stood, no value revealed
+    });
+
+    socket.on('blackjack:round_result', (data) => {
+      const actions = document.getElementById('bjActions');
+      const opponentCards = document.getElementById('bjOpponentCards');
+      const opponentValue = document.getElementById('bjOpponentValue');
+      const yourCards = document.getElementById('bjYourCards');
+      const yourValue = document.getElementById('bjYourValue');
+
+      // Reveal all cards
+      if (opponentCards && data.opponentHand) {
+        opponentCards.innerHTML = data.opponentHand.map(renderCard).join('');
+      }
+      if (opponentValue) opponentValue.textContent = `Value: ${data.opponentValue}`;
+
+      if (yourCards && data.yourHand) {
+        yourCards.innerHTML = data.yourHand.map(renderCard).join('');
+      }
+      if (yourValue) yourValue.textContent = `Value: ${data.yourValue}`;
+
+      if (actions) {
+        const resultText = data.result === 'win' ? '✓ YOU WON!' : data.result === 'lose' ? '✗ YOU LOST' : '= TIE';
+        actions.innerHTML = `<div class="status-message ${data.result === 'win' ? 'success' : data.result === 'lose' ? 'error' : 'info'}">${resultText}</div>`;
+      }
+
+      const scoreEl = document.getElementById('bjScore');
+      if (scoreEl) scoreEl.textContent = `Rounds Won: ${data.roundsWon} - ${data.opponentRoundsWon}`;
+    });
+
+    socket.on('blackjack:end', (data) => {
+      console.log('[Blackjack] Game ended:', data);
+      const gameContent = document.getElementById('gameContent');
+      gameContent.innerHTML = `
+        <div class="status-message ${data.result === 'win' ? 'success' : 'error'}">
+          <div style="font-size: 2rem; margin-bottom: 10px;">
+            ${data.result === 'win' ? '🏆 YOU WIN!' : '😔 YOU LOSE'}
+          </div>
+          <div>Rounds Won: ${data.roundsWon} - ${data.opponentRoundsWon}</div>
+        </div>
+      `;
+    });
+
+    // 9. BATTLESHIP
+    let battleshipPhase = 'placement';
+    let battleshipShips = [];
+    let battleshipMyBoard = [];
+    let battleshipOpponentBoard = [];
+
+    function renderBattleship() {
+      const gameContent = document.getElementById('gameContent');
+
+      if (battleshipPhase === 'placement') {
+        gameContent.innerHTML = `
+          <div class="battleship-phase">Place your 5 ships by clicking on cells</div>
+          <div class="score-display" id="battleshipShips">Ships placed: 0/5</div>
+          <div class="game-grid grid-5x5" id="battleshipPlacement"></div>
+          <button class="math-submit" id="battleshipConfirm" disabled>Confirm Placement</button>
+        `;
+
+        const grid = document.getElementById('battleshipPlacement');
+        battleshipMyBoard = Array(5).fill(null).map(() => Array(5).fill(null));
+
+        for (let row = 0; row < 5; row++) {
+          for (let col = 0; col < 5; col++) {
+            const cell = document.createElement('div');
+            cell.className = 'grid-cell';
+            cell.dataset.row = row;
+            cell.dataset.col = col;
+
+            cell.addEventListener('click', () => {
+              if (battleshipShips.length < 5) {
+                const alreadyPlaced = battleshipShips.some(s => s.row === row && s.col === col);
+                if (!alreadyPlaced) {
+                  battleshipShips.push({ row, col });
+                  cell.classList.add('occupied');
+                  cell.textContent = '🚢';
+
+                  const shipsEl = document.getElementById('battleshipShips');
+                  if (shipsEl) shipsEl.textContent = `Ships placed: ${battleshipShips.length}/5`;
+
+                  const confirmBtn = document.getElementById('battleshipConfirm');
+                  if (confirmBtn && battleshipShips.length === 5) {
+                    confirmBtn.disabled = false;
+                  }
+                }
+              }
+            });
+
+            grid.appendChild(cell);
+          }
+        }
+
+        document.getElementById('battleshipConfirm').addEventListener('click', () => {
+          if (battleshipShips.length === 5) {
+            socket.emit('battleship:place_ships', { ships: battleshipShips });
+            document.getElementById('battleshipConfirm').disabled = true;
+          }
+        });
+
+      } else {
+        // Battle phase
+        gameContent.innerHTML = `
+          <div class="score-display" id="battleshipScore">Hits: 0</div>
+          <div class="status-message info" id="battleshipStatus">Waiting for turn...</div>
+          <div class="battleship-phase">Opponent's Waters - Click to fire</div>
+          <div class="game-grid grid-5x5" id="battleshipFiring"></div>
+        `;
+
+        const grid = document.getElementById('battleshipFiring');
+        battleshipOpponentBoard = Array(5).fill(null).map(() => Array(5).fill(null));
+
+        for (let row = 0; row < 5; row++) {
+          for (let col = 0; col < 5; col++) {
+            const cell = document.createElement('div');
+            cell.className = 'grid-cell';
+            cell.dataset.row = row;
+            cell.dataset.col = col;
+
+            cell.addEventListener('click', () => {
+              socket.emit('battleship:fire', { row, col });
+            });
+
+            grid.appendChild(cell);
+          }
+        }
+      }
+    }
+
+    socket.on('battleship:start', (data) => {
+      console.log('[Battleship] Game started:', data);
+      battleshipPhase = 'placement';
+      battleshipShips = [];
+      renderBattleship();
+    });
+
+    socket.on('battleship:placement_complete', (data) => {
+      const gameContent = document.getElementById('gameContent');
+      gameContent.innerHTML = '<div class="status-message info">Waiting for opponent to place ships...</div>';
+    });
+
+    socket.on('battleship:waiting', (data) => {
+      const gameContent = document.getElementById('gameContent');
+      if (gameContent) {
+        gameContent.innerHTML = '<div class="status-message info">Waiting for opponent to place ships...</div>';
+      }
+    });
+
+    socket.on('battleship:battle_start', (data) => {
+      battleshipPhase = 'battle';
+      renderBattleship();
+    });
+
+    socket.on('battleship:hit', (data) => {
+      const scoreEl = document.getElementById('battleshipScore');
+      if (scoreEl) scoreEl.textContent = `Enemy Ships Remaining: ${data.hitsRemaining || 0}`;
+
+      const cell = document.querySelector(`#battleshipFiring [data-row="${data.row}"][data-col="${data.col}"]`);
+      if (cell) {
+        cell.classList.add('red', 'occupied');
+        cell.textContent = '💥';
+      }
+    });
+
+    socket.on('battleship:your_ship_hit', (data) => {
+      // Mark opponent's hit on our board
+      const cell = document.querySelector(`#battleshipOwn [data-row="${data.row}"][data-col="${data.col}"]`);
+      if (cell) {
+        cell.classList.add('red');
+        cell.textContent = '💥';
+      }
+    });
+
+    socket.on('battleship:opponent_miss', (data) => {
+      // Opponent missed on our board
+      const cell = document.querySelector(`#battleshipOwn [data-row="${data.row}"][data-col="${data.col}"]`);
+      if (cell) {
+        cell.classList.add('occupied');
+        cell.textContent = '○';
+      }
+    });
+
+    socket.on('battleship:miss', (data) => {
+      const cell = document.querySelector(`#battleshipFiring [data-row="${data.row}"][data-col="${data.col}"]`);
+      if (cell) {
+        cell.classList.add('occupied');
+        cell.textContent = '○';
+      }
+    });
+
+    socket.on('battleship:placement_error', (data) => {
+      const statusEl = document.getElementById('battleshipStatus');
+      if (statusEl) {
+        statusEl.textContent = data.message || 'Placement error - try again';
+        statusEl.className = 'status-message error';
+      }
+    });
+
+    socket.on('battleship:fire_error', (data) => {
+      const statusEl = document.getElementById('battleshipStatus');
+      if (statusEl) {
+        statusEl.textContent = data.message || 'Invalid target - try again';
+        statusEl.className = 'status-message error';
+      }
+    });
+
+    socket.on('battleship:turn', (data) => {
+      const statusEl = document.getElementById('battleshipStatus');
+      if (statusEl) {
+        statusEl.textContent = data.yourTurn ? 'Your Turn - Fire!' : `${data.currentPlayer}'s Turn`;
+        statusEl.className = data.yourTurn ? 'status-message success' : 'status-message info';
+      }
+    });
+
+    socket.on('battleship:end', (data) => {
+      console.log('[Battleship] Game ended:', data);
+      const gameContent = document.getElementById('gameContent');
+      gameContent.innerHTML = `
+        <div class="status-message ${data.result === 'win' ? 'success' : 'error'}">
+          <div style="font-size: 2rem; margin-bottom: 10px;">
+            ${data.result === 'win' ? '🏆 YOU WIN!' : '😔 YOU LOSE'}
+          </div>
+          <div>Moves: ${data.moves}</div>
+        </div>
+      `;
+    });
+
+    // 10. MINESWEEPER
+    let minesweeperBoard = [];
+    let minesweeperSelectedCell = null;
+
+    function renderMinesweeper() {
+      const gameContent = document.getElementById('gameContent');
+      gameContent.innerHTML = `
+        <div class="score-display" id="minesweeperScore">Bombs Defused: 0</div>
+        <div class="status-message info" id="minesweeperStatus">Your turn</div>
+        <div class="minesweeper-info" id="minesweeperInfo">Click a cell, then choose action</div>
+        <div class="game-grid grid-5x5" id="minesweeperGrid"></div>
+        <div class="minesweeper-actions" id="minesweeperActions" style="display: none;">
+          <button class="minesweeper-button clear" id="msrClear">✓ CLEAR (Safe)</button>
+          <button class="minesweeper-button defuse" id="msrDefuse">💣 DEFUSE (Bomb)</button>
+        </div>
+      `;
+
+      updateMinesweeperGrid();
+
+      document.getElementById('msrClear').addEventListener('click', () => {
+        if (minesweeperSelectedCell !== null) {
+          const row = Math.floor(minesweeperSelectedCell / 5);
+          const col = minesweeperSelectedCell % 5;
+          socket.emit('minesweeper:action', { row, col, action: 'clear' });
+          minesweeperSelectedCell = null;
+          document.getElementById('minesweeperActions').style.display = 'none';
+        }
+      });
+
+      document.getElementById('msrDefuse').addEventListener('click', () => {
+        if (minesweeperSelectedCell !== null) {
+          const row = Math.floor(minesweeperSelectedCell / 5);
+          const col = minesweeperSelectedCell % 5;
+          socket.emit('minesweeper:action', { row, col, action: 'defuse' });
+          minesweeperSelectedCell = null;
+          document.getElementById('minesweeperActions').style.display = 'none';
+        }
+      });
+    }
+
+    function updateMinesweeperGrid() {
+      const grid = document.getElementById('minesweeperGrid');
+      if (!grid) return;
+
+      grid.innerHTML = '';
+      for (let i = 0; i < 25; i++) {
+        const row = Math.floor(i / 5);
+        const col = i % 5;
+        const cell = document.createElement('div');
+        cell.className = 'grid-cell';
+        cell.dataset.position = i;
+
+        const boardValue = minesweeperBoard[row]?.[col];
+        if (boardValue === '?') {
+          cell.textContent = '';
+        } else if (boardValue === 'B') {
+          cell.classList.add('bomb', 'revealed');
+          cell.textContent = '💣';
+        } else if (typeof boardValue === 'number') {
+          cell.classList.add('revealed');
+          cell.textContent = boardValue || '';
+        }
+
+        cell.addEventListener('click', () => {
+          if (boardValue === '?') {
+            // Select this cell
+            document.querySelectorAll('#minesweeperGrid .grid-cell').forEach(c => {
+              c.style.borderColor = '';
+            });
+            cell.style.borderColor = 'var(--accent)';
+            minesweeperSelectedCell = i;
+            document.getElementById('minesweeperActions').style.display = 'flex';
+          }
+        });
+
+        grid.appendChild(cell);
+      }
+    }
+
+    socket.on('minesweeper:start', (data) => {
+      console.log('[Minesweeper] Game started:', data);
+      minesweeperBoard = data.board;
+      minesweeperSelectedCell = null;
+      renderMinesweeper();
+    });
+
+    socket.on('minesweeper:turn', (data) => {
+      if (data.board) minesweeperBoard = data.board;
+
+      const statusEl = document.getElementById('minesweeperStatus');
+      const scoreEl = document.getElementById('minesweeperScore');
+
+      if (statusEl) {
+        statusEl.textContent = data.yourTurn ? 'Your Turn!' : `${data.currentPlayer}'s Turn`;
+        statusEl.className = data.yourTurn ? 'status-message success' : 'status-message info';
+      }
+
+      if (scoreEl) {
+        scoreEl.textContent = `Your Bombs: ${data.yourBombsDefused} | Opp: ${data.opponentBombsDefused}`;
+      }
+
+      updateMinesweeperGrid();
+    });
+
+    socket.on('minesweeper:clear_success', (data) => {
+      if (data.board) minesweeperBoard = data.board;
+      updateMinesweeperGrid();
+    });
+
+    socket.on('minesweeper:defuse_success', (data) => {
+      if (data.board) minesweeperBoard = data.board;
+
+      const scoreEl = document.getElementById('minesweeperScore');
+      if (scoreEl) scoreEl.textContent = `Bombs Defused: ${data.bombsDefused}`;
+
+      updateMinesweeperGrid();
+    });
+
+    socket.on('minesweeper:error', (data) => {
+      const infoEl = document.getElementById('minesweeperInfo');
+      if (infoEl) {
+        infoEl.textContent = data.message || 'Invalid action - try again';
+        infoEl.style.color = 'var(--danger)';
+      }
+    });
+
+    socket.on('minesweeper:opponent_clear', (data) => {
+      if (data.board) minesweeperBoard = data.board;
+      updateMinesweeperGrid();
+    });
+
+    socket.on('minesweeper:opponent_defuse', (data) => {
+      if (data.board) minesweeperBoard = data.board;
+      const scoreEl = document.getElementById('minesweeperScore');
+      if (scoreEl && data.opponentBombsDefused !== undefined) {
+        scoreEl.textContent = `Opponent defused a bomb! (${data.opponentBombsDefused} total)`;
+      }
+      updateMinesweeperGrid();
+    });
+
+    socket.on('minesweeper:opponent_lose', (data) => {
+      const infoEl = document.getElementById('minesweeperInfo');
+      if (infoEl) {
+        infoEl.textContent = `Opponent hit a bomb!`;
+        infoEl.style.color = 'var(--success)';
+      }
+    });
+
+    socket.on('minesweeper:lose', (data) => {
+      const infoEl = document.getElementById('minesweeperInfo');
+      if (infoEl) {
+        infoEl.textContent = data.reason === 'cleared_bomb' ? '💥 You hit a bomb!' : '✗ Wrong action!';
+        infoEl.style.color = 'var(--danger)';
+      }
+    });
+
+    socket.on('minesweeper:tie', (data) => {
+      const gameContent = document.getElementById('gameContent');
+      gameContent.innerHTML = `
+        <div class="status-message info">
+          <div style="font-size: 1.5rem; margin-bottom: 10px;">TIE!</div>
+          <div>Restarting with new board...</div>
+        </div>
+      `;
+    });
+
+    socket.on('minesweeper:restart', (data) => {
+      if (data.board) minesweeperBoard = data.board;
+      renderMinesweeper();
+    });
+
+    socket.on('minesweeper:end', (data) => {
+      console.log('[Minesweeper] Game ended:', data);
+      const gameContent = document.getElementById('gameContent');
+      gameContent.innerHTML = `
+        <div class="status-message ${data.result === 'win' ? 'success' : 'error'}">
+          <div style="font-size: 2rem; margin-bottom: 10px;">
+            ${data.result === 'win' ? '🏆 YOU WIN!' : '😔 YOU LOSE'}
+          </div>
+          <div>Bombs Defused: ${data.bombsDefused} - ${data.opponentBombsDefused}</div>
+          <div>Games: ${data.gamesPlayed}</div>
+        </div>
+      `;
+    });
+
+    // Initialize on load
+    init();
+  </script>
+</body>
+</html>

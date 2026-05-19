@@ -1,0 +1,943 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<trivia version="1.0">
+  <categories>
+    <!-- GENERAL KNOWLEDGE -->
+    <category id="general" name="General Knowledge">
+      <!-- Multiple Choice -->
+      <question id="gen-mc-1" type="multiple_choice">
+        <text>What is the capital of Australia?</text>
+        <options>
+          <option>Sydney</option>
+          <option correct="true">Canberra</option>
+          <option>Melbourne</option>
+          <option>Perth</option>
+        </options>
+      </question>
+      <question id="gen-mc-2" type="multiple_choice">
+        <text>Which planet is known as the Red Planet?</text>
+        <options>
+          <option>Venus</option>
+          <option>Jupiter</option>
+          <option correct="true">Mars</option>
+          <option>Saturn</option>
+        </options>
+      </question>
+      <question id="gen-mc-3" type="multiple_choice">
+        <text>What is the largest ocean on Earth?</text>
+        <options>
+          <option>Atlantic Ocean</option>
+          <option correct="true">Pacific Ocean</option>
+          <option>Indian Ocean</option>
+          <option>Arctic Ocean</option>
+        </options>
+      </question>
+      <question id="gen-mc-4" type="multiple_choice">
+        <text>How many continents are there on Earth?</text>
+        <options>
+          <option>5</option>
+          <option>6</option>
+          <option correct="true">7</option>
+          <option>8</option>
+        </options>
+      </question>
+      <question id="gen-mc-5" type="multiple_choice">
+        <text>What language has the most native speakers in the world?</text>
+        <options>
+          <option>English</option>
+          <option>Spanish</option>
+          <option correct="true">Mandarin Chinese</option>
+          <option>Hindi</option>
+        </options>
+      </question>
+
+      <!-- True/False -->
+      <question id="gen-tf-1" type="true_false">
+        <text>The Great Wall of China is visible from space with the naked eye.</text>
+        <answer>false</answer>
+      </question>
+      <question id="gen-tf-2" type="true_false">
+        <text>Honey never spoils and can last thousands of years.</text>
+        <answer>true</answer>
+      </question>
+      <question id="gen-tf-3" type="true_false">
+        <text>The Amazon River is the longest river in the world.</text>
+        <answer>false</answer>
+      </question>
+      <question id="gen-tf-4" type="true_false">
+        <text>There are more stars in the universe than grains of sand on Earth.</text>
+        <answer>true</answer>
+      </question>
+
+      <!-- Number Range -->
+      <question id="gen-nr-1" type="number_range">
+        <text>In what year did the Titanic sink?</text>
+        <answer>1912</answer>
+      </question>
+      <question id="gen-nr-2" type="number_range">
+        <text>How many countries are members of the United Nations?</text>
+        <answer>193</answer>
+      </question>
+      <question id="gen-nr-3" type="number_range">
+        <text>How many time zones does Russia span?</text>
+        <answer>11</answer>
+      </question>
+      <question id="gen-nr-4" type="number_range">
+        <text>How many letters are in the English alphabet?</text>
+        <answer>26</answer>
+      </question>
+
+      <!-- Text Input -->
+      <question id="gen-ti-1" type="text_input">
+        <text>What is the chemical symbol for water?</text>
+        <answer>H2O</answer>
+        <acceptable>h2o,H20,h20</acceptable>
+      </question>
+      <question id="gen-ti-2" type="text_input">
+        <text>What is the largest country in the world by area?</text>
+        <answer>Russia</answer>
+        <acceptable>russia,Russian Federation,russian federation</acceptable>
+      </question>
+      <question id="gen-ti-3" type="text_input">
+        <text>What is the currency of Japan?</text>
+        <answer>Yen</answer>
+        <acceptable>yen,Japanese Yen,japanese yen,JPY,jpy</acceptable>
+      </question>
+
+      <!-- Multiple Correct -->
+      <question id="gen-mult-1" type="multiple_correct">
+        <text>Which of these are primary colors?</text>
+        <options>
+          <option correct="true">Red</option>
+          <option correct="true">Blue</option>
+          <option>Green</option>
+          <option correct="true">Yellow</option>
+          <option>Orange</option>
+        </options>
+      </question>
+      <question id="gen-mult-2" type="multiple_correct">
+        <text>Which of these are vowels in the English alphabet?</text>
+        <options>
+          <option correct="true">A</option>
+          <option>B</option>
+          <option correct="true">E</option>
+          <option>D</option>
+          <option correct="true">I</option>
+        </options>
+      </question>
+      <question id="gen-mult-3" type="multiple_correct">
+        <text>Which of these are landlocked countries?</text>
+        <options>
+          <option correct="true">Switzerland</option>
+          <option>France</option>
+          <option correct="true">Austria</option>
+          <option>Spain</option>
+          <option correct="true">Mongolia</option>
+        </options>
+      </question>
+
+      <!-- Opinion -->
+      <question id="gen-op-1" type="opinion">
+        <text>What is the best season of the year?</text>
+        <options>
+          <option>Spring</option>
+          <option>Summer</option>
+          <option>Autumn</option>
+          <option>Winter</option>
+        </options>
+      </question>
+      <question id="gen-op-2" type="opinion">
+        <text>What is the most useful language to learn?</text>
+        <options>
+          <option>English</option>
+          <option>Spanish</option>
+          <option>Mandarin</option>
+          <option>French</option>
+        </options>
+      </question>
+      <question id="gen-op-3" type="opinion">
+        <text>What is the best way to travel?</text>
+        <options>
+          <option>By plane</option>
+          <option>By car</option>
+          <option>By train</option>
+          <option>By boat</option>
+        </options>
+      </question>
+    </category>
+
+    <!-- SCIENCE -->
+    <category id="science" name="Science">
+      <!-- Multiple Choice -->
+      <question id="sci-mc-1" type="multiple_choice">
+        <text>What is the hardest natural substance on Earth?</text>
+        <options>
+          <option correct="true">Diamond</option>
+          <option>Titanium</option>
+          <option>Quartz</option>
+          <option>Obsidian</option>
+        </options>
+      </question>
+      <question id="sci-mc-2" type="multiple_choice">
+        <text>What gas do plants absorb from the atmosphere?</text>
+        <options>
+          <option>Oxygen</option>
+          <option>Nitrogen</option>
+          <option correct="true">Carbon Dioxide</option>
+          <option>Hydrogen</option>
+        </options>
+      </question>
+      <question id="sci-mc-3" type="multiple_choice">
+        <text>What is the closest planet to the Sun?</text>
+        <options>
+          <option correct="true">Mercury</option>
+          <option>Venus</option>
+          <option>Earth</option>
+          <option>Mars</option>
+        </options>
+      </question>
+      <question id="sci-mc-4" type="multiple_choice">
+        <text>What part of the cell contains genetic material?</text>
+        <options>
+          <option>Mitochondria</option>
+          <option>Ribosome</option>
+          <option correct="true">Nucleus</option>
+          <option>Cell membrane</option>
+        </options>
+      </question>
+
+      <!-- True/False -->
+      <question id="sci-tf-1" type="true_false">
+        <text>Light travels faster than sound.</text>
+        <answer>true</answer>
+      </question>
+      <question id="sci-tf-2" type="true_false">
+        <text>Electrons are larger than atoms.</text>
+        <answer>false</answer>
+      </question>
+      <question id="sci-tf-3" type="true_false">
+        <text>Water boils at 100 degrees Celsius at sea level.</text>
+        <answer>true</answer>
+      </question>
+      <question id="sci-tf-4" type="true_false">
+        <text>The human body has four lungs.</text>
+        <answer>false</answer>
+      </question>
+
+      <!-- Number Range -->
+      <question id="sci-nr-1" type="number_range">
+        <text>How many bones are in the adult human body?</text>
+        <answer>206</answer>
+      </question>
+      <question id="sci-nr-2" type="number_range">
+        <text>What is the speed of light in thousands of kilometers per second?</text>
+        <answer>300</answer>
+      </question>
+      <question id="sci-nr-3" type="number_range">
+        <text>How many elements are on the periodic table?</text>
+        <answer>118</answer>
+      </question>
+
+      <!-- Text Input -->
+      <question id="sci-ti-1" type="text_input">
+        <text>What is the chemical symbol for gold?</text>
+        <answer>Au</answer>
+        <acceptable>AU,au,Gold,gold</acceptable>
+      </question>
+      <question id="sci-ti-2" type="text_input">
+        <text>What planet is known for its rings?</text>
+        <answer>Saturn</answer>
+        <acceptable>saturn</acceptable>
+      </question>
+      <question id="sci-ti-3" type="text_input">
+        <text>What is the chemical symbol for iron?</text>
+        <answer>Fe</answer>
+        <acceptable>fe,FE,Iron,iron</acceptable>
+      </question>
+
+      <!-- Multiple Correct -->
+      <question id="sci-mult-1" type="multiple_correct">
+        <text>Which of these are noble gases?</text>
+        <options>
+          <option correct="true">Helium</option>
+          <option correct="true">Neon</option>
+          <option>Oxygen</option>
+          <option correct="true">Argon</option>
+          <option>Nitrogen</option>
+        </options>
+      </question>
+      <question id="sci-mult-2" type="multiple_correct">
+        <text>Which of these are types of energy?</text>
+        <options>
+          <option correct="true">Kinetic</option>
+          <option correct="true">Thermal</option>
+          <option>Magnetic pull</option>
+          <option correct="true">Potential</option>
+          <option>Gravity</option>
+        </options>
+      </question>
+      <question id="sci-mult-3" type="multiple_correct">
+        <text>Which of these are parts of a plant cell?</text>
+        <options>
+          <option correct="true">Cell wall</option>
+          <option correct="true">Chloroplast</option>
+          <option>Centriole</option>
+          <option correct="true">Vacuole</option>
+          <option>Flagellum</option>
+        </options>
+      </question>
+
+      <!-- Opinion -->
+      <question id="sci-op-1" type="opinion">
+        <text>What is the most fascinating branch of science?</text>
+        <options>
+          <option>Physics</option>
+          <option>Biology</option>
+          <option>Chemistry</option>
+          <option>Astronomy</option>
+        </options>
+      </question>
+      <question id="sci-op-2" type="opinion">
+        <text>What would be the most exciting scientific discovery?</text>
+        <options>
+          <option>Cure for all diseases</option>
+          <option>Alien life</option>
+          <option>Time travel</option>
+          <option>Unlimited energy</option>
+        </options>
+      </question>
+    </category>
+
+    <!-- HISTORY -->
+    <category id="history" name="History">
+      <!-- Multiple Choice -->
+      <question id="his-mc-1" type="multiple_choice">
+        <text>Who was the first President of the United States?</text>
+        <options>
+          <option>Thomas Jefferson</option>
+          <option>Abraham Lincoln</option>
+          <option correct="true">George Washington</option>
+          <option>John Adams</option>
+        </options>
+      </question>
+      <question id="his-mc-2" type="multiple_choice">
+        <text>In which country did the Renaissance begin?</text>
+        <options>
+          <option>France</option>
+          <option correct="true">Italy</option>
+          <option>England</option>
+          <option>Spain</option>
+        </options>
+      </question>
+      <question id="his-mc-3" type="multiple_choice">
+        <text>What ancient civilization built the pyramids at Giza?</text>
+        <options>
+          <option>Romans</option>
+          <option>Greeks</option>
+          <option correct="true">Egyptians</option>
+          <option>Persians</option>
+        </options>
+      </question>
+      <question id="his-mc-4" type="multiple_choice">
+        <text>Which explorer is credited with discovering America in 1492?</text>
+        <options>
+          <option>Vasco da Gama</option>
+          <option correct="true">Christopher Columbus</option>
+          <option>Ferdinand Magellan</option>
+          <option>Marco Polo</option>
+        </options>
+      </question>
+
+      <!-- True/False -->
+      <question id="his-tf-1" type="true_false">
+        <text>Cleopatra lived closer in time to the Moon landing than to the construction of the Great Pyramid.</text>
+        <answer>true</answer>
+      </question>
+      <question id="his-tf-2" type="true_false">
+        <text>The Roman Empire fell in the year 476 AD.</text>
+        <answer>true</answer>
+      </question>
+      <question id="his-tf-3" type="true_false">
+        <text>Napoleon Bonaparte was unusually short for his time.</text>
+        <answer>false</answer>
+      </question>
+
+      <!-- Number Range -->
+      <question id="his-nr-1" type="number_range">
+        <text>In what year did World War II end?</text>
+        <answer>1945</answer>
+      </question>
+      <question id="his-nr-2" type="number_range">
+        <text>In what year did the Berlin Wall fall?</text>
+        <answer>1989</answer>
+      </question>
+      <question id="his-nr-3" type="number_range">
+        <text>In what year did the French Revolution begin?</text>
+        <answer>1789</answer>
+      </question>
+      <question id="his-nr-4" type="number_range">
+        <text>In what year did World War I begin?</text>
+        <answer>1914</answer>
+      </question>
+
+      <!-- Text Input -->
+      <question id="his-ti-1" type="text_input">
+        <text>What ship did the Pilgrims sail on to reach America in 1620?</text>
+        <answer>Mayflower</answer>
+        <acceptable>The Mayflower,mayflower,the mayflower</acceptable>
+      </question>
+      <question id="his-ti-2" type="text_input">
+        <text>What was the last name of the brothers who flew the first airplane?</text>
+        <answer>Wright</answer>
+        <acceptable>wright,The Wright Brothers,wright brothers,Wright Brothers</acceptable>
+      </question>
+      <question id="his-ti-3" type="text_input">
+        <text>What ancient city was buried by the eruption of Mount Vesuvius in 79 AD?</text>
+        <answer>Pompeii</answer>
+        <acceptable>pompeii,Pompei,pompei</acceptable>
+      </question>
+
+      <!-- Multiple Correct -->
+      <question id="his-mult-1" type="multiple_correct">
+        <text>Which of these countries were part of the Allied Powers in World War II?</text>
+        <options>
+          <option correct="true">United States</option>
+          <option>Germany</option>
+          <option correct="true">United Kingdom</option>
+          <option>Japan</option>
+          <option correct="true">Soviet Union</option>
+        </options>
+      </question>
+      <question id="his-mult-2" type="multiple_correct">
+        <text>Which of these were ancient Greek philosophers?</text>
+        <options>
+          <option correct="true">Socrates</option>
+          <option correct="true">Plato</option>
+          <option>Julius Caesar</option>
+          <option correct="true">Aristotle</option>
+          <option>Cleopatra</option>
+        </options>
+      </question>
+
+      <!-- Opinion -->
+      <question id="his-op-1" type="opinion">
+        <text>What is the most interesting historical period?</text>
+        <options>
+          <option>Ancient Egypt</option>
+          <option>Medieval Era</option>
+          <option>Renaissance</option>
+          <option>World War II</option>
+        </options>
+      </question>
+      <question id="his-op-2" type="opinion">
+        <text>Who is the most influential historical figure?</text>
+        <options>
+          <option>Julius Caesar</option>
+          <option>Leonardo da Vinci</option>
+          <option>Albert Einstein</option>
+          <option>Genghis Khan</option>
+        </options>
+      </question>
+    </category>
+
+    <!-- ENTERTAINMENT -->
+    <category id="entertainment" name="Entertainment">
+      <!-- Multiple Choice -->
+      <question id="ent-mc-1" type="multiple_choice">
+        <text>What movie features the quote "Here's looking at you, kid"?</text>
+        <options>
+          <option>Gone with the Wind</option>
+          <option correct="true">Casablanca</option>
+          <option>The Godfather</option>
+          <option>Citizen Kane</option>
+        </options>
+      </question>
+      <question id="ent-mc-2" type="multiple_choice">
+        <text>Which band performed "Bohemian Rhapsody"?</text>
+        <options>
+          <option>The Beatles</option>
+          <option>Led Zeppelin</option>
+          <option correct="true">Queen</option>
+          <option>Pink Floyd</option>
+        </options>
+      </question>
+      <question id="ent-mc-3" type="multiple_choice">
+        <text>What is the name of the fictional continent in Game of Thrones?</text>
+        <options>
+          <option>Middle-earth</option>
+          <option correct="true">Westeros</option>
+          <option>Narnia</option>
+          <option>Hogwarts</option>
+        </options>
+      </question>
+      <question id="ent-mc-4" type="multiple_choice">
+        <text>Who directed the movie "Jurassic Park"?</text>
+        <options>
+          <option>James Cameron</option>
+          <option correct="true">Steven Spielberg</option>
+          <option>George Lucas</option>
+          <option>Ridley Scott</option>
+        </options>
+      </question>
+      <question id="ent-mc-5" type="multiple_choice">
+        <text>What is the best-selling video game of all time?</text>
+        <options>
+          <option>Tetris</option>
+          <option>Grand Theft Auto V</option>
+          <option correct="true">Minecraft</option>
+          <option>Super Mario Bros.</option>
+        </options>
+      </question>
+
+      <!-- True/False -->
+      <question id="ent-tf-1" type="true_false">
+        <text>The character of James Bond was created by author Ian Fleming.</text>
+        <answer>true</answer>
+      </question>
+      <question id="ent-tf-2" type="true_false">
+        <text>The movie "Titanic" won 11 Academy Awards.</text>
+        <answer>true</answer>
+      </question>
+      <question id="ent-tf-3" type="true_false">
+        <text>Mario's original name was Jumpman.</text>
+        <answer>true</answer>
+      </question>
+      <question id="ent-tf-4" type="true_false">
+        <text>The TV show "Friends" is set in Los Angeles.</text>
+        <answer>false</answer>
+      </question>
+
+      <!-- Number Range -->
+      <question id="ent-nr-1" type="number_range">
+        <text>In what year was the first Harry Potter book published?</text>
+        <answer>1997</answer>
+      </question>
+      <question id="ent-nr-2" type="number_range">
+        <text>In what year was the original Star Wars movie released?</text>
+        <answer>1977</answer>
+      </question>
+      <question id="ent-nr-3" type="number_range">
+        <text>In what year was the first episode of The Simpsons aired?</text>
+        <answer>1989</answer>
+      </question>
+
+      <!-- Text Input -->
+      <question id="ent-ti-1" type="text_input">
+        <text>What is the name of Harry Potter's pet owl?</text>
+        <answer>Hedwig</answer>
+        <acceptable>hedwig</acceptable>
+      </question>
+      <question id="ent-ti-2" type="text_input">
+        <text>What fictional city is Batman's home?</text>
+        <answer>Gotham</answer>
+        <acceptable>gotham,Gotham City,gotham city</acceptable>
+      </question>
+      <question id="ent-ti-3" type="text_input">
+        <text>What is the name of the wizard played by Ian McKellen in Lord of the Rings?</text>
+        <answer>Gandalf</answer>
+        <acceptable>gandalf,Gandalf the Grey,Gandalf the White</acceptable>
+      </question>
+
+      <!-- Multiple Correct -->
+      <question id="ent-mult-1" type="multiple_correct">
+        <text>Which of these actors have played Batman in live-action films?</text>
+        <options>
+          <option correct="true">Michael Keaton</option>
+          <option correct="true">Christian Bale</option>
+          <option>Johnny Depp</option>
+          <option correct="true">Ben Affleck</option>
+          <option>Brad Pitt</option>
+        </options>
+      </question>
+      <question id="ent-mult-2" type="multiple_correct">
+        <text>Which of these are Disney animated movies?</text>
+        <options>
+          <option correct="true">The Lion King</option>
+          <option correct="true">Frozen</option>
+          <option>Shrek</option>
+          <option correct="true">Moana</option>
+          <option>Megamind</option>
+        </options>
+      </question>
+      <question id="ent-mult-3" type="multiple_correct">
+        <text>Which of these are Marvel superheroes?</text>
+        <options>
+          <option correct="true">Spider-Man</option>
+          <option correct="true">Iron Man</option>
+          <option>Superman</option>
+          <option correct="true">Thor</option>
+          <option>Batman</option>
+        </options>
+      </question>
+
+      <!-- Opinion -->
+      <question id="ent-op-1" type="opinion">
+        <text>What is the best movie genre?</text>
+        <options>
+          <option>Action</option>
+          <option>Comedy</option>
+          <option>Horror</option>
+          <option>Drama</option>
+        </options>
+      </question>
+      <question id="ent-op-2" type="opinion">
+        <text>What is the best type of video game?</text>
+        <options>
+          <option>RPG</option>
+          <option>First-Person Shooter</option>
+          <option>Puzzle</option>
+          <option>Open World</option>
+        </options>
+      </question>
+      <question id="ent-op-3" type="opinion">
+        <text>What is the best music genre?</text>
+        <options>
+          <option>Pop</option>
+          <option>Rock</option>
+          <option>Hip-Hop</option>
+          <option>Classical</option>
+        </options>
+      </question>
+    </category>
+
+    <!-- SPORTS -->
+    <category id="sports" name="Sports">
+      <!-- Multiple Choice -->
+      <question id="spo-mc-1" type="multiple_choice">
+        <text>In which sport would you perform a slam dunk?</text>
+        <options>
+          <option>Football</option>
+          <option correct="true">Basketball</option>
+          <option>Tennis</option>
+          <option>Volleyball</option>
+        </options>
+      </question>
+      <question id="spo-mc-2" type="multiple_choice">
+        <text>How many points is a touchdown worth in American football?</text>
+        <options>
+          <option>3</option>
+          <option correct="true">6</option>
+          <option>7</option>
+          <option>4</option>
+        </options>
+      </question>
+      <question id="spo-mc-3" type="multiple_choice">
+        <text>In which country did the sport of cricket originate?</text>
+        <options>
+          <option>Australia</option>
+          <option>India</option>
+          <option correct="true">England</option>
+          <option>South Africa</option>
+        </options>
+      </question>
+
+      <!-- True/False -->
+      <question id="spo-tf-1" type="true_false">
+        <text>A marathon is exactly 26.2 miles long.</text>
+        <answer>true</answer>
+      </question>
+      <question id="spo-tf-2" type="true_false">
+        <text>The Olympic Games are held every five years.</text>
+        <answer>false</answer>
+      </question>
+      <question id="spo-tf-3" type="true_false">
+        <text>A regulation basketball hoop is 10 feet high.</text>
+        <answer>true</answer>
+      </question>
+
+      <!-- Number Range -->
+      <question id="spo-nr-1" type="number_range">
+        <text>How many players are on a soccer team on the field at one time?</text>
+        <answer>11</answer>
+      </question>
+      <question id="spo-nr-2" type="number_range">
+        <text>How many holes are played in a standard round of golf?</text>
+        <answer>18</answer>
+      </question>
+      <question id="spo-nr-3" type="number_range">
+        <text>In what year were the first modern Olympic Games held?</text>
+        <answer>1896</answer>
+      </question>
+
+      <!-- Text Input -->
+      <question id="spo-ti-1" type="text_input">
+        <text>What sport is played at Wimbledon?</text>
+        <answer>Tennis</answer>
+        <acceptable>tennis,Lawn Tennis,lawn tennis</acceptable>
+      </question>
+      <question id="spo-ti-2" type="text_input">
+        <text>What country has won the most FIFA World Cups?</text>
+        <answer>Brazil</answer>
+        <acceptable>brazil,Brasil,brasil</acceptable>
+      </question>
+      <question id="spo-ti-3" type="text_input">
+        <text>In baseball, what is a perfect game also called when no batter reaches base?</text>
+        <answer>Perfect game</answer>
+        <acceptable>perfect game,A perfect game,a perfect game</acceptable>
+      </question>
+
+      <!-- Multiple Correct -->
+      <question id="spo-mult-1" type="multiple_correct">
+        <text>Which of these are Olympic sports?</text>
+        <options>
+          <option correct="true">Swimming</option>
+          <option correct="true">Gymnastics</option>
+          <option>Cricket</option>
+          <option correct="true">Fencing</option>
+          <option>American Football</option>
+        </options>
+      </question>
+      <question id="spo-mult-2" type="multiple_correct">
+        <text>Which of these sports use a net?</text>
+        <options>
+          <option correct="true">Tennis</option>
+          <option correct="true">Volleyball</option>
+          <option>Golf</option>
+          <option correct="true">Badminton</option>
+          <option>Baseball</option>
+        </options>
+      </question>
+
+      <!-- Opinion -->
+      <question id="spo-op-1" type="opinion">
+        <text>What is the most exciting sport to watch?</text>
+        <options>
+          <option>Football</option>
+          <option>Basketball</option>
+          <option>Soccer</option>
+          <option>Baseball</option>
+        </options>
+      </question>
+      <question id="spo-op-2" type="opinion">
+        <text>What is the hardest sport to play?</text>
+        <options>
+          <option>Gymnastics</option>
+          <option>Ice Hockey</option>
+          <option>Water Polo</option>
+          <option>Boxing</option>
+        </options>
+      </question>
+      <question id="spo-op-3" type="opinion">
+        <text>What is the best team sport?</text>
+        <options>
+          <option>Soccer</option>
+          <option>Basketball</option>
+          <option>Baseball</option>
+          <option>Volleyball</option>
+        </options>
+      </question>
+    </category>
+
+    <!-- FOOD & DRINK -->
+    <category id="food" name="Food and Drink">
+      <!-- Multiple Choice -->
+      <question id="food-mc-1" type="multiple_choice">
+        <text>What is the main ingredient in guacamole?</text>
+        <options>
+          <option>Tomato</option>
+          <option correct="true">Avocado</option>
+          <option>Onion</option>
+          <option>Lime</option>
+        </options>
+      </question>
+      <question id="food-mc-2" type="multiple_choice">
+        <text>What country is the origin of the croissant?</text>
+        <options>
+          <option correct="true">Austria</option>
+          <option>France</option>
+          <option>Italy</option>
+          <option>Switzerland</option>
+        </options>
+      </question>
+      <question id="food-mc-3" type="multiple_choice">
+        <text>What type of pasta is shaped like small tubes?</text>
+        <options>
+          <option>Spaghetti</option>
+          <option correct="true">Penne</option>
+          <option>Fettuccine</option>
+          <option>Linguine</option>
+        </options>
+      </question>
+      <question id="food-mc-4" type="multiple_choice">
+        <text>What fruit is known as the "king of fruits" in Southeast Asia?</text>
+        <options>
+          <option>Mango</option>
+          <option correct="true">Durian</option>
+          <option>Papaya</option>
+          <option>Jackfruit</option>
+        </options>
+      </question>
+
+      <!-- True/False -->
+      <question id="food-tf-1" type="true_false">
+        <text>Sushi traditionally originated in China.</text>
+        <answer>false</answer>
+      </question>
+      <question id="food-tf-2" type="true_false">
+        <text>Tomatoes are technically a fruit.</text>
+        <answer>true</answer>
+      </question>
+      <question id="food-tf-3" type="true_false">
+        <text>White chocolate contains cocoa solids.</text>
+        <answer>false</answer>
+      </question>
+      <question id="food-tf-4" type="true_false">
+        <text>Peanuts are technically legumes, not nuts.</text>
+        <answer>true</answer>
+      </question>
+
+      <!-- Number Range -->
+      <question id="food-nr-1" type="number_range">
+        <text>How many calories are in a typical banana?</text>
+        <answer>105</answer>
+      </question>
+      <question id="food-nr-2" type="number_range">
+        <text>At what temperature in degrees Fahrenheit does water boil?</text>
+        <answer>212</answer>
+      </question>
+      <question id="food-nr-3" type="number_range">
+        <text>How many teaspoons are in a tablespoon?</text>
+        <answer>3</answer>
+      </question>
+      <question id="food-nr-4" type="number_range">
+        <text>How many cups are in a gallon?</text>
+        <answer>16</answer>
+      </question>
+
+      <!-- Text Input -->
+      <question id="food-ti-1" type="text_input">
+        <text>What Italian dish is made of layers of pasta, meat sauce, and cheese?</text>
+        <answer>Lasagna</answer>
+        <acceptable>lasagna,Lasagne,lasagne</acceptable>
+      </question>
+      <question id="food-ti-2" type="text_input">
+        <text>What Japanese dish consists of battered and deep-fried vegetables or seafood?</text>
+        <answer>Tempura</answer>
+        <acceptable>tempura</acceptable>
+      </question>
+      <question id="food-ti-3" type="text_input">
+        <text>What spice comes from the dried stigma of the crocus flower and is the most expensive spice?</text>
+        <answer>Saffron</answer>
+        <acceptable>saffron</acceptable>
+      </question>
+      <question id="gen-ti-4" type="text_input">
+        <text>What is the tallest mountain in the world?</text>
+        <answer>Mount Everest</answer>
+        <acceptable>mount everest,Everest,everest,Mt Everest,mt everest</acceptable>
+      </question>
+      <question id="sci-ti-4" type="text_input">
+        <text>What gas makes up most of Earth's atmosphere?</text>
+        <answer>Nitrogen</answer>
+        <acceptable>nitrogen,N2,n2</acceptable>
+      </question>
+
+      <!-- Multiple Correct -->
+      <question id="food-mult-1" type="multiple_correct">
+        <text>Which of these are types of pasta?</text>
+        <options>
+          <option correct="true">Penne</option>
+          <option correct="true">Fusilli</option>
+          <option>Bruschetta</option>
+          <option correct="true">Rigatoni</option>
+          <option>Tiramisu</option>
+        </options>
+      </question>
+      <question id="food-mult-2" type="multiple_correct">
+        <text>Which of these are citrus fruits?</text>
+        <options>
+          <option correct="true">Lemon</option>
+          <option correct="true">Grapefruit</option>
+          <option>Banana</option>
+          <option correct="true">Lime</option>
+          <option>Strawberry</option>
+        </options>
+      </question>
+      <question id="food-mult-3" type="multiple_correct">
+        <text>Which of these are types of cheese?</text>
+        <options>
+          <option correct="true">Brie</option>
+          <option correct="true">Gouda</option>
+          <option>Prosciutto</option>
+          <option correct="true">Camembert</option>
+          <option>Pancetta</option>
+        </options>
+      </question>
+      <question id="his-mult-3" type="multiple_correct">
+        <text>Which of these were ancient wonders of the world?</text>
+        <options>
+          <option correct="true">Great Pyramid of Giza</option>
+          <option correct="true">Hanging Gardens of Babylon</option>
+          <option>Colosseum</option>
+          <option correct="true">Lighthouse of Alexandria</option>
+          <option>Great Wall of China</option>
+        </options>
+      </question>
+      <question id="spo-mult-3" type="multiple_correct">
+        <text>Which of these sports use a ball?</text>
+        <options>
+          <option correct="true">Soccer</option>
+          <option correct="true">Tennis</option>
+          <option>Swimming</option>
+          <option correct="true">Basketball</option>
+          <option>Fencing</option>
+        </options>
+      </question>
+
+      <!-- Opinion -->
+      <question id="food-op-1" type="opinion">
+        <text>What is the best pizza topping?</text>
+        <options>
+          <option>Pepperoni</option>
+          <option>Mushrooms</option>
+          <option>Pineapple</option>
+          <option>Extra Cheese</option>
+        </options>
+      </question>
+      <question id="food-op-2" type="opinion">
+        <text>Which breakfast food is the best?</text>
+        <options>
+          <option>Pancakes</option>
+          <option>Eggs and Bacon</option>
+          <option>Cereal</option>
+          <option>Waffles</option>
+        </options>
+      </question>
+      <question id="food-op-3" type="opinion">
+        <text>What is the best dessert?</text>
+        <options>
+          <option>Ice Cream</option>
+          <option>Chocolate Cake</option>
+          <option>Cheesecake</option>
+          <option>Cookies</option>
+        </options>
+      </question>
+      <question id="food-op-4" type="opinion">
+        <text>What is the best type of cuisine?</text>
+        <options>
+          <option>Italian</option>
+          <option>Mexican</option>
+          <option>Japanese</option>
+          <option>Indian</option>
+        </options>
+      </question>
+      <question id="his-op-3" type="opinion">
+        <text>What is the most impressive ancient structure?</text>
+        <options>
+          <option>Great Pyramid of Giza</option>
+          <option>Colosseum</option>
+          <option>Machu Picchu</option>
+          <option>Stonehenge</option>
+        </options>
+      </question>
+      <question id="sci-op-3" type="opinion">
+        <text>What is the most important invention of all time?</text>
+        <options>
+          <option>The wheel</option>
+          <option>Electricity</option>
+          <option>The internet</option>
+          <option>The printing press</option>
+        </options>
+      </question>
+    </category>
+
+  </categories>
+</trivia>

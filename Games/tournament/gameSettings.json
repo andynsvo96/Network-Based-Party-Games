@@ -1,0 +1,24 @@
+{
+  "votingEnabled": true,
+  "enabledGames": [
+    "tap-race",
+    "cowboy-duel",
+    "tic-tac-toe",
+    "math-dash",
+    "whack-a-mole",
+    "connect-four",
+    "memory-sequence",
+    "battleship",
+    "minesweeper",
+    "blackjack"
+  ],
+  "ticTacToeWins": 3,
+  "whackMolePopupDuration": 0.5,
+  "whackMoleScoreLead": 5,
+  "cowboyMinWaitSeconds": 3,
+  "memoryRevealTime": 5,
+  "mathDashPointsToWin": 10,
+  "minesweeperBombCount": 1,
+  "usePresetNames": false,
+  "presetNames": []
+}

@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Game Night - Join</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    :root {
+      --bg: #020617;
+      --bg-card: rgba(15, 23, 42, 0.95);
+      --accent: #f59e0b;
+      --accent-hover: #d97706;
+      --danger: #ef4444;
+      --success: #22c55e;
+      --text: #e5e7eb;
+      --text-dim: #9ca3af;
+      --border: rgba(245, 158, 11, 0.3);
+      --radius-xl: 24px;
+      --radius-lg: 16px;
+      --radius-md: 12px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 400px;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 32px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      color: var(--accent);
+      margin-bottom: 30px;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 32px 24px;
+      text-align: center;
+    }
+
+    .input-group {
+      margin-bottom: 20px;
+    }
+
+    .input-group label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+      text-align: left;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 18px 16px;
+      font-size: 16px; /* Prevents iOS zoom on focus */
+      font-weight: 600;
+      background: rgba(0, 0, 0, 0.3);
+      border: 2px solid var(--border);
+      border-radius: var(--radius-md);
+      color: var(--text);
+      text-align: center;
+      text-transform: uppercase;
+      -webkit-appearance: none; /* iOS fix */
+    }
+
+    .input-group input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 20px rgba(245, 158, 11, 0.2);
+    }
+
+    .name-select {
+      width: 100%;
+      padding: 18px 16px;
+      font-size: 16px; /* Prevents iOS zoom on focus */
+      font-weight: 600;
+      background: rgba(0, 0, 0, 0.3);
+      border: 2px solid var(--border);
+      border-radius: var(--radius-md);
+      color: var(--text);
+      text-align: center;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23f59e0b' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 16px center;
+    }
+
+    .name-select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 20px rgba(245, 158, 11, 0.2);
+    }
+
+    .name-select option {
+      background: #0f172a;
+      color: var(--text);
+      padding: 10px;
+    }
+
+    .name-select option:disabled {
+      color: var(--text-dim);
+    }
+
+    .btn {
+      width: 100%;
+      padding: 20px 24px;
+      min-height: 56px;
+      font-size: 18px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      border: none;
+      border-radius: var(--radius-lg);
+      cursor: pointer;
+      transition: all 0.2s;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #111;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: var(--accent-hover);
+      transform: translateY(-2px);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .error {
+      color: var(--danger);
+      font-size: 14px;
+      margin-top: 10px;
+    }
+
+    .status {
+      margin-top: 20px;
+      padding: 16px;
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      border-radius: var(--radius-md);
+      color: var(--success);
+    }
+
+    .waiting {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 10px;
+    }
+
+    .waiting-subtitle {
+      color: var(--text-dim);
+      font-size: 14px;
+    }
+
+    /* Voting Section */
+    .voting-section {
+      margin-top: 24px;
+    }
+
+    .voting-section h3 {
+      color: var(--accent);
+      font-size: 18px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 16px;
+    }
+
+    .vote-options {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .vote-btn {
+      padding: 18px 16px;
+      min-height: 60px;
+      font-size: 16px;
+      font-weight: 600;
+      background: rgba(245, 158, 11, 0.1);
+      border: 2px solid var(--border);
+      color: var(--text);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all 0.2s;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    .vote-btn:hover {
+      background: rgba(245, 158, 11, 0.2);
+      border-color: var(--accent);
+    }
+
+    .vote-btn.selected {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #111;
+    }
+
+    .timer {
+      font-size: 48px;
+      font-weight: 900;
+      color: var(--accent);
+      margin: 20px 0;
+    }
+
+    .player-list {
+      margin-top: 20px;
+      text-align: left;
+    }
+
+    .player-list h4 {
+      color: var(--text-dim);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+    }
+
+    .player-list ul {
+      list-style: none;
+      font-size: 14px;
+    }
+
+    .player-list li {
+      padding: 6px 0;
+      color: var(--text-dim);
+    }
+
+    .player-list li.you {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .kicked-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .kicked-message {
+      text-align: center;
+      padding: 40px;
+    }
+
+    .kicked-message h2 {
+      color: var(--danger);
+      font-size: 32px;
+      margin-bottom: 20px;
+    }
+
+    .hidden { display: none !important; }
+
+    /* ============ ANIMATION SYSTEM ============ */
+
+    /* Ripple Effect */
+    .ripple {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.4);
+      transform: scale(0);
+      animation: rippleEffect 0.6s ease-out forwards;
+      pointer-events: none;
+    }
+
+    @keyframes rippleEffect {
+      to {
+        transform: scale(4);
+        opacity: 0;
+      }
+    }
+
+    /* Vote Button Animation */
+    .vote-btn {
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+                  background 0.3s ease,
+                  box-shadow 0.3s ease;
+    }
+
+    .vote-btn:hover {
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 8px 20px rgba(245, 158, 11, 0.3);
+    }
+
+    .vote-btn.selected {
+      animation: buttonPulse 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes buttonPulse {
+      0%, 100% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.05);
+        box-shadow: 0 0 30px rgba(245, 158, 11, 0.5);
+      }
+    }
+
+    /* Timer Warning Animation */
+    .timer {
+      transition: color 0.3s ease, transform 0.1s ease;
+    }
+
+    .timer.warning {
+      color: var(--danger);
+      animation: timerPulse 1s ease-in-out infinite;
+    }
+
+    @keyframes timerPulse {
+      0%, 100% {
+        transform: scale(1);
+        text-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+      }
+      50% {
+        transform: scale(1.1);
+        text-shadow: 0 0 40px rgba(239, 68, 68, 0.8);
+      }
+    }
+
+    /* Phase Transitions */
+    #joinSection, #waitingSection, #votingSection, #launchingSection {
+      transition: opacity 0.4s ease,
+                  transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      will-change: opacity, transform;
+    }
+
+    .phase-enter {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    .phase-active {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Player List Animation */
+    .player-list li {
+      animation: fadeIn 0.4s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateX(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    /* Button Press Effect */
+    .btn:active, .vote-btn:active {
+      transform: scale(0.97);
+    }
+
+    /* Accessibility: Reduced Motion */
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Game Night</h1>
+
+    <!-- JOIN SECTION -->
+    <div id="joinSection" class="card">
+      <div class="input-group" id="customNameGroup">
+        <label for="nameInput">Your Name</label>
+        <input type="text" id="nameInput" placeholder="Enter name" maxlength="20" autofocus>
+      </div>
+      <div class="input-group hidden" id="presetNameGroup">
+        <label for="nameSelect">Select Your Name</label>
+        <select id="nameSelect" class="name-select">
+          <option value="">-- Select a name --</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" id="joinBtn" onclick="joinGame()">Join</button>
+      <div class="error hidden" id="errorMsg"></div>
+    </div>
+
+    <!-- WAITING SECTION -->
+    <div id="waitingSection" class="card hidden">
+      <div class="waiting">Waiting for host...</div>
+      <div class="waiting-subtitle">You're in! The host will select a game soon.</div>
+
+      <div class="status">
+        Connected as: <strong id="playerName">-</strong>
+      </div>
+
+      <div class="player-list">
+        <h4>Players in lobby:</h4>
+        <ul id="playerList"></ul>
+      </div>
+    </div>
+
+    <!-- VOTING SECTION -->
+    <div id="votingSection" class="card hidden">
+      <div class="timer" id="voteTimer">30</div>
+      <div class="voting-section">
+        <h3>Vote for a Game!</h3>
+        <div class="vote-options" id="voteOptions"></div>
+      </div>
+    </div>
+
+    <!-- GAME LAUNCHING SECTION -->
+    <div id="launchingSection" class="card hidden">
+      <div class="waiting">Launching Game...</div>
+      <div class="waiting-subtitle" id="launchGameName">Redirecting to game...</div>
+    </div>
+  </div>
+
+  <!-- KICKED OVERLAY -->
+  <div id="kickedOverlay" class="kicked-overlay hidden">
+    <div class="kicked-message">
+      <h2>Removed</h2>
+      <p id="kickedMsg">You have been removed from the game.</p>
+    </div>
+  </div>
+
+  <script>
+    const socket = io({
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+    });
+
+    // Check URL params first (from game returning to menu), then localStorage
+    const _urlParams = new URLSearchParams(window.location.search);
+    let playerKey = _urlParams.get("launcherKey") || localStorage.getItem("launcher_playerKey") || null;
+    let playerName = _urlParams.get("launcherName") || localStorage.getItem("launcher_playerName") || "";
+    let currentVote = null;
+    let votingDeadline = null;
+    let voteTimerInterval = null;
+    let eligibleGames = [];
+    let usePresetNames = false;
+    let presetNames = [];
+    let takenNames = [];
+    let nameInputSignature = null;
+    let playerListSignature = null;
+    let voteOptionsSignature = null;
+
+    // Elements
+    const joinSection = document.getElementById("joinSection");
+    const waitingSection = document.getElementById("waitingSection");
+    const votingSection = document.getElementById("votingSection");
+    const launchingSection = document.getElementById("launchingSection");
+    const nameInput = document.getElementById("nameInput");
+    const nameSelect = document.getElementById("nameSelect");
+    const customNameGroup = document.getElementById("customNameGroup");
+    const presetNameGroup = document.getElementById("presetNameGroup");
+    const errorMsg = document.getElementById("errorMsg");
+    const playerList = document.getElementById("playerList");
+    const voteOptions = document.getElementById("voteOptions");
+    const voteTimer = document.getElementById("voteTimer");
+    const kickedOverlay = document.getElementById("kickedOverlay");
+
+    // If we got credentials from URL params, save to localStorage
+    if (_urlParams.get("launcherKey") && _urlParams.get("launcherName")) {
+      localStorage.setItem("launcher_playerKey", playerKey);
+      localStorage.setItem("launcher_playerName", playerName);
+      // Clean URL params after reading
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+
+    // Auto-rejoin if we have a stored key and name
+    socket.on("connect", () => {
+      // Request initial state for preset names
+      socket.emit("player_request_state");
+      if (playerKey && playerName) {
+        // Hide join form while we attempt auto-rejoin
+        joinSection.classList.add("hidden");
+        waitingSection.classList.remove("hidden");
+        document.getElementById("playerName").textContent = playerName;
+        socket.emit("player_join", { playerKey, name: playerName });
+      }
+    });
+
+    socket.on("player_init", (data) => {
+      usePresetNames = data.usePresetNames || false;
+      presetNames = data.presetNames || [];
+      takenNames = data.takenNames || [];
+      updateNameInputMode();
+    });
+
+    socket.on("forceReselect", () => {
+      // Host changed preset names mode, player needs to re-enter name
+      playerKey = null;
+      playerName = "";
+      playerListSignature = null;
+      voteOptionsSignature = null;
+      localStorage.removeItem("launcher_playerKey");
+      localStorage.removeItem("launcher_playerName");
+      joinSection.classList.remove("hidden");
+      waitingSection.classList.add("hidden");
+      votingSection.classList.add("hidden");
+      launchingSection.classList.add("hidden");
+      errorMsg.classList.add("hidden");
+      nameInput.value = "";
+      nameSelect.value = "";
+    });
+
+    socket.on("join_success", (data) => {
+      playerKey = data.playerKey;
+      playerName = data.name;
+      localStorage.setItem("launcher_playerKey", playerKey);
+      localStorage.setItem("launcher_playerName", playerName);
+
+      joinSection.classList.add("hidden");
+      waitingSection.classList.remove("hidden");
+      document.getElementById("playerName").textContent = playerName;
+    });
+
+    socket.on("join_error", (msg) => {
+      errorMsg.textContent = msg;
+      errorMsg.classList.remove("hidden");
+      // If auto-rejoin failed, show the join form again
+      joinSection.classList.remove("hidden");
+      waitingSection.classList.add("hidden");
+      // Clear invalid stored credentials
+      playerKey = null;
+      playerName = "";
+      playerListSignature = null;
+      localStorage.removeItem("launcher_playerKey");
+      localStorage.removeItem("launcher_playerName");
+    });
+
+    socket.on("state_update", (data) => {
+      // Update preset names state
+      if (data.usePresetNames !== undefined) {
+        usePresetNames = data.usePresetNames;
+      }
+      if (data.presetNames) {
+        presetNames = data.presetNames;
+      }
+      if (data.takenNames) {
+        takenNames = data.takenNames;
+      }
+      updateNameInputMode();
+
+      // Update player list
+      if (data.players) {
+        renderPlayerList(data.players);
+      }
+
+      // Handle phase changes
+      if (data.phase === "menu") {
+        votingSection.classList.add("hidden");
+        launchingSection.classList.add("hidden");
+        if (playerKey) {
+          waitingSection.classList.remove("hidden");
+        }
+      } else if (data.phase === "game" && playerKey) {
+        // Show launching state while waiting for redirect (reconnecting player)
+        waitingSection.classList.add("hidden");
+        votingSection.classList.add("hidden");
+        launchingSection.classList.remove("hidden");
+        document.getElementById("launchGameName").textContent = "Reconnecting to game...";
+      }
+    });
+
+    socket.on("voting_started", (data) => {
+      eligibleGames = data.eligibleGames;
+      votingDeadline = data.deadline;
+      currentVote = null;
+      voteOptionsSignature = null;
+
+      waitingSection.classList.add("hidden");
+      votingSection.classList.remove("hidden");
+
+      renderVoteOptions();
+      startVoteTimer();
+    });
+
+    socket.on("launch_game", (data) => {
+      waitingSection.classList.add("hidden");
+      votingSection.classList.add("hidden");
+      launchingSection.classList.remove("hidden");
+
+      document.getElementById("launchGameName").textContent = `Starting ${data.game.name}...`;
+
+      // Redirect to game's player page after a brief delay
+      setTimeout(() => {
+        // Pass player info via URL params for the game to pick up
+        const url = `${data.playerUrl}?launcherKey=${encodeURIComponent(data.playerKey)}&launcherName=${encodeURIComponent(data.playerName)}`;
+        window.location.href = url;
+      }, 500);
+    });
+
+    socket.on("returned_to_menu", () => {
+      votingSection.classList.add("hidden");
+      launchingSection.classList.add("hidden");
+      if (playerKey) {
+        waitingSection.classList.remove("hidden");
+      }
+    });
+
+    socket.on("kicked", (data) => {
+      document.getElementById("kickedMsg").textContent = data.message || "You have been removed.";
+      kickedOverlay.classList.remove("hidden");
+      playerKey = null;
+      playerName = "";
+      playerListSignature = null;
+      voteOptionsSignature = null;
+      localStorage.removeItem("launcher_playerKey");
+      localStorage.removeItem("launcher_playerName");
+    });
+
+    function joinGame() {
+      let name;
+      if (usePresetNames) {
+        name = nameSelect.value;
+        if (!name) {
+          errorMsg.textContent = "Please select a name.";
+          errorMsg.classList.remove("hidden");
+          return;
+        }
+      } else {
+        name = nameInput.value.trim();
+        if (!name) {
+          errorMsg.textContent = "Please enter a name.";
+          errorMsg.classList.remove("hidden");
+          return;
+        }
+      }
+
+      errorMsg.classList.add("hidden");
+      playerName = name;
+      socket.emit("player_join", { playerKey, name });
+    }
+
+    function updateNameInputMode() {
+      const signature = `${usePresetNames ? 1 : 0}|${presetNames.join('::')}|${takenNames.join('::')}`;
+      if (nameInputSignature === signature) return;
+      nameInputSignature = signature;
+
+      if (usePresetNames) {
+        customNameGroup.classList.add("hidden");
+        presetNameGroup.classList.remove("hidden");
+        // Populate the dropdown
+        nameSelect.innerHTML = '<option value="">-- Select a name --</option>' +
+          presetNames.map(name => {
+            const isTaken = takenNames.includes(name);
+            return `<option value="${escapeHtml(name)}" ${isTaken ? 'disabled' : ''}>${escapeHtml(name)}${isTaken ? ' (taken)' : ''}</option>`;
+          }).join("");
+      } else {
+        customNameGroup.classList.remove("hidden");
+        presetNameGroup.classList.add("hidden");
+      }
+    }
+
+    nameInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") joinGame();
+    });
+
+    function renderPlayerList(players) {
+      const signature = players
+        .map(p => `${p.key}|${p.name}|${p.connected ? 1 : 0}|${p.key === playerKey ? 1 : 0}`)
+        .join("::");
+      if (playerListSignature === signature) return;
+      playerListSignature = signature;
+
+      playerList.innerHTML = players.map(p => {
+        const isYou = p.key === playerKey;
+        const status = p.connected ? "" : " (offline)";
+        return `<li class="${isYou ? 'you' : ''}">${isYou ? '(You) ' : ''}${escapeHtml(p.name)}${status}</li>`;
+      }).join("");
+    }
+
+    function renderVoteOptions() {
+      const signature = `${currentVote || ''}|${eligibleGames.map(g => `${g.id}|${g.name}`).join("::")}`;
+      if (voteOptionsSignature === signature) return;
+      voteOptionsSignature = signature;
+
+      voteOptions.innerHTML = eligibleGames.map(g => `
+        <button class="vote-btn ${currentVote === g.id ? 'selected' : ''}"
+                onclick="vote('${g.id}')">${g.name}</button>
+      `).join("");
+    }
+
+    function vote(gameId) {
+      currentVote = gameId;
+      socket.emit("player_vote", { gameId });
+      renderVoteOptions();
+    }
+
+    function startVoteTimer() {
+      if (voteTimerInterval) clearInterval(voteTimerInterval);
+
+      voteTimerInterval = setInterval(() => {
+        const remaining = Math.max(0, Math.ceil((votingDeadline - Date.now()) / 1000));
+        voteTimer.textContent = remaining;
+
+        // Add warning class when <10 seconds
+        if (remaining <= 10 && remaining > 0) {
+          voteTimer.classList.add('warning');
+        } else {
+          voteTimer.classList.remove('warning');
+        }
+
+        if (remaining <= 0) {
+          clearInterval(voteTimerInterval);
+          voteTimer.classList.remove('warning');
+        }
+      }, 100);
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement("div");
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    // ============ ANIMATION SYSTEM ============
+
+    // Ripple Effect
+    function createRipple(element, event) {
+      const ripple = document.createElement('span');
+      ripple.className = 'ripple';
+      const rect = element.getBoundingClientRect();
+      const size = Math.max(rect.width, rect.height);
+      ripple.style.width = ripple.style.height = size + 'px';
+      ripple.style.left = (event.clientX - rect.left - size / 2) + 'px';
+      ripple.style.top = (event.clientY - rect.top - size / 2) + 'px';
+      element.appendChild(ripple);
+      setTimeout(() => ripple.remove(), 600);
+    }
+
+    // Initialize on load
+    document.addEventListener('DOMContentLoaded', () => {
+      // Add ripple to vote buttons
+      document.addEventListener('click', (e) => {
+        if (e.target.classList.contains('vote-btn')) {
+          createRipple(e.target, e);
+        } else if (e.target.classList.contains('btn')) {
+          createRipple(e.target, e);
+        }
+      });
+    });
+  </script>
+</body>
+</html>

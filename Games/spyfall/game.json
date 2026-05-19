@@ -1,0 +1,8 @@
+{
+  "id": "spyfall",
+  "name": "Spyfall",
+  "minPlayers": 3,
+  "maxPlayers": 20,
+  "description": "Find the spy by asking clever questions",
+  "icon": "icon.png"
+}

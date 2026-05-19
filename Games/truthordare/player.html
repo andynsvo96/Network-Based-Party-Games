@@ -1,0 +1,2254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Truth or Dare - Player</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :root {
+      --bg-primary: #0a0a0f;
+      --bg-secondary: #14151b;
+      --bg-card: rgba(20, 21, 27, 0.95);
+      --accent-primary: #a855f7;
+      --accent-secondary: #2dd4bf;
+      --accent-truth: #3b82f6;
+      --accent-dare: #ef4444;
+      --text-primary: #f5f5f5;
+      --text-muted: rgba(245, 245, 245, 0.6);
+      --border-subtle: rgba(255, 255, 255, 0.1);
+      --success: #22c55e;
+      --danger: #ef4444;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+      color: var(--text-primary);
+      min-height: 100vh;
+      font-size: 16px;
+    }
+
+    .hidden { display: none !important; }
+
+    .container {
+      max-width: 500px;
+      margin: 0 auto;
+      padding: 16px;
+      min-height: 100vh;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border-subtle);
+      margin-bottom: 16px;
+    }
+
+    .header h1 {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+
+    .player-info {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    .score-badge {
+      background: var(--accent-primary);
+      color: white;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-weight: 600;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 16px;
+    }
+
+    .card h2 {
+      font-size: 20px;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    .card h3 {
+      font-size: 16px;
+      margin-bottom: 12px;
+      color: var(--accent-secondary);
+    }
+
+    /* Join Form */
+    .join-form {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--text-muted);
+    }
+
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%;
+      padding: 14px;
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      font-size: 16px;
+      -webkit-appearance: none;
+    }
+
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+      outline: none;
+      border-color: var(--accent-primary);
+    }
+
+    .btn {
+      width: 100%;
+      padding: 16px;
+      border: none;
+      border-radius: 12px;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent-primary), #7c3aed);
+      color: white;
+    }
+
+    .btn-primary:hover, .btn-primary:active {
+      transform: scale(1.02);
+    }
+
+    .btn-secondary {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .btn-success {
+      background: var(--success);
+      color: white;
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .error-msg {
+      color: var(--danger);
+      text-align: center;
+      margin-top: 8px;
+    }
+
+    /* Timer */
+    .timer {
+      font-size: 48px;
+      font-weight: 700;
+      color: var(--accent-primary);
+      text-align: center;
+      font-family: monospace;
+    }
+
+    .timer.warning {
+      color: var(--danger);
+      animation: pulse 1s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+
+    /* Timer Container and Progress Bar */
+    .timer-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      margin: 16px 0;
+    }
+
+    .timer-progress {
+      width: 300px;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .timer-progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+      transition: width 0.1s linear;
+      border-radius: 4px;
+    }
+
+    .timer-progress-bar.warning {
+      background: linear-gradient(90deg, var(--danger), #ff6b6b);
+    }
+
+    /* Toast Notifications */
+    @keyframes slideInFade {
+      0% {
+        opacity: 0;
+        transform: translateX(-20px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes fadeOut {
+      to {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+    }
+
+    .submission-success-toast, .error-toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 12px 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      z-index: 1000;
+      animation: slideInFade 0.3s ease-out, fadeOut 0.3s ease-out 2.7s;
+      pointer-events: none;
+      color: white;
+      font-weight: 600;
+    }
+
+    .submission-success-toast {
+      background: var(--success);
+    }
+
+    .error-toast {
+      background: var(--danger);
+    }
+
+    .submission-item.new {
+      animation: slideInFade 0.3s ease-out;
+    }
+
+    /* Connection Status Indicator */
+    .connection-status {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: var(--bg-card);
+      border-radius: 20px;
+      font-size: 12px;
+      z-index: 100;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+    }
+
+    .connection-status.reconnecting .status-dot {
+      background: orange;
+      animation: pulse 1s infinite;
+    }
+
+    .connection-status.disconnected .status-dot {
+      background: var(--danger);
+    }
+
+    /* Accessibility */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border-width: 0;
+    }
+
+    button:focus-visible {
+      outline: 2px solid var(--accent-primary);
+      outline-offset: 2px;
+    }
+
+    .btn:focus-visible {
+      box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.4);
+    }
+
+    /* Mobile Responsiveness */
+    @media (max-width: 768px) {
+      .timer-container {
+        width: 100%;
+      }
+
+      .timer-progress {
+        width: 100%;
+        max-width: 300px;
+      }
+
+      .intro-grid {
+        grid-template-columns: 1fr !important;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .timer {
+        font-size: 36px;
+      }
+
+      .intro-grid-card h3 {
+        font-size: 14px;
+      }
+
+      .intro-grid-card p {
+        font-size: 12px;
+      }
+    }
+
+    /* Submission Form */
+    .type-toggle {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .type-btn {
+      flex: 1;
+      padding: 12px;
+      border: 2px solid var(--border-subtle);
+      border-radius: 8px;
+      background: transparent;
+      color: var(--text-muted);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .type-btn.active.truth {
+      border-color: var(--accent-truth);
+      color: var(--accent-truth);
+      background: rgba(59, 130, 246, 0.1);
+    }
+
+    .type-btn.active.dare {
+      border-color: var(--accent-dare);
+      color: var(--accent-dare);
+      background: rgba(239, 68, 68, 0.1);
+    }
+
+    .submissions-list {
+      margin-top: 16px;
+      max-height: 250px;
+      overflow-y: auto;
+      border-top: 1px solid var(--border-subtle);
+      padding-top: 12px;
+    }
+
+    .submission-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      background: var(--bg-secondary);
+      border-radius: 8px;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    .submission-type {
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+
+    .submission-type.truth {
+      background: rgba(59, 130, 246, 0.2);
+      color: var(--accent-truth);
+    }
+
+    .submission-type.dare {
+      background: rgba(239, 68, 68, 0.2);
+      color: var(--accent-dare);
+    }
+
+    /* Pre-made list */
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      background: var(--bg-secondary);
+      color: var(--text-muted);
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .tab-btn.active {
+      background: var(--accent-primary);
+      color: white;
+    }
+
+    .premade-list {
+      max-height: 320px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    /* Custom scrollbar styling for better UX */
+    .premade-list::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .premade-list::-webkit-scrollbar-track {
+      background: var(--bg-secondary);
+      border-radius: 3px;
+    }
+
+    .premade-list::-webkit-scrollbar-thumb {
+      background: var(--border-subtle);
+      border-radius: 3px;
+    }
+
+    .premade-list::-webkit-scrollbar-thumb:hover {
+      background: var(--accent-primary);
+    }
+
+    .premade-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 16px;
+      background: var(--bg-secondary);
+      border-radius: 8px;
+      margin-bottom: 10px;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .premade-item > span:first-child {
+      flex: 1;
+      min-width: 0;
+      word-break: break-word;
+      padding-right: 8px;
+    }
+
+    .premade-item.claimed {
+      opacity: 0.5;
+    }
+
+    .claim-btn {
+      background: var(--accent-secondary);
+      color: var(--bg-primary);
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 12px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      min-width: 70px;
+      transition: all 0.2s ease;
+    }
+
+    .claim-btn:hover:not(:disabled) {
+      transform: scale(1.05);
+      box-shadow: 0 2px 8px rgba(45, 212, 191, 0.3);
+    }
+
+    .claim-btn:disabled {
+      background: var(--text-muted);
+      cursor: not-allowed;
+    }
+
+    /* Your Turn */
+    .your-turn-banner {
+      background: linear-gradient(135deg, var(--accent-primary), #7c3aed);
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    .your-turn-banner h2 {
+      margin: 0;
+      font-size: 28px;
+    }
+
+    .spin-result {
+      text-align: center;
+      padding: 16px;
+      background: var(--bg-secondary);
+      border-radius: 12px;
+      margin-bottom: 16px;
+    }
+
+    .spin-result-label {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .spin-result-value {
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    /* Dealers Choice */
+    .dealers-choice {
+      text-align: center;
+    }
+
+    .dealers-choice h3 {
+      color: gold;
+      font-size: 24px;
+      margin-bottom: 16px;
+    }
+
+    .choice-buttons {
+      display: flex;
+      gap: 16px;
+    }
+
+    .choice-btn {
+      flex: 1;
+      padding: 24px;
+      font-size: 24px;
+      font-weight: 700;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+
+    .choice-btn.truth {
+      background: var(--accent-truth);
+      color: white;
+    }
+
+    .choice-btn.dare {
+      background: var(--accent-dare);
+      color: white;
+    }
+
+    /* Challenge Display */
+    .challenge-card {
+      text-align: center;
+    }
+
+    .challenge-type-badge {
+      display: inline-block;
+      padding: 8px 24px;
+      border-radius: 20px;
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .challenge-type-badge.truth {
+      background: rgba(59, 130, 246, 0.2);
+      color: var(--accent-truth);
+    }
+
+    .challenge-type-badge.dare {
+      background: rgba(239, 68, 68, 0.2);
+      color: var(--accent-dare);
+    }
+
+    .challenge-text {
+      font-size: 22px;
+      line-height: 1.4;
+      margin-bottom: 16px;
+    }
+
+    .targeted-badge {
+      background: rgba(239, 68, 68, 0.2);
+      color: var(--accent-dare);
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .waiting-host {
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    /* Watching */
+    .watching-banner {
+      background: var(--bg-secondary);
+      padding: 16px;
+      border-radius: 12px;
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    .watching-banner span {
+      color: var(--accent-primary);
+      font-weight: 700;
+    }
+
+    /* Mini submit form */
+    .mini-submit {
+      border-top: 1px solid var(--border-subtle);
+      padding-top: 16px;
+      margin-top: 16px;
+    }
+
+    .mini-submit-toggle {
+      width: 100%;
+      padding: 12px;
+      background: transparent;
+      border: 1px dashed var(--border-subtle);
+      border-radius: 8px;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+
+    .mini-form {
+      margin-top: 12px;
+    }
+
+    .mini-form textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      font-size: 14px;
+      resize: none;
+      margin-bottom: 8px;
+    }
+
+    .mini-form-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .mini-form-row select {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      font-size: 14px;
+    }
+
+    /* Results */
+    .results-banner {
+      text-align: center;
+      padding: 24px;
+    }
+
+    .results-banner h2 {
+      color: gold;
+      font-size: 28px;
+      margin-bottom: 16px;
+    }
+
+    .your-rank {
+      font-size: 48px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .your-final-score {
+      font-size: 20px;
+      color: var(--text-muted);
+    }
+
+    .awards-list {
+      margin-top: 24px;
+    }
+
+    .award-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 12px;
+      background: var(--bg-secondary);
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
+
+    .award-title-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .award-detail {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .award-emoji {
+      font-size: 28px;
+    }
+
+    /* Player list in lobby */
+    .player-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    .player-chip {
+      background: var(--bg-secondary);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+    }
+
+    .player-chip.you {
+      background: var(--accent-primary);
+    }
+
+    .player-chip.disconnected {
+      opacity: 0.5;
+    }
+
+    /* Kicked overlay */
+    .kicked-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+
+    .kicked-message {
+      text-align: center;
+      padding: 32px;
+    }
+
+    .kicked-message h2 {
+      color: var(--danger);
+      margin-bottom: 16px;
+    }
+
+    /* Player History Panel */
+    .history-panel {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--bg-card);
+      border-top: 1px solid var(--border-subtle);
+      padding: 12px 16px;
+      max-height: 180px;
+      overflow-y: auto;
+      z-index: 50;
+    }
+
+    .history-panel h3 {
+      font-size: 14px;
+      color: var(--accent-secondary);
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .history-toggle {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 12px;
+      cursor: pointer;
+      padding: 4px 8px;
+    }
+
+    .history-panel.collapsed {
+      max-height: 40px;
+      overflow: hidden;
+    }
+
+    .history-panel.collapsed .history-list {
+      display: none;
+    }
+
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .history-item {
+      background: var(--bg-secondary);
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+    }
+
+    .history-item .history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .history-item .history-type {
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+    }
+
+    .history-item .history-type.truth {
+      background: rgba(59, 130, 246, 0.2);
+      color: var(--accent-truth);
+    }
+
+    .history-item .history-type.dare {
+      background: rgba(239, 68, 68, 0.2);
+      color: var(--accent-dare);
+    }
+
+    .history-item .history-result {
+      font-weight: 600;
+      font-size: 12px;
+    }
+
+    .history-item .history-result.completed { color: var(--success); }
+    .history-item .history-result.refused { color: var(--danger); }
+
+    .history-item .history-challenge {
+      color: var(--text-muted);
+      font-style: italic;
+      font-size: 12px;
+      line-height: 1.3;
+    }
+
+    .history-item .history-targeted {
+      font-size: 11px;
+      color: var(--accent-dare);
+      margin-top: 4px;
+    }
+
+    .history-empty {
+      color: var(--text-muted);
+      font-size: 13px;
+      text-align: center;
+      padding: 8px;
+    }
+
+    /* Adjust container for fixed bottom panel */
+    .container {
+      padding-bottom: 200px;
+    }
+
+    /* Modal Overlay */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.85);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      backdrop-filter: blur(4px);
+    }
+
+    .claim-modal {
+      background: var(--bg-card);
+      border: 2px solid var(--accent-primary);
+      border-radius: 20px;
+      padding: 32px;
+      max-width: 500px;
+      width: 90%;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+      animation: modalSlideIn 0.3s ease;
+    }
+
+    @keyframes modalSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .claim-modal h3 {
+      font-size: 22px;
+      margin-bottom: 16px;
+      color: var(--accent-primary);
+      text-align: center;
+    }
+
+    .modal-content-preview {
+      background: var(--bg-secondary);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 24px;
+      font-size: 16px;
+      line-height: 1.5;
+      color: var(--text-primary);
+      max-height: 150px;
+      overflow-y: auto;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .modal-actions .btn {
+      flex: 1;
+      font-size: 16px;
+    }
+
+    .playerStatusCircle {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+    .playerStatusCircle.online { background: #10b981; }
+    .playerStatusCircle.offline {
+      background: transparent;
+      border: 2px solid #6b7280;
+    }
+  </style>
+</head>
+<body>
+  <!-- Connection Status Indicator -->
+  <div class="connection-status" id="connectionStatus">
+    <span class="status-dot"></span>
+    <span class="status-text">Connected</span>
+  </div>
+
+  <div class="container">
+    <!-- Header (shown after joining) -->
+    <div class="header hidden" id="header">
+      <h1>Truth or Dare</h1>
+      <div class="player-info">
+        <span id="playerNameDisplay">Player</span>
+        <span class="score-badge">Score: <span id="playerScore">0</span></span>
+      </div>
+    </div>
+
+    <!-- Join Card -->
+    <div class="card" id="joinCard">
+      <h2>Join via Launcher</h2>
+      <div class="join-form">
+        <p style="text-align:center;color:#aaa;margin:16px 0;">Players must join through the main launcher.</p>
+        <a href="/" class="btn btn-primary" style="display:inline-block;text-align:center;text-decoration:none;">Go to Launcher</a>
+        <div class="error-msg hidden" id="joinError"></div>
+        <!-- Hidden elements kept for auto-reconnect JS compatibility -->
+        <input type="hidden" id="nameInput">
+        <button id="joinBtn" style="display:none;">JOIN</button>
+      </div>
+    </div>
+
+    <!-- Waiting Card -->
+    <div class="card hidden" id="waitingCard">
+      <h2>Waiting for Game to Start</h2>
+      <p style="text-align: center; color: var(--text-muted); margin-bottom: 16px;">The host will start the game soon...</p>
+      <div class="player-chips" id="lobbyPlayers"></div>
+    </div>
+
+
+    <!-- Preparation Card - Combines intro + submission -->
+    <div class="card hidden" id="preparationCard">
+      <div class="timer-container">
+        <div class="timer" id="prepTimer" role="timer" aria-label="Preparation timer" aria-live="polite">90</div>
+        <div class="timer-progress" aria-hidden="true">
+          <div class="timer-progress-bar" id="prepTimerProgress" style="width: 100%;"></div>
+        </div>
+      </div>
+      <p style="text-align: center; color: var(--text-muted); margin-bottom: 24px;">
+        Get ready! You can start creating content now.
+      </p>
+
+      <!-- Submission form -->
+      <h3>Create Your Own</h3>
+      <div class="type-toggle">
+        <button class="type-btn active truth" id="prepTypeTruthBtn">TRUTH</button>
+        <button class="type-btn dare" id="prepTypeDareBtn">DARE</button>
+      </div>
+
+      <div class="form-group">
+        <textarea id="prepContentText" rows="2" placeholder="Enter your truth or dare..." maxlength="200"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Target (optional)</label>
+        <select id="prepTargetSelect">
+          <option value="">Anyone (not targeted)</option>
+        </select>
+      </div>
+
+      <button class="btn btn-primary" id="prepSubmitBtn">SUBMIT</button>
+
+      <div class="submissions-list" id="prepMySubmissions"></div>
+
+      <!-- Pre-made section -->
+      <div style="margin-top: 24px;">
+        <h3>Claim Pre-made</h3>
+        <div class="tabs">
+          <button class="tab-btn active" id="prepPremadeTruthsTab">Truths</button>
+          <button class="tab-btn" id="prepPremadeDaresTab">Dares</button>
+        </div>
+        <div class="premade-list" id="prepPremadeTruths"></div>
+        <div class="premade-list hidden" id="prepPremadeDares"></div>
+      </div>
+    </div>
+
+    <!-- Submission Card -->
+    <div class="card hidden" id="submissionCard">
+      <div class="timer" id="subTimer">60</div>
+      <p style="text-align: center; color: var(--text-muted); margin-bottom: 16px;">Create your truths and dares!</p>
+
+      <h3>Create Your Own</h3>
+      <div class="type-toggle">
+        <button class="type-btn active truth" id="typeTruthBtn">TRUTH</button>
+        <button class="type-btn dare" id="typeDareBtn">DARE</button>
+      </div>
+
+      <div class="form-group">
+        <textarea id="contentText" rows="2" placeholder="Enter your truth or dare..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Target (optional)</label>
+        <select id="targetSelect">
+          <option value="">Anyone (not targeted)</option>
+        </select>
+      </div>
+
+      <button class="btn btn-primary" id="submitContentBtn">SUBMIT</button>
+
+      <div class="submissions-list" id="mySubmissions"></div>
+
+      <div style="margin-top: 24px;">
+        <h3>Claim Pre-made</h3>
+        <div class="tabs">
+          <button class="tab-btn active" id="premadeTruthsTab">Truths</button>
+          <button class="tab-btn" id="premadeDaresTab">Dares</button>
+        </div>
+        <div class="premade-list" id="premadeTruths"></div>
+        <div class="premade-list hidden" id="premadeDares"></div>
+      </div>
+    </div>
+
+    <!-- Your Turn Card -->
+    <div class="card hidden" id="yourTurnCard">
+      <div class="your-turn-banner">
+        <h2>YOUR TURN!</h2>
+      </div>
+
+      <div id="spinningSection">
+        <div class="spin-result">
+          <div class="spin-result-label">Content Source</div>
+          <div class="spin-result-value" id="spin1Value">Spinning...</div>
+        </div>
+        <div class="spin-result">
+          <div class="spin-result-label">Type</div>
+          <div class="spin-result-value" id="spin2Value">...</div>
+        </div>
+      </div>
+
+      <div class="dealers-choice hidden" id="dealersChoiceSection">
+        <h3>DEALER'S CHOICE!</h3>
+        <p style="color: var(--text-muted); margin-bottom: 16px;">You get to pick!</p>
+        <div class="choice-buttons">
+          <button class="choice-btn truth" id="chooseTruthBtn">TRUTH</button>
+          <button class="choice-btn dare" id="chooseDareBtn">DARE</button>
+        </div>
+      </div>
+
+      <div class="challenge-card hidden" id="yourChallengeSection">
+        <div class="challenge-type-badge" id="yourChallengeType">DARE</div>
+        <div class="challenge-text" id="yourChallengeText">Loading...</div>
+        <div id="yourChallengeTargeted"></div>
+        <p class="waiting-host">Waiting for host to confirm...</p>
+      </div>
+    </div>
+
+    <!-- Watching Card - REDESIGNED -->
+    <div class="card hidden" id="watchingCard">
+      <!-- Current turn info -->
+      <div class="watching-banner">
+        <span id="watchPlayerName">Player</span> is taking their turn!
+      </div>
+
+      <!-- Challenge Display (when revealed) -->
+      <div class="challenge-card hidden" id="watchChallengeSection">
+        <div class="challenge-type-badge" id="watchChallengeType">DARE</div>
+        <div class="challenge-text" id="watchChallengeText">Loading...</div>
+      </div>
+
+      <!-- Main focus: Content creation -->
+      <h2>Add More Content</h2>
+      <p style="text-align: center; color: var(--text-muted); margin-bottom: 16px;">
+        Submit truths and dares while you wait!
+      </p>
+
+      <!-- Type toggle -->
+      <div class="type-toggle">
+        <button class="type-btn active truth" id="waitingTypeTruthBtn">TRUTH</button>
+        <button class="type-btn dare" id="waitingTypeDareBtn">DARE</button>
+      </div>
+
+      <!-- Content input -->
+      <div class="form-group">
+        <textarea id="waitingContentText" rows="2" placeholder="Enter your truth or dare..." maxlength="200"></textarea>
+      </div>
+
+      <!-- Target selection -->
+      <div class="form-group">
+        <label>Target (optional)</label>
+        <select id="waitingTargetSelect">
+          <option value="">Anyone (not targeted)</option>
+        </select>
+      </div>
+
+      <button class="btn btn-primary" id="waitingSubmitBtn">SUBMIT</button>
+
+      <!-- Pre-made section (conditional on host setting) -->
+      <div id="waitingPremadeSection" class="hidden" style="margin-top: 32px; border-top: 1px solid var(--border-subtle); padding-top: 24px;">
+        <h3>Claim Pre-made Content</h3>
+        <div class="tabs">
+          <button class="tab-btn active" id="waitingPremadeTruthsTab">Truths</button>
+          <button class="tab-btn" id="waitingPremadeDaresTab">Dares</button>
+        </div>
+        <div class="premade-list" id="waitingPremadeTruths"></div>
+        <div class="premade-list hidden" id="waitingPremadeDares"></div>
+      </div>
+    </div>
+
+    <!-- Results Card -->
+    <div class="card hidden" id="resultsCard">
+      <div class="results-banner">
+        <h2>GAME OVER</h2>
+        <div class="your-rank" id="yourRank">#1</div>
+        <div class="your-final-score" id="yourFinalScore">Score: 0</div>
+      </div>
+
+      <div class="awards-list" id="yourAwards"></div>
+
+      <p style="text-align: center; color: var(--text-muted); margin-top: 24px;">Waiting for host...</p>
+    </div>
+
+    <!-- Kicked Overlay -->
+    <div class="kicked-overlay hidden" id="kickedOverlay">
+      <div class="kicked-message">
+        <h2>You've Been Kicked</h2>
+        <p>The host removed you from the game.</p>
+        <button class="btn btn-primary" onclick="location.reload()">Try Again</button>
+      </div>
+    </div>
+
+    <!-- Claiming Modal -->
+    <div class="modal-overlay hidden" id="claimModalOverlay">
+      <div class="claim-modal">
+        <h3>Claim Pre-made Content</h3>
+        <p class="modal-content-preview" id="claimModalPreview">
+          Content text will appear here...
+        </p>
+
+        <div class="form-group">
+          <label>Target Player (optional)</label>
+          <select id="claimTargetSelect">
+            <option value="">Anyone (not targeted)</option>
+          </select>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn btn-secondary" id="claimModalCancel">Cancel</button>
+          <button class="btn btn-primary" id="claimModalConfirm">Claim</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Player History Panel (fixed at bottom) -->
+  <div class="history-panel hidden" id="historyPanel">
+    <h3>
+      <span>Your History</span>
+      <button class="history-toggle" id="historyToggle">▼ Hide</button>
+    </h3>
+    <div class="history-list" id="playerHistoryList">
+      <div class="history-empty">No history yet</div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    (function() {
+      // ---------- Storage Manager (Private Browsing Support) ----------
+      const StorageManager = {
+        _memoryStore: {},
+        _useMemory: false,
+        init() {
+          try {
+            localStorage.setItem('_test', '1');
+            localStorage.removeItem('_test');
+            this._useMemory = false;
+          } catch (e) {
+            console.warn('localStorage unavailable (private browsing?), using in-memory storage');
+            this._useMemory = true;
+          }
+        },
+        setItem(key, value) {
+          if (this._useMemory) {
+            this._memoryStore[key] = value;
+          } else {
+            try { localStorage.setItem(key, value); }
+            catch (e) { this._memoryStore[key] = value; }
+          }
+        },
+        getItem(key) {
+          if (this._useMemory) {
+            return this._memoryStore[key] || null;
+          } else {
+            try { return localStorage.getItem(key); }
+            catch (e) { return this._memoryStore[key] || null; }
+          }
+        },
+        removeItem(key) {
+          if (this._useMemory) {
+            delete this._memoryStore[key];
+          } else {
+            try { localStorage.removeItem(key); }
+            catch (e) { delete this._memoryStore[key]; }
+          }
+        }
+      };
+      StorageManager.init();
+
+      let wasEverConnected = false;
+
+      // Connect to game namespace
+      const pathParts = window.location.pathname.split('/');
+      const gameId = pathParts[2]; // e.g., "truthordare"
+      const socket = io(gameId ? `/game/${gameId}` : '/', {
+        transports: ['websocket', 'polling'],
+        reconnection: true,
+        reconnectionAttempts: 3,
+        reconnectionDelay: 500,
+        reconnectionDelayMax: 1000,
+      });
+
+      // Redirect to launcher if game server is unreachable after all reconnection attempts
+      socket.io.on("reconnect_failed", () => {
+        if (typeof toast === "function") {
+          toast("warn", "Game Ended", "Returning to lobby...");
+        }
+        setTimeout(() => {
+          const launcherUrl = window.location.protocol + "//" + window.location.host + "/players";
+          window.location.href = launcherUrl;
+        }, 1500);
+      });
+
+      // Immediate redirect if game server is unreachable on initial connection
+      socket.io.on("error", () => {
+        if (!wasEverConnected) {
+          console.log("Game server unreachable, returning to launcher...");
+          const launcherUrl = window.location.protocol + "//" + window.location.host + "/players";
+          window.location.href = launcherUrl;
+        }
+      });
+
+      // Check for launcher credentials in URL params (from main game launcher)
+      const urlParams = new URLSearchParams(window.location.search);
+      const launcherKey = urlParams.get("launcherKey");
+      const launcherName = urlParams.get("launcherName");
+
+      // If coming from launcher with a name, store it for auto-join
+      if (launcherName) {
+        StorageManager.setItem('truthordare_player_name', launcherName.toUpperCase());
+      }
+
+      // State - use launcher data first, then fall back to StorageManager
+      let playerId = launcherKey || StorageManager.getItem('truthordare_player_id');
+      let playerName = launcherName?.toUpperCase() || StorageManager.getItem('truthordare_player_name') || '';
+      let gameState = null;
+      let selectedType = 'truth';
+      let mySubmissions = [];
+      let subInterval = null;
+      let pendingClaim = null; // { type, contentId, text }
+
+      // Define claimPremade early to ensure it's available for inline onclick handlers
+      window.claimPremade = (type, contentId, text) => {
+        // IMMEDIATELY disable all instances to prevent double-claims
+        const allInstances = document.querySelectorAll(`[data-premade-id="${contentId}"]`);
+        allInstances.forEach(el => {
+          const btn = el.querySelector('.claim-btn');
+          if (btn) {
+            btn.disabled = true;
+            btn.textContent = 'CLAIMING...';
+          }
+          el.style.opacity = '0.3';
+          el.style.pointerEvents = 'none';
+        });
+
+        // Store claim info
+        pendingClaim = { type, contentId, text };
+
+        // Populate modal preview
+        document.getElementById('claimModalPreview').textContent = text;
+
+        // Populate target dropdown
+        const targetSelect = document.getElementById('claimTargetSelect');
+        targetSelect.innerHTML = '<option value="">Anyone (not targeted)</option>';
+
+        if (gameState && gameState.players) {
+          gameState.players.filter(p => p.id !== playerId).forEach(p => {
+            targetSelect.innerHTML += `<option value="${p.id}">${p.name}</option>`;
+          });
+        }
+
+        // Show modal
+        document.getElementById('claimModalOverlay').classList.remove('hidden');
+      };
+
+      // DOM Elements
+      const header = document.getElementById('header');
+      const playerNameDisplay = document.getElementById('playerNameDisplay');
+      const playerScore = document.getElementById('playerScore');
+
+      const joinCard = document.getElementById('joinCard');
+      const nameInput = document.getElementById('nameInput');
+      const joinBtn = document.getElementById('joinBtn');
+      const joinError = document.getElementById('joinError');
+
+      const waitingCard = document.getElementById('waitingCard');
+      const lobbyPlayers = document.getElementById('lobbyPlayers');
+
+      const introCard = document.getElementById('introCard');
+      // introTitle and introText removed - grid layout uses introTitle1-3 and introContent1-3
+
+      const submissionCard = document.getElementById('submissionCard');
+      const subTimer = document.getElementById('subTimer');
+      const contentText = document.getElementById('contentText');
+      const targetSelect = document.getElementById('targetSelect');
+
+      const yourTurnCard = document.getElementById('yourTurnCard');
+      const dealersChoiceSection = document.getElementById('dealersChoiceSection');
+      const yourChallengeSection = document.getElementById('yourChallengeSection');
+
+      const watchingCard = document.getElementById('watchingCard');
+      const miniForm = document.getElementById('miniForm');
+
+      const resultsCard = document.getElementById('resultsCard');
+
+      const kickedOverlay = document.getElementById('kickedOverlay');
+
+      // History panel elements
+      const historyPanel = document.getElementById('historyPanel');
+      const historyToggle = document.getElementById('historyToggle');
+      const playerHistoryList = document.getElementById('playerHistoryList');
+      let playerHistory = [];
+
+      // History panel toggle
+      historyToggle.onclick = () => {
+        historyPanel.classList.toggle('collapsed');
+        historyToggle.textContent = historyPanel.classList.contains('collapsed') ? '▲ Show' : '▼ Hide';
+      };
+
+      // Auto-join if we have stored credentials
+      if (playerId && playerName) {
+        nameInput.value = playerName;
+      }
+
+      // Join button
+      joinBtn.onclick = () => {
+        const name = nameInput.value.trim().toUpperCase();
+        if (!name) {
+          showError('Please enter your name');
+          return;
+        }
+        socket.emit('registerPlayer', { playerId, name });
+      };
+
+      nameInput.onkeypress = (e) => {
+        if (e.key === 'Enter') joinBtn.click();
+      };
+
+      function showError(msg) {
+        joinError.textContent = msg;
+        joinError.classList.remove('hidden');
+      }
+
+      // Socket events
+      socket.on('connect', () => {
+        wasEverConnected = true;
+        if (playerId && playerName) {
+          socket.emit('registerPlayer', { playerId, name: playerName });
+        }
+      });
+
+      socket.on('playerRegistered', (data) => {
+        playerId = data.playerId;
+        playerName = data.name;
+        StorageManager.setItem('truthordare_player_id', playerId);
+        StorageManager.setItem('truthordare_player_name', playerName);
+
+        joinCard.classList.add('hidden');
+        header.classList.remove('hidden');
+        playerNameDisplay.textContent = playerName;
+
+        updateUI();
+      });
+
+      socket.on('registrationError', (data) => {
+        showError(data.message);
+      });
+
+      socket.on('gameState', (state) => {
+        gameState = state;
+        updateUI();
+        updatePlayerHistory();
+      });
+
+
+      // Preparation phase with timer and submission features
+      let prepInterval = null;
+      let prepSelectedType = 'truth';
+      const preparationCard = document.getElementById('preparationCard');
+
+      socket.on('preparationPhasePlayer', (data) => {
+        showCard('preparation');
+
+        announceToScreenReader('Game preparation phase started. ' + data.duration + ' seconds to create content.');
+        startPrepTimer(data.deadline, data.duration || 90);
+        populatePrepTargetSelect(data.players);
+        populatePrepPremade(data.premadeTruths, data.premadeDares);
+      });
+
+      function startPrepTimer(deadline, totalDuration) {
+        if (prepInterval) clearInterval(prepInterval);
+
+        const timerEl = document.getElementById('prepTimer');
+        const progressBar = document.getElementById('prepTimerProgress');
+
+        prepInterval = setInterval(() => {
+          const remaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+          timerEl.textContent = remaining;
+
+          // Update progress bar
+          const percentage = (remaining / totalDuration) * 100;
+          progressBar.style.width = percentage + '%';
+
+          if (remaining <= 10) {
+            timerEl.classList.add('warning');
+            progressBar.classList.add('warning');
+          } else {
+            timerEl.classList.remove('warning');
+            progressBar.classList.remove('warning');
+          }
+
+          if (remaining <= 0) {
+            clearInterval(prepInterval);
+          }
+        }, 100);
+      }
+
+      function populatePrepTargetSelect(players) {
+        const select = document.getElementById('prepTargetSelect');
+        select.innerHTML = '<option value="">Anyone (not targeted)</option>';
+        players.filter(p => p.id !== playerId).forEach(p => {
+          select.innerHTML += `<option value="${p.id}">${p.name}</option>`;
+        });
+      }
+
+      function populatePrepPremade(truths, dares) {
+        document.getElementById('prepPremadeTruths').innerHTML = truths.map(t => `
+          <div class="premade-item" data-premade-id="${t.id}">
+            <span>${t.text}</span>
+            <button class="claim-btn" onclick="claimPremade('truth', '${t.id}', \`${t.text.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)">CLAIM</button>
+          </div>
+        `).join('');
+
+        document.getElementById('prepPremadeDares').innerHTML = dares.map(d => `
+          <div class="premade-item" data-premade-id="${d.id}">
+            <span>${d.text}</span>
+            <button class="claim-btn" onclick="claimPremade('dare', '${d.id}', \`${d.text.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)">CLAIM</button>
+          </div>
+        `).join('');
+      }
+
+      // Prep type toggle
+      document.getElementById('prepTypeTruthBtn').onclick = () => {
+        prepSelectedType = 'truth';
+        document.getElementById('prepTypeTruthBtn').classList.add('active');
+        document.getElementById('prepTypeDareBtn').classList.remove('active');
+      };
+
+      document.getElementById('prepTypeDareBtn').onclick = () => {
+        prepSelectedType = 'dare';
+        document.getElementById('prepTypeDareBtn').classList.add('active');
+        document.getElementById('prepTypeTruthBtn').classList.remove('active');
+      };
+
+      // Prep submit
+      document.getElementById('prepSubmitBtn').onclick = () => {
+        const text = document.getElementById('prepContentText').value.trim();
+        if (!text) return;
+
+        socket.emit('submitContent', {
+          type: prepSelectedType,
+          text,
+          targetId: document.getElementById('prepTargetSelect').value || null,
+        });
+
+        document.getElementById('prepContentText').value = '';
+      };
+
+      // Prep premade tabs
+      document.getElementById('prepPremadeTruthsTab').onclick = () => {
+        document.getElementById('prepPremadeTruthsTab').classList.add('active');
+        document.getElementById('prepPremadeDaresTab').classList.remove('active');
+        document.getElementById('prepPremadeTruths').classList.remove('hidden');
+        document.getElementById('prepPremadeDares').classList.add('hidden');
+      };
+
+      document.getElementById('prepPremadeDaresTab').onclick = () => {
+        document.getElementById('prepPremadeDaresTab').classList.add('active');
+        document.getElementById('prepPremadeTruthsTab').classList.remove('active');
+        document.getElementById('prepPremadeDares').classList.remove('hidden');
+        document.getElementById('prepPremadeTruths').classList.add('hidden');
+      };
+
+      // Utility functions
+      function showSuccessToast(message) {
+        const toast = document.createElement('div');
+        toast.className = 'submission-success-toast';
+        toast.textContent = message;
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+          toast.remove();
+        }, 3000);
+      }
+
+      function announceToScreenReader(message) {
+        const announcer = document.getElementById('srAnnouncements');
+        if (announcer) {
+          announcer.textContent = message;
+          setTimeout(() => {
+            announcer.textContent = '';
+          }, 1000);
+        }
+      }
+
+      // Connection status handlers
+      const connectionStatus = document.getElementById('connectionStatus');
+      const statusText = connectionStatus.querySelector('.status-text');
+
+      socket.on('connect', () => {
+        connectionStatus.classList.remove('reconnecting', 'disconnected');
+        statusText.textContent = 'Connected';
+
+        if (playerId && playerName) {
+          showSuccessToast('Reconnected to game!');
+        }
+      });
+
+      socket.on('disconnect', () => {
+        connectionStatus.classList.add('disconnected');
+        connectionStatus.classList.remove('reconnecting');
+        statusText.textContent = 'Disconnected';
+      });
+
+      socket.on('reconnecting', () => {
+        connectionStatus.classList.add('reconnecting');
+        connectionStatus.classList.remove('disconnected');
+        statusText.textContent = 'Reconnecting...';
+      });
+
+      socket.on('reconnect_failed', () => {
+        connectionStatus.classList.add('disconnected');
+        connectionStatus.classList.remove('reconnecting');
+        statusText.textContent = 'Connection Failed';
+      });
+
+      socket.on('submissionPhase', (data) => {
+        showCard('submission');
+        startSubTimer(data.deadline);
+        populateTargetSelect(data.players);
+        populatePremade(data.premadeTruths, data.premadeDares);
+      });
+
+      socket.on('turnStarted', (data) => {
+        if (data.playerId === playerId) {
+          showCard('yourTurn');
+          document.getElementById('spin1Value').textContent = 'Spinning...';
+          document.getElementById('spin2Value').textContent = '...';
+          dealersChoiceSection.classList.add('hidden');
+          yourChallengeSection.classList.add('hidden');
+          document.getElementById('spinningSection').classList.remove('hidden');
+        } else {
+          showCard('watching');
+
+          // Show whose turn it is
+          document.getElementById('watchPlayerName').textContent = data.playerName;
+
+          // Hide challenge section initially
+          document.getElementById('watchChallengeSection').classList.add('hidden');
+
+          // Populate waiting form
+          populateWaitingTargets();
+
+          // Show/hide pre-made section based on setting
+          if (data.showPremadeInGame) {
+            document.getElementById('waitingPremadeSection').classList.remove('hidden');
+          } else {
+            document.getElementById('waitingPremadeSection').classList.add('hidden');
+          }
+        }
+      });
+
+      socket.on('spin1Complete', (data) => {
+        document.getElementById('spin1Value').textContent = data.result.name;
+
+        if (data.isDealersChoice && gameState.currentTurn && gameState.currentTurn.playerId === playerId) {
+          document.getElementById('spinningSection').classList.add('hidden');
+          dealersChoiceSection.classList.remove('hidden');
+        }
+      });
+
+      socket.on('spin2Complete', (data) => {
+        const type = data.result.toUpperCase();
+        document.getElementById('spin2Value').textContent = type;
+        // watchType removed - challenge will display when revealed
+      });
+
+      socket.on('challengeRevealed', (data) => {
+        const challenge = data.challenge;
+
+        if (data.playerId === playerId) {
+          dealersChoiceSection.classList.add('hidden');
+          document.getElementById('spinningSection').classList.add('hidden');
+          yourChallengeSection.classList.remove('hidden');
+
+          const typeEl = document.getElementById('yourChallengeType');
+          typeEl.textContent = challenge.type.toUpperCase();
+          typeEl.className = 'challenge-type-badge ' + challenge.type;
+
+          document.getElementById('yourChallengeText').textContent = challenge.text;
+          document.getElementById('yourChallengeTargeted').innerHTML = challenge.isTargeted
+            ? '<span class="targeted-badge">TARGETED</span>'
+            : '';
+        } else {
+          document.getElementById('watchChallengeSection').classList.remove('hidden');
+
+          const typeEl = document.getElementById('watchChallengeType');
+          typeEl.textContent = challenge.type.toUpperCase();
+          typeEl.className = 'challenge-type-badge ' + challenge.type;
+
+          document.getElementById('watchChallengeText').textContent = challenge.text;
+        }
+      });
+
+      socket.on('waitingPremadeLists', (data) => {
+        populateWaitingPremade(data.premadeTruths, data.premadeDares);
+      });
+
+      socket.on('turnComplete', (data) => {
+        if (data.playerId === playerId) {
+          playerScore.textContent = data.newScore;
+        }
+        // Add to player history panel
+        addPlayerHistoryItem(data);
+      });
+
+      socket.on('gameResults', (data) => {
+        showCard('results');
+
+        const myRank = data.leaderboard.findIndex(p => p.id === playerId) + 1;
+        const myData = data.leaderboard.find(p => p.id === playerId);
+
+        document.getElementById('yourRank').textContent = myRank === 1 ? '🏆 #1' : '#' + myRank;
+        document.getElementById('yourFinalScore').textContent = 'Score: ' + (myData ? myData.score : 0);
+
+        // Helper function to get descriptive text for award values
+        function getAwardLabel(title, value) {
+          const labels = {
+            'Most Daring': value === 1 ? 'dare completed' : 'dares completed',
+            'Truth Seeker': value === 1 ? 'truth completed' : 'truths completed',
+            'Party Pooper': value === 1 ? 'refusal' : 'refusals',
+            'Content Creator': value === 1 ? 'submission' : 'submissions',
+            'Popular Author': value === 1 ? 'time used' : 'times used',
+            'Hot Seat': value === 1 ? 'time targeted' : 'times targeted',
+          };
+          return `${value} ${labels[title] || ''}`;
+        }
+
+        const myAwards = data.superlatives.filter(s => s.playerId === playerId);
+        document.getElementById('yourAwards').innerHTML = myAwards.map(a => `
+          <div class="award-item">
+            <div class="award-title-row">
+              <span class="award-emoji">${a.emoji}</span>
+              <span>${a.title}</span>
+            </div>
+            ${a.value ? `<span class="award-detail">${getAwardLabel(a.title, a.value)}</span>` : ''}
+          </div>
+        `).join('');
+      });
+
+      socket.on('playerKicked', (data) => {
+        if (data.playerId === playerId) {
+          kickedOverlay.classList.remove('hidden');
+          StorageManager.removeItem('truthordare_player_id');
+          StorageManager.removeItem('truthordare_player_name');
+        }
+      });
+
+      socket.on('contentSubmitted', (data) => {
+        mySubmissions.push({
+          id: data.id,
+          type: data.type,
+          text: data.text || '',
+          claimed: false,
+          targetName: data.targetName || null
+        });
+        updateSubmissionsList();
+        updatePrepSubmissionsList();
+
+        // Show success toast
+        showSuccessToast('Content submitted!');
+
+        contentText.value = '';
+        document.getElementById('prepContentText').value = '';
+        document.getElementById('waitingContentText').value = '';
+      });
+
+      socket.on('claimSuccess', (data) => {
+        // Add to tracking list
+        mySubmissions.push({
+          id: data.contentId,
+          type: data.type,
+          text: data.text || '',
+          claimed: true,
+          targetName: data.targetName || null
+        });
+        updateSubmissionsList();
+        updatePrepSubmissionsList();
+
+        // Show success toast
+        showSuccessToast('Pre-made content claimed!');
+
+        // Remove item from display entirely (show only unclaimed)
+        const elements = document.querySelectorAll(`[data-premade-id="${data.contentId}"]`);
+        elements.forEach(el => el.remove());
+      });
+
+      socket.on('premadeClaimed', (data) => {
+        // Remove item from display entirely (show only unclaimed)
+        const elements = document.querySelectorAll(`[data-premade-id="${data.contentId}"]`);
+        elements.forEach(el => el.remove());
+      });
+
+      socket.on('claimError', (data) => {
+        // Show error toast
+        const toast = document.createElement('div');
+        toast.className = 'error-toast';
+        toast.textContent = data.message || 'Failed to claim content';
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+          toast.remove();
+        }, 3000);
+
+        // Re-enable the item if it's still visible
+        if (pendingClaim) {
+          const allInstances = document.querySelectorAll(`[data-premade-id="${pendingClaim.contentId}"]`);
+          allInstances.forEach(el => {
+            const btn = el.querySelector('.claim-btn');
+            if (btn && btn.textContent === 'CLAIMING...') {
+              btn.disabled = false;
+              btn.textContent = 'CLAIM';
+            }
+            el.style.opacity = '1';
+            el.style.pointerEvents = 'auto';
+          });
+        }
+      });
+
+      // FIX 7: Send acknowledgment before redirecting to ensure graceful shutdown
+      socket.on('returned_to_menu', (data) => {
+        if (data && data.shutdownId) {
+          socket.emit('player_ack_return_to_menu', { shutdownId: data.shutdownId });
+        }
+        // Small delay to ensure ack is sent before disconnect
+        setTimeout(() => {
+          socket.disconnect();
+          window.location.href = window.location.protocol + '//' + window.location.host + '/players';
+        }, 50);
+      });
+
+      // Type toggle
+      document.getElementById('typeTruthBtn').onclick = () => {
+        selectedType = 'truth';
+        document.getElementById('typeTruthBtn').classList.add('active');
+        document.getElementById('typeDareBtn').classList.remove('active');
+      };
+
+      document.getElementById('typeDareBtn').onclick = () => {
+        selectedType = 'dare';
+        document.getElementById('typeDareBtn').classList.add('active');
+        document.getElementById('typeTruthBtn').classList.remove('active');
+      };
+
+      // Submit content
+      document.getElementById('submitContentBtn').onclick = () => {
+        const text = contentText.value.trim();
+        if (!text) return;
+
+        socket.emit('submitContent', {
+          type: selectedType,
+          text,
+          targetId: targetSelect.value || null,
+        });
+      };
+
+      // Premade tabs
+      document.getElementById('premadeTruthsTab').onclick = () => {
+        document.getElementById('premadeTruthsTab').classList.add('active');
+        document.getElementById('premadeDaresTab').classList.remove('active');
+        document.getElementById('premadeTruths').classList.remove('hidden');
+        document.getElementById('premadeDares').classList.add('hidden');
+      };
+
+      document.getElementById('premadeDaresTab').onclick = () => {
+        document.getElementById('premadeDaresTab').classList.add('active');
+        document.getElementById('premadeTruthsTab').classList.remove('active');
+        document.getElementById('premadeDares').classList.remove('hidden');
+        document.getElementById('premadeTruths').classList.add('hidden');
+      };
+
+      // Dealers choice
+      document.getElementById('chooseTruthBtn').onclick = () => {
+        socket.emit('dealersChoice', { choice: 'truth' });
+        dealersChoiceSection.classList.add('hidden');
+      };
+
+      document.getElementById('chooseDareBtn').onclick = () => {
+        socket.emit('dealersChoice', { choice: 'dare' });
+        dealersChoiceSection.classList.add('hidden');
+      };
+
+      // Mini submit - REMOVED: watching card now has full submission form
+
+      // Waiting screen state
+      let waitingSelectedType = 'truth';
+
+      // Type toggle for waiting screen
+      document.getElementById('waitingTypeTruthBtn').onclick = () => {
+        waitingSelectedType = 'truth';
+        document.getElementById('waitingTypeTruthBtn').classList.add('active');
+        document.getElementById('waitingTypeDareBtn').classList.remove('active');
+      };
+
+      document.getElementById('waitingTypeDareBtn').onclick = () => {
+        waitingSelectedType = 'dare';
+        document.getElementById('waitingTypeDareBtn').classList.add('active');
+        document.getElementById('waitingTypeTruthBtn').classList.remove('active');
+      };
+
+      // Waiting submit
+      document.getElementById('waitingSubmitBtn').onclick = () => {
+        const text = document.getElementById('waitingContentText').value.trim();
+        if (!text) return;
+
+        socket.emit('submitContent', {
+          type: waitingSelectedType,
+          text,
+          targetId: document.getElementById('waitingTargetSelect').value || null,
+        });
+
+        document.getElementById('waitingContentText').value = '';
+      };
+
+      // Waiting premade tabs
+      document.getElementById('waitingPremadeTruthsTab').onclick = () => {
+        document.getElementById('waitingPremadeTruthsTab').classList.add('active');
+        document.getElementById('waitingPremadeDaresTab').classList.remove('active');
+        document.getElementById('waitingPremadeTruths').classList.remove('hidden');
+        document.getElementById('waitingPremadeDares').classList.add('hidden');
+      };
+
+      document.getElementById('waitingPremadeDaresTab').onclick = () => {
+        document.getElementById('waitingPremadeDaresTab').classList.add('active');
+        document.getElementById('waitingPremadeTruthsTab').classList.remove('active');
+        document.getElementById('waitingPremadeDares').classList.remove('hidden');
+        document.getElementById('waitingPremadeTruths').classList.add('hidden');
+      };
+
+      function populateWaitingTargets() {
+        if (!gameState) return;
+        const select = document.getElementById('waitingTargetSelect');
+        select.innerHTML = '<option value="">Anyone (not targeted)</option>';
+        gameState.players.filter(p => p.id !== playerId).forEach(p => {
+          select.innerHTML += `<option value="${p.id}">${p.name}</option>`;
+        });
+      }
+
+      function populateWaitingPremade(truths, dares) {
+        document.getElementById('waitingPremadeTruths').innerHTML = truths.map(t => `
+          <div class="premade-item" data-premade-id="${t.id}">
+            <span>${t.text}</span>
+            <button class="claim-btn" onclick="claimPremade('truth', '${t.id}', \`${t.text.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)">CLAIM</button>
+          </div>
+        `).join('');
+
+        document.getElementById('waitingPremadeDares').innerHTML = dares.map(d => `
+          <div class="premade-item" data-premade-id="${d.id}">
+            <span>${d.text}</span>
+            <button class="claim-btn" onclick="claimPremade('dare', '${d.id}', \`${d.text.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)">CLAIM</button>
+          </div>
+        `).join('');
+      }
+
+      function showCard(card) {
+        joinCard.classList.add('hidden');
+        waitingCard.classList.add('hidden');
+        preparationCard.classList.add('hidden');
+        submissionCard.classList.add('hidden');
+        yourTurnCard.classList.add('hidden');
+        watchingCard.classList.add('hidden');
+        resultsCard.classList.add('hidden');
+
+        switch (card) {
+          case 'waiting': waitingCard.classList.remove('hidden'); break;
+          case 'preparation': preparationCard.classList.remove('hidden'); break;
+          case 'submission': submissionCard.classList.remove('hidden'); break;
+          case 'yourTurn': yourTurnCard.classList.remove('hidden'); break;
+          case 'watching': watchingCard.classList.remove('hidden'); break;
+          case 'results': resultsCard.classList.remove('hidden'); break;
+        }
+
+        // Show history panel during playing phase (yourTurn or watching)
+        if (card === 'yourTurn' || card === 'watching') {
+          historyPanel.classList.remove('hidden');
+        } else {
+          historyPanel.classList.add('hidden');
+        }
+      }
+
+      // Update player history display - shows only entries involving this player
+      function updatePlayerHistory() {
+        if (!gameState || !gameState.turnHistory || !playerId) {
+          playerHistoryList.innerHTML = '<div class="history-empty">No history yet</div>';
+          return;
+        }
+
+        // Filter history for entries where this player was active OR was targeted
+        const myHistory = gameState.turnHistory.filter(h =>
+          h.playerId === playerId || h.targetPlayerId === playerId
+        );
+
+        if (myHistory.length === 0) {
+          playerHistoryList.innerHTML = '<div class="history-empty">No history yet</div>';
+          return;
+        }
+
+        playerHistoryList.innerHTML = myHistory.map(h => {
+          const wasTargeted = h.targetPlayerId === playerId && h.playerId !== playerId;
+          const resultText = h.completed
+            ? (h.type === 'dare' ? '+2' : '+1')
+            : (h.type === 'dare' ? '-2' : '-1');
+
+          return `
+            <div class="history-item">
+              <div class="history-header">
+                <span class="history-type ${h.type}">${h.type.toUpperCase()}</span>
+                <span class="history-result ${h.completed ? 'completed' : 'refused'}">${resultText}</span>
+              </div>
+              <div class="history-challenge">"${h.challengeText || ''}"</div>
+              ${wasTargeted ? '<div class="history-targeted">📎 You were targeted</div>' : ''}
+            </div>
+          `;
+        }).join('');
+      }
+
+      // Add new history item when turn completes
+      function addPlayerHistoryItem(data) {
+        // Only add if this player was involved
+        if (data.playerId !== playerId && data.targetPlayerId !== playerId) {
+          return;
+        }
+
+        const wasTargeted = data.targetPlayerId === playerId && data.playerId !== playerId;
+        const resultText = data.completed
+          ? (data.type === 'dare' ? '+2' : '+1')
+          : (data.type === 'dare' ? '-2' : '-1');
+
+        const html = `
+          <div class="history-item">
+            <div class="history-header">
+              <span class="history-type ${data.type}">${data.type.toUpperCase()}</span>
+              <span class="history-result ${data.completed ? 'completed' : 'refused'}">${resultText}</span>
+            </div>
+            <div class="history-challenge">"${data.challengeText || ''}"</div>
+            ${wasTargeted ? '<div class="history-targeted">📎 You were targeted</div>' : ''}
+          </div>
+        `;
+
+        // Remove empty message if present
+        const emptyMsg = playerHistoryList.querySelector('.history-empty');
+        if (emptyMsg) emptyMsg.remove();
+
+        playerHistoryList.insertAdjacentHTML('afterbegin', html);
+      }
+
+      function updateUI() {
+        if (!gameState || !playerId) return;
+
+        // Update score
+        const me = gameState.players.find(p => p.id === playerId);
+        if (me) {
+          playerScore.textContent = me.score;
+        }
+
+        // Update lobby players
+        lobbyPlayers.innerHTML = gameState.players.map(p => `
+          <span class="player-chip ${p.id === playerId ? 'you' : ''} ${!p.connected ? 'disconnected' : ''}">
+            ${p.name}${p.id === playerId ? ' (You)' : ''}
+          </span>
+        `).join('');
+
+        // Show correct card based on phase
+        if (gameState.phase === 'lobby') {
+          if (playerId) showCard('waiting');
+        } else if (gameState.phase === 'playing') {
+          if (gameState.currentTurn) {
+            if (gameState.currentTurn.playerId === playerId) {
+              if (yourTurnCard.classList.contains('hidden')) {
+                showCard('yourTurn');
+              }
+            } else {
+              if (watchingCard.classList.contains('hidden')) {
+                showCard('watching');
+              }
+            }
+          }
+        }
+      }
+
+      function startSubTimer(deadline) {
+        if (subInterval) clearInterval(subInterval);
+
+        subInterval = setInterval(() => {
+          const remaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+          subTimer.textContent = remaining;
+
+          if (remaining <= 10) {
+            subTimer.classList.add('warning');
+          } else {
+            subTimer.classList.remove('warning');
+          }
+
+          if (remaining <= 0) {
+            clearInterval(subInterval);
+          }
+        }, 100);
+      }
+
+      function populateTargetSelect(players) {
+        targetSelect.innerHTML = '<option value="">Anyone (not targeted)</option>';
+        players.filter(p => p.id !== playerId).forEach(p => {
+          targetSelect.innerHTML += `<option value="${p.id}">${p.name}</option>`;
+        });
+      }
+
+      // populateMiniTargets removed - no longer needed
+
+      function populatePremade(truths, dares) {
+        document.getElementById('premadeTruths').innerHTML = truths.map(t => `
+          <div class="premade-item" data-premade-id="${t.id}">
+            <span>${t.text}</span>
+            <button class="claim-btn" onclick="claimPremade('truth', '${t.id}', \`${t.text.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)">CLAIM</button>
+          </div>
+        `).join('');
+
+        document.getElementById('premadeDares').innerHTML = dares.map(d => `
+          <div class="premade-item" data-premade-id="${d.id}">
+            <span>${d.text}</span>
+            <button class="claim-btn" onclick="claimPremade('dare', '${d.id}', \`${d.text.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)">CLAIM</button>
+          </div>
+        `).join('');
+      }
+
+      // Modal cancel
+      document.getElementById('claimModalCancel').onclick = () => {
+        if (pendingClaim) {
+          // Re-enable item if user cancels BEFORE server confirms
+          const allInstances = document.querySelectorAll(`[data-premade-id="${pendingClaim.contentId}"]`);
+          allInstances.forEach(el => {
+            const btn = el.querySelector('.claim-btn');
+            if (btn && btn.textContent === 'CLAIMING...') {
+              btn.disabled = false;
+              btn.textContent = 'CLAIM';
+            }
+            el.style.opacity = '1';
+            el.style.pointerEvents = 'auto';
+          });
+        }
+        document.getElementById('claimModalOverlay').classList.add('hidden');
+        pendingClaim = null;
+      };
+
+      // Modal confirm
+      document.getElementById('claimModalConfirm').onclick = () => {
+        if (!pendingClaim) return;
+
+        const targetId = document.getElementById('claimTargetSelect').value || null;
+
+        socket.emit('claimPremade', {
+          type: pendingClaim.type,
+          contentId: pendingClaim.contentId,
+          targetId: targetId
+        });
+
+        document.getElementById('claimModalOverlay').classList.add('hidden');
+        pendingClaim = null;
+      };
+
+      // Click outside to close
+      document.getElementById('claimModalOverlay').onclick = (e) => {
+        if (e.target.id === 'claimModalOverlay') {
+          if (pendingClaim) {
+            // Re-enable item if user cancels BEFORE server confirms
+            const allInstances = document.querySelectorAll(`[data-premade-id="${pendingClaim.contentId}"]`);
+            allInstances.forEach(el => {
+              const btn = el.querySelector('.claim-btn');
+              if (btn && btn.textContent === 'CLAIMING...') {
+                btn.disabled = false;
+                btn.textContent = 'CLAIM';
+              }
+              el.style.opacity = '1';
+              el.style.pointerEvents = 'auto';
+            });
+          }
+          document.getElementById('claimModalOverlay').classList.add('hidden');
+          pendingClaim = null;
+        }
+      };
+
+      function updateSubmissionsList() {
+        const list = document.getElementById('mySubmissions');
+        if (mySubmissions.length === 0) {
+          list.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 8px; font-size: 13px;">No submissions yet</p>';
+          return;
+        }
+
+        list.innerHTML = mySubmissions.map((s, index) => `
+          <div class="submission-item ${index === mySubmissions.length - 1 ? 'new' : ''}">
+            <div style="display: flex; flex-direction: column; gap: 4px; width: 100%;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span class="submission-type ${s.type}">${s.type.toUpperCase()}</span>
+                ${s.claimed ? '<span style="font-size: 10px; color: var(--accent-secondary);">CLAIMED</span>' : ''}
+                ${s.targetName ? `<span style="font-size: 10px; color: var(--accent-dare);">→ ${s.targetName}</span>` : ''}
+              </div>
+              <div style="font-size: 12px; color: var(--text-muted); font-style: italic; word-break: break-word;">
+                "${s.text}"
+              </div>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      function updatePrepSubmissionsList() {
+        const list = document.getElementById('prepMySubmissions');
+        if (!list) return;
+
+        if (mySubmissions.length === 0) {
+          list.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 8px; font-size: 13px;">No submissions yet</p>';
+          return;
+        }
+
+        list.innerHTML = mySubmissions.map((s, index) => `
+          <div class="submission-item ${index === mySubmissions.length - 1 ? 'new' : ''}">
+            <div style="display: flex; flex-direction: column; gap: 4px; width: 100%;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span class="submission-type ${s.type}">${s.type.toUpperCase()}</span>
+                ${s.claimed ? '<span style="font-size: 10px; color: var(--accent-secondary);">CLAIMED</span>' : ''}
+                ${s.targetName ? `<span style="font-size: 10px; color: var(--accent-dare);">→ ${s.targetName}</span>` : ''}
+              </div>
+              <div style="font-size: 12px; color: var(--text-muted); font-style: italic; word-break: break-word;">
+                "${s.text}"
+              </div>
+            </div>
+          </div>
+        `).join('');
+      }
+    })();
+  </script>
+
+  <!-- Screen reader announcement region for accessibility -->
+  <div class="sr-only" role="status" aria-live="polite" aria-atomic="true" id="srAnnouncements"></div>
+</body>
+</html>

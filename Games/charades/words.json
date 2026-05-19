@@ -1,0 +1,6 @@
+{
+  "location": ["Beach", "Library", "Airport", "Hospital", "Restaurant"],
+  "object": ["Umbrella", "Guitar", "Toothbrush", "Ladder", "Camera"],
+  "person": ["Superman", "Chef", "Doctor", "Firefighter", "Pirate"],
+  "action": ["Swimming", "Dancing", "Cooking", "Sleeping", "Fishing"]
+}

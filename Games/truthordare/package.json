@@ -1,0 +1,10 @@
+{
+  "name": "truthordare",
+  "version": "1.0.0",
+  "description": "Truth or Dare multiplayer party game",
+  "main": "server.js",
+  "dependencies": {
+    "express": "^4.21.0",
+    "socket.io": "^4.7.5"
+  }
+}

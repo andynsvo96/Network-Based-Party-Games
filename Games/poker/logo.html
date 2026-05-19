@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SIRIUS Glitch</title>
+
+  <!-- Optional cyberpunk font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&display=swap" rel="stylesheet" />
+
+  <style>
+    :root{
+      --bg:#070812;
+      --neon:#f8ff3a;
+      --c1:#00f5ff;
+      --c2:#ff2bd6;
+    }
+
+    html,body{height:100%;margin:0}
+    body{
+      display:grid;
+      place-items:center;
+      background:
+        radial-gradient(1200px 600px at 50% 35%, rgba(255,43,214,.14), transparent 60%),
+        radial-gradient(900px 500px at 55% 55%, rgba(0,245,255,.12), transparent 60%),
+        linear-gradient(180deg, #050610 0%, var(--bg) 60%, #050610 100%);
+      overflow:hidden;
+      color:#fff;
+      font-family: Orbitron, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+
+    /* Subtle grid */
+    body::before{
+      content:"";
+      position:fixed; inset:0;
+      background:
+        linear-gradient(to right, rgba(0,245,255,.06) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255,43,214,.05) 1px, transparent 1px);
+      background-size: 64px 64px;
+      transform: perspective(900px) rotateX(55deg) translateY(10%);
+      transform-origin: center;
+      opacity:.25;
+      filter: blur(.2px);
+      pointer-events:none;
+    }
+
+    .stage{
+      position:relative;
+      padding:64px 90px;
+      border-radius:18px;
+      background: rgba(10,10,20,.25);
+      box-shadow:
+        0 0 0 1px rgba(0,245,255,.14) inset,
+        0 0 60px rgba(0,245,255,.12),
+        0 0 90px rgba(255,43,214,.10);
+      backdrop-filter: blur(10px);
+    }
+
+    /* Scanlines + vignette + moving shimmer */
+    .stage::before{
+      content:"";
+      position:absolute; inset:-2px;
+      border-radius:18px;
+      background:
+        repeating-linear-gradient(
+          to bottom,
+          rgba(255,255,255,.04) 0px,
+          rgba(255,255,255,.04) 1px,
+          rgba(0,0,0,0) 3px,
+          rgba(0,0,0,0) 6px
+        ),
+        radial-gradient(closest-side, transparent 72%, rgba(0,0,0,.55));
+      mix-blend-mode: overlay;
+      opacity:.35;
+      pointer-events:none;
+    }
+    .stage::after{
+      content:"";
+      position:absolute; inset:-40%;
+      background: linear-gradient(120deg, transparent 35%, rgba(248,255,58,.08) 50%, transparent 65%);
+      animation: sweep 2.6s linear infinite;
+      pointer-events:none;
+    }
+
+    @keyframes sweep{
+      0%{ transform: translateX(-30%) translateY(10%) rotate(0deg); }
+      100%{ transform: translateX(30%) translateY(-10%) rotate(0deg); }
+    }
+
+    .glitch{
+      position:relative;
+      font-weight:800;
+      letter-spacing: .22em;
+      font-size: clamp(56px, 10vw, 140px);
+      line-height: 1;
+      color: var(--neon);
+      text-transform: uppercase;
+      text-shadow:
+        0 0 10px rgba(248,255,58,.35),
+        0 0 22px rgba(248,255,58,.18),
+        0 0 40px rgba(0,245,255,.12);
+      animation: flicker 3.2s infinite;
+    }
+
+    /* Chromatic split layers */
+    .glitch::before,
+    .glitch::after{
+      content: attr(data-text);
+      position:absolute;
+      left:0; top:0;
+      width:100%;
+      overflow:hidden;
+      will-change: transform, clip-path, filter;
+      opacity:.9;
+    }
+    .glitch::before{
+      transform: translate(-2px, 0);
+      text-shadow:
+        2px 0 var(--c1),
+        0 0 18px rgba(0,245,255,.35);
+      animation: glitchA 1.15s infinite steps(2, end);
+    }
+    .glitch::after{
+      transform: translate(2px, 0);
+      text-shadow:
+        -2px 0 var(--c2),
+        0 0 18px rgba(255,43,214,.30);
+      animation: glitchB 0.95s infinite steps(2, end);
+    }
+
+    /* Main jitter */
+    .glitch span{
+      display:inline-block;
+      animation: jitter 1.9s infinite steps(2, end);
+    }
+
+    @keyframes jitter{
+      0%, 92%, 100% { transform: translate(0,0) skewX(0deg); }
+      93% { transform: translate(-1px, 0) skewX(2deg); }
+      94% { transform: translate(2px, -1px) skewX(-2deg); }
+      95% { transform: translate(-2px, 1px) skewX(1deg); }
+      96% { transform: translate(1px, 0) skewX(0deg); }
+    }
+
+    /* Slice glitches */
+    @keyframes glitchA{
+      0%   { clip-path: inset(0 0 85% 0); transform: translate(-3px,-1px); filter: hue-rotate(0deg); }
+      10%  { clip-path: inset(10% 0 60% 0); transform: translate(2px,0); }
+      20%  { clip-path: inset(40% 0 40% 0); transform: translate(-2px,1px); }
+      30%  { clip-path: inset(65% 0 20% 0); transform: translate(3px,-1px); }
+      40%  { clip-path: inset(80% 0 8% 0); transform: translate(-1px,0); }
+      50%  { clip-path: inset(55% 0 30% 0); transform: translate(1px,1px); filter: hue-rotate(25deg); }
+      60%  { clip-path: inset(20% 0 65% 0); transform: translate(-3px,0); }
+      70%  { clip-path: inset(35% 0 45% 0); transform: translate(2px,-1px); }
+      80%  { clip-path: inset(5% 0 80% 0); transform: translate(-1px,1px); }
+      90%  { clip-path: inset(0 0 90% 0); transform: translate(1px,0); }
+      100% { clip-path: inset(0 0 85% 0); transform: translate(-3px,-1px); filter: hue-rotate(0deg); }
+    }
+
+    @keyframes glitchB{
+      0%   { clip-path: inset(85% 0 0 0); transform: translate(3px,1px); }
+      12%  { clip-path: inset(60% 0 20% 0); transform: translate(-2px,0); }
+      24%  { clip-path: inset(45% 0 40% 0); transform: translate(2px,-1px); }
+      36%  { clip-path: inset(20% 0 65% 0); transform: translate(-3px,1px); }
+      48%  { clip-path: inset(8% 0 80% 0); transform: translate(1px,0); }
+      60%  { clip-path: inset(30% 0 50% 0); transform: translate(3px,-1px); }
+      72%  { clip-path: inset(70% 0 10% 0); transform: translate(-1px,1px); }
+      84%  { clip-path: inset(90% 0 0 0); transform: translate(2px,0); }
+      100% { clip-path: inset(85% 0 0 0); transform: translate(3px,1px); }
+    }
+
+    /* Neon flicker */
+    @keyframes flicker{
+      0%, 100% { opacity: 1; filter: saturate(1.1) brightness(1.05); }
+      7% { opacity: .95; }
+      8% { opacity: .55; }
+      9% { opacity: 1; }
+      31% { opacity: .92; }
+      32% { opacity: .75; }
+      33% { opacity: 1; }
+      71% { opacity: .9; }
+      72% { opacity: .6; }
+      73% { opacity: 1; }
+    }
+
+    /* Small helper text (optional) */
+    .hint{
+      margin-top: 18px;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      font-size: 12px;
+      letter-spacing: .12em;
+      opacity: .65;
+      text-align:center;
+    }
+  </style>
+</head>
+<body>
+  <div class="stage" role="img" aria-label="Glitchy cyberpunk text reading SIRIUS">
+    <div class="glitch" data-text="SIRIUS"><span>SIRIUS</span></div>
+    <div class="hint">GLITCH / LOOPING</div>
+  </div>
+</body>
+</html>

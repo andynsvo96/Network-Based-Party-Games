@@ -1,0 +1,1366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Spyfall Player</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: Arial, sans-serif;
+      background: #05060a;
+      color: #f5f5f5;
+    }
+
+    body {
+      font-size: 17px; /* slightly bigger for readability */
+    }
+
+    #app {
+      box-sizing: border-box;
+      padding: 16px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    h1, h2, h3 {
+      margin: 0 0 8px 0;
+    }
+
+    .card {
+      background: #14151b;
+      border-radius: 12px;
+      padding: 14px 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+      box-sizing: border-box;
+    }
+
+    .center {
+      text-align: center;
+    }
+
+    label {
+      font-size: 0.95rem;
+      opacity: 0.9;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: 1px solid #333;
+      background: #05060a;
+      color: #f5f5f5;
+      font-size: 1rem;
+      margin-top: 4px;
+      box-sizing: border-box;
+    }
+
+    select {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 8px;
+      border: 1px solid #333;
+      background: #05060a;
+      color: #f5f5f5;
+      font-size: 1.1rem;
+      margin-top: 4px;
+      box-sizing: border-box;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f5f5f5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      background-size: 18px;
+    }
+
+    select:focus {
+      outline: none;
+      border-color: #2a6df4;
+    }
+
+    select option {
+      padding: 12px;
+      font-size: 1.1rem;
+      background: #14151b;
+      color: #f5f5f5;
+    }
+
+    select option:disabled {
+      color: #666;
+      background: #1a1a1a;
+    }
+
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 1rem;
+      background: #2a6df4;
+      color: #fff;
+      transition: background 0.15s ease, transform 0.1s ease;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    button:disabled {
+      background: #444;
+      cursor: default;
+      transform: none;
+    }
+
+    button:hover:not(:disabled) {
+      background: #3b7cff;
+    }
+
+    button:active:not(:disabled) {
+      transform: scale(0.97);
+    }
+
+    .small {
+      font-size: 0.85rem;
+      opacity: 0.8;
+    }
+
+    .phase-label {
+      font-size: 0.9rem;
+      opacity: 0.8;
+      margin-bottom: 4px;
+      text-align: center;
+    }
+
+    .location-box {
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px dashed #555;
+      text-align: center;
+      min-height: 60px;
+    }
+
+    .location-text {
+      font-size: 1.4rem;
+      font-weight: bold;
+      margin-top: 4px;
+    }
+
+    .location-hidden {
+      opacity: 0.7;
+      font-size: 0.95rem;
+    }
+
+    .timer {
+      margin-top: 4px;
+      font-size: 0.95rem;
+      opacity: 0.8;
+    }
+
+    .timer-warning {
+      color: #ff5252;
+      font-weight: bold;
+      animation: pulse-timer 0.8s ease-in-out infinite;
+    }
+
+    @keyframes pulse-timer {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.15); }
+      100% { transform: scale(1); }
+    }
+
+    .role-label {
+      display: inline-block;
+      font-weight: bold;
+      padding: 4px 10px;
+      border-radius: 999px;
+    }
+
+    .role-citizen {
+      background: #1b5e20;
+    }
+
+    .role-spy {
+      background: #b71c1c;
+    }
+
+    .vote-card {
+      background: #14151b;
+      border-radius: 12px;
+      padding: 14px;
+      box-sizing: border-box;
+    }
+
+    .vote-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .vote-option {
+      padding: 10px;
+      border-radius: 8px;
+      background: #1b1c24;
+      border: 1px solid #333;
+      text-align: center;
+      font-size: 0.95rem;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .vote-option.selected {
+      border-color: #2a6df4;
+      box-shadow: 0 0 0 1px #2a6df4;
+    }
+
+    .msg {
+      font-size: 0.9rem;
+      margin-top: 6px;
+    }
+
+    .result-msg {
+      margin-top: 10px;
+      font-size: 1rem;
+    }
+
+    /* Quick overview overlay */
+    #overview-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+    }
+
+    #overview-content {
+      background: #14151b;
+      border-radius: 12px;
+      padding: 16px;
+      max-width: 420px;
+      width: calc(100% - 40px);
+      box-sizing: border-box;
+    }
+
+    #overview-content h3 {
+      margin-top: 0;
+    }
+
+    #overview-content ul {
+      padding-left: 20px;
+      margin: 4px 0 10px 0;
+    }
+
+    #overview-close-btn {
+      margin-top: 8px;
+    }
+
+    #quick-overview-btn {
+      margin-top: 10px;
+    }
+
+    #quick-overview-btn-session {
+      margin-top: 10px;
+    }
+
+    #quick-overview-btn-vote {
+      margin-top: 20px; /* extra distance below Submit Vote */
+    }
+
+    #quick-overview-btn-results {
+      margin-top: 10px;
+    }
+
+    /* Intro animation styles */
+    #introScreen {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #05060a;
+      z-index: 2000;
+      overflow: hidden;
+    }
+    #introScreen.active { display: flex; align-items: center; justify-content: center; }
+    .intro-track {
+      display: flex;
+      gap: 32px;
+      padding: 24px;
+      max-width: 1200px;
+    }
+    .intro-card {
+      flex: 1;
+      min-width: 280px;
+      max-width: 360px;
+      background: #14151b;
+      border-radius: 12px;
+      border: 1px solid #333;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+      padding: 24px;
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .intro-card.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .intro-card h3 {
+      margin: 0 0 12px 0;
+      font-size: 18px;
+      color: #f57c00;
+    }
+    .intro-card p {
+      margin: 0;
+      color: #aaa;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    @media (max-width: 900px) {
+      .intro-track {
+        flex-direction: column;
+        align-items: center;
+      }
+      .intro-card {
+        max-width: 400px;
+        width: 100%;
+      }
+    }
+
+    .playerStatusCircle {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+    .playerStatusCircle.online { background: #10b981; }
+    .playerStatusCircle.offline {
+      background: transparent;
+      border: 2px solid #6b7280;
+    }
+  </style>
+</head>
+<body>
+<!-- INTRO SCREEN -->
+<section id="introScreen">
+  <div class="intro-track">
+    <div class="intro-card" id="introCard1">
+      <h3 id="introTitle1">How to Play</h3>
+      <p id="introContent1">Loading...</p>
+    </div>
+    <div class="intro-card" id="introCard2">
+      <h3 id="introTitle2">Asking Questions</h3>
+      <p id="introContent2">Loading...</p>
+    </div>
+    <div class="intro-card" id="introCard3">
+      <h3 id="introTitle3">Winning</h3>
+      <p id="introContent3">Loading...</p>
+    </div>
+  </div>
+</section>
+
+<div id="app">
+  <!-- Connect card -->
+  <div id="connect-card" class="card">
+    <h2 class="center">Join via Launcher</h2>
+    <p class="small center" id="join-instruction">
+      Players must join through the main launcher.
+    </p>
+    <div style="text-align:center;margin-top:12px;">
+      <a href="/" id="join-btn" style="display:inline-block;padding:10px 24px;background:var(--accent,#4a90d9);color:#fff;border-radius:6px;text-decoration:none;">Go to Launcher</a>
+    </div>
+    <div id="connect-error" class="small" style="color:#ff8a80; margin-top:6px;"></div>
+    <!-- Hidden elements kept for auto-reconnect JS compatibility -->
+    <input type="hidden" id="name-input">
+    <div id="custom-name-section" style="display:none;"></div>
+    <div id="preset-name-section" style="display:none;">
+      <select id="name-select"></select>
+    </div>
+  </div>
+
+  <!-- Waiting for game to end card (shown to new players when game is in progress) -->
+  <div id="waiting-card" class="card" style="display:none;">
+    <h2 class="center">Game In Progress</h2>
+    <p class="center" id="waiting-message">
+      A game is currently in progress. Please wait for the host to finish the current round.
+    </p>
+    <div class="center" style="margin-top:12px;">
+      <button id="quick-overview-btn-waiting">Quick overview</button>
+    </div>
+  </div>
+
+  <!-- Waiting / game card -->
+  <div id="game-card" class="card" style="display:none;">
+    <div class="phase-label" id="phase-label">Waiting for host...</div>
+    <h2 class="center">Spyfall</h2>
+
+    <!-- Player name display + change name button (lobby only) -->
+    <div id="player-name-display" class="center" style="margin-bottom:8px;">
+      <span>Playing as: <strong id="current-name-label"></strong></span>
+      <button id="change-name-btn" style="margin-left:10px; padding:6px 12px; font-size:0.85rem;">Change Name</button>
+    </div>
+
+    <!-- Change name form (hidden by default) -->
+    <div id="change-name-form" style="display:none; margin-bottom:12px;">
+      <div id="change-name-custom" style="margin-bottom:8px;">
+        <label for="change-name-input">New Name</label>
+        <input id="change-name-input" type="text" placeholder="YOUR NEW NAME" style="margin-top:4px;">
+      </div>
+      <div id="change-name-preset" style="display:none; margin-bottom:8px;">
+        <label for="change-name-select">Select new name</label>
+        <select id="change-name-select" style="margin-top:4px;"></select>
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button id="confirm-name-change-btn" style="flex:1;">Confirm</button>
+        <button id="cancel-name-change-btn" style="flex:1; background:#555;">Cancel</button>
+      </div>
+      <div id="change-name-error" class="small" style="color:#ff8a80; margin-top:6px;"></div>
+    </div>
+
+    <!-- Initial instructions shown while game is NOT in session -->
+    <div id="instructions-block" class="small">
+      <p class="center">
+        Waiting for the host to start a round.
+      </p>
+      <div class="center" style="margin-top:8px;">
+        <button id="quick-overview-btn">Quick overview</button>
+      </div>
+    </div>
+
+    <!-- Card (role + location) – ONLY visible while game is in session -->
+    <div id="location-section" style="display:none; margin-top:8px;">
+      <div class="location-box">
+        <div id="location-display" class="location-hidden">
+          Tap "REVEAL LOCATION AND ROLE" to briefly show your secret card.
+        </div>
+        <div id="location-timer" class="timer"></div>
+      </div>
+      <div style="margin-top:10px;">
+        <button id="reveal-btn">REVEAL LOCATION AND ROLE</button>
+      </div>
+      <div id="info-msg" class="msg"></div>
+      <button id="quick-overview-btn-session">Quick overview</button>
+    </div>
+  </div>
+
+  <!-- Voting card (only shown in voting phase) -->
+  <div id="voting-card" class="vote-card" style="display:none;">
+    <div class="phase-label">Voting Stage</div>
+    <h2 class="center">Who is the spy?</h2>
+    <p class="small center" id="vote-instruction">
+      Tap up to the allowed number of players you think are spies, then tap "Submit Vote".
+    </p>
+    <div class="center small timer" id="vote-timer-label" style="margin-top:4px;"></div>
+    <div id="vote-options" class="vote-grid"></div>
+    <div style="margin-top:10px;">
+      <button id="submit-vote-btn">Submit Vote</button>
+    </div>
+    <div id="vote-msg" class="msg center"></div>
+    <button id="quick-overview-btn-vote">Quick overview</button>
+  </div>
+
+  <!-- Results (simple summary) -->
+  <div id="result-card" class="card" style="display:none;">
+    <h2 class="center">Round Result</h2>
+    <div id="result-text" class="result-msg center"></div>
+    <div id="result-score" class="small center" style="margin-top:6px;"></div>
+    <button id="quick-overview-btn-results">Quick overview</button>
+  </div>
+</div>
+
+<!-- Quick overview overlay -->
+<div id="overview-overlay">
+  <div id="overview-content">
+    <h3>How to Play Spyfall</h3>
+    <ul class="small">
+      <li>Everyone except one or more spies shares the same secret location.</li>
+      <li>Spies know only that they are spies; they do not know the location.</li>
+      <li>Players ask each other questions out loud about the location.</li>
+      <li>Spies try to blend in and guess the location without being caught.</li>
+      <li>When voting starts, you select who you think the spy(ies) are.</li>
+      <li>Points are awarded or deducted based on whether the group correctly finds the spy(ies).</li>
+    </ul>
+    <button id="overview-close-btn">Close</button>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  (function () {
+    // Check for launcher credentials in URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    const launcherKey = urlParams.get("launcherKey");
+    const launcherName = urlParams.get("launcherName");
+
+    let wasEverConnected = false;
+
+    // Connect to game namespace
+    const pathParts = window.location.pathname.split('/');
+    const gameId = pathParts[2]; // e.g., "spyfall"
+    const socket = io(gameId ? `/game/${gameId}` : '/', {
+      transports: ["websocket", "polling"],
+      reconnection: true,
+      reconnectionAttempts: 3,
+      reconnectionDelay: 500,
+      reconnectionDelayMax: 1000
+    });
+
+    // Redirect to launcher if game server is unreachable after all reconnection attempts
+    socket.io.on("reconnect_failed", () => {
+      if (typeof toast === "function") {
+        toast("warn", "Game Ended", "Returning to lobby...");
+      }
+      setTimeout(() => {
+        const launcherUrl = window.location.protocol + "//" + window.location.host + "/players";
+        window.location.href = launcherUrl;
+      }, 1500);
+    });
+
+    // Immediate redirect if game server is unreachable on initial connection
+    socket.io.on("error", () => {
+      if (!wasEverConnected) {
+        console.log("Game server unreachable, returning to launcher...");
+        const launcherUrl = window.location.protocol + "//" + window.location.host + "/players";
+        window.location.href = launcherUrl;
+      }
+    });
+
+    // DOM refs
+    const connectCard = document.getElementById("connect-card");
+    const nameInput = document.getElementById("name-input");
+    const joinBtn = document.getElementById("join-btn");
+    const connectError = document.getElementById("connect-error");
+    const joinInstruction = document.getElementById("join-instruction");
+    const customNameSection = document.getElementById("custom-name-section");
+    const presetNameSection = document.getElementById("preset-name-section");
+    const nameSelect = document.getElementById("name-select");
+
+    const waitingCard = document.getElementById("waiting-card");
+    const waitingMessage = document.getElementById("waiting-message");
+    const quickOverviewBtnWaiting = document.getElementById("quick-overview-btn-waiting");
+
+    const gameCard = document.getElementById("game-card");
+    const phaseLabel = document.getElementById("phase-label");
+    const instructionsBlock = document.getElementById("instructions-block");
+    const locationSection = document.getElementById("location-section");
+    const locationDisplay = document.getElementById("location-display");
+    const locationTimer = document.getElementById("location-timer");
+    const revealBtn = document.getElementById("reveal-btn");
+    const infoMsg = document.getElementById("info-msg");
+
+    const playerNameDisplay = document.getElementById("player-name-display");
+    const currentNameLabel = document.getElementById("current-name-label");
+    const changeNameBtn = document.getElementById("change-name-btn");
+    const changeNameForm = document.getElementById("change-name-form");
+    const changeNameCustom = document.getElementById("change-name-custom");
+    const changeNamePreset = document.getElementById("change-name-preset");
+    const changeNameInput = document.getElementById("change-name-input");
+    const changeNameSelect = document.getElementById("change-name-select");
+    const confirmNameChangeBtn = document.getElementById("confirm-name-change-btn");
+    const cancelNameChangeBtn = document.getElementById("cancel-name-change-btn");
+    const changeNameError = document.getElementById("change-name-error");
+
+    const votingCard = document.getElementById("voting-card");
+    const voteInstruction = document.getElementById("vote-instruction");
+    const voteOptionsContainer = document.getElementById("vote-options");
+    const submitVoteBtn = document.getElementById("submit-vote-btn");
+    const voteMsg = document.getElementById("vote-msg");
+    const voteTimerLabel = document.getElementById("vote-timer-label");
+
+    const resultCard = document.getElementById("result-card");
+    const resultText = document.getElementById("result-text");
+    const resultScore = document.getElementById("result-score");
+
+    const overviewOverlay = document.getElementById("overview-overlay");
+    const overviewCloseBtn = document.getElementById("overview-close-btn");
+    const quickOverviewBtn = document.getElementById("quick-overview-btn");
+    const quickOverviewBtnSession = document.getElementById("quick-overview-btn-session");
+    const quickOverviewBtnVote = document.getElementById("quick-overview-btn-vote");
+    const quickOverviewBtnResults = document.getElementById("quick-overview-btn-results");
+
+    // State
+    let playerId = null;
+    let currentPhase = "lobby";
+    let myRole = null; // "spy" | "citizen"
+    let otherSpiesNames = [];
+    let revealInterval = null;
+    let voteCountdown = null;
+    let allowedTargets = [];
+    let latestPlayers = [];
+    let myName = "";
+    let myScore = 0;
+    let currentMaxVotes = 1;
+    let usePresetNames = false;
+    let presetNames = [];
+    let takenNames = [];
+    let isWaitingForGame = false; // true if blocked from joining because game is in progress
+
+    // ---------- Storage Manager (Private Browsing Support) ----------
+    const StorageManager = {
+      _memoryStore: {},
+      _useMemory: false,
+      init() {
+        try {
+          localStorage.setItem('_test', '1');
+          localStorage.removeItem('_test');
+          this._useMemory = false;
+        } catch (e) {
+          console.warn('localStorage unavailable (private browsing?), using in-memory storage');
+          this._useMemory = true;
+        }
+      },
+      setItem(key, value) {
+        if (this._useMemory) {
+          this._memoryStore[key] = value;
+        } else {
+          try { localStorage.setItem(key, value); }
+          catch (e) { this._memoryStore[key] = value; }
+        }
+      },
+      getItem(key) {
+        if (this._useMemory) {
+          return this._memoryStore[key] || null;
+        } else {
+          try { return localStorage.getItem(key); }
+          catch (e) { return this._memoryStore[key] || null; }
+        }
+      },
+      removeItem(key) {
+        if (this._useMemory) {
+          delete this._memoryStore[key];
+        } else {
+          try { localStorage.removeItem(key); }
+          catch (e) { delete this._memoryStore[key]; }
+        }
+      }
+    };
+    StorageManager.init();
+
+    // Restore playerId and name for persistent scores and auto-rejoin
+    // Use launcher credentials if coming from master menu
+    if (launcherKey) {
+      StorageManager.setItem("spyfall_player_id", launcherKey);
+    }
+    if (launcherName) {
+      StorageManager.setItem("spyfall_player_name", launcherName.toUpperCase());
+    }
+
+    const storedId = StorageManager.getItem("spyfall_player_id");
+    const storedName = StorageManager.getItem("spyfall_player_name");
+    if (storedId) {
+      playerId = storedId;
+    }
+
+    // Auto-rejoin on reconnect (like Jeopardy)
+    socket.on("connect", () => {
+      wasEverConnected = true;
+      if (storedId && storedName) {
+        const isFromLauncher = launcherKey && launcherName;
+        if (isFromLauncher) {
+          connectError.textContent = "";
+          joinInstruction.textContent = "Joining game...";
+        }
+        socket.emit("registerPlayer", {
+          playerId: storedId,
+          name: storedName
+        });
+      }
+    });
+
+    // Join
+    joinBtn.addEventListener("click", () => {
+      let name = "";
+
+      if (usePresetNames && presetNames.length > 0) {
+        // Use dropdown selection
+        name = nameSelect.value;
+        if (!name) {
+          connectError.textContent = "Please select a name from the list.";
+          return;
+        }
+      } else {
+        // Use text input
+        name = (nameInput.value || "").trim();
+        if (!name) {
+          connectError.textContent = "Please enter a name.";
+          return;
+        }
+      }
+
+      name = name.toUpperCase(); // auto-capitalize
+      connectError.textContent = "";
+      myName = name;
+
+      socket.emit("registerPlayer", {
+        playerId: playerId || undefined,
+        name: name
+      });
+    });
+
+    // On registration error
+    socket.on("registerError", (msg) => {
+      connectError.textContent = msg || "Registration failed.";
+      connectError.style.color = "#ff8a80";
+    });
+
+    // Game in progress - show waiting screen for new players
+    socket.on("gameInProgress", ({ message }) => {
+      isWaitingForGame = true;
+      connectCard.style.display = "none";
+      gameCard.style.display = "none";
+      votingCard.style.display = "none";
+      resultCard.style.display = "none";
+      waitingCard.style.display = "block";
+      waitingMessage.textContent = message || "A game is currently in progress. Please wait for the host to finish the current round.";
+    });
+
+    // Game ended by host - allow waiting players to join
+    socket.on("gameEndedByHost", ({ message }) => {
+      if (isWaitingForGame) {
+        isWaitingForGame = false;
+        waitingCard.style.display = "none";
+        connectCard.style.display = "block";
+        connectError.textContent = message || "The game has ended. You can now join!";
+        connectError.style.color = "#4caf50"; // green for success
+      }
+    });
+
+    // Name changed successfully
+    socket.on("nameChanged", ({ playerId: pid, name }) => {
+      if (pid === playerId) {
+        myName = (name || "").toUpperCase();
+        currentNameLabel.textContent = myName;
+        StorageManager.setItem("spyfall_player_name", myName);
+        changeNameForm.style.display = "none";
+        changeNameError.textContent = "";
+      }
+    });
+
+    // Name change error
+    socket.on("changeNameError", (msg) => {
+      changeNameError.textContent = msg || "Failed to change name.";
+    });
+
+    // Error handlers for name validation (consistent with Mafia)
+    socket.on("player_error", (msg) => {
+      connectError.textContent = msg || "An error occurred.";
+      connectError.style.color = "#ff8a80";
+    });
+
+    socket.on("join_rejected", ({ reason }) => {
+      connectError.textContent = reason || "Join was rejected.";
+      connectError.style.color = "#ff8a80";
+      connectCard.style.display = "block";
+      gameCard.style.display = "none";
+    });
+
+    // On registered
+    socket.on("playerRegistered", ({ playerId: pid, name }) => {
+      playerId = pid;
+      myName = (name || "").toUpperCase();
+      StorageManager.setItem("spyfall_player_id", pid);
+      StorageManager.setItem("spyfall_player_name", myName);
+
+      isWaitingForGame = false;
+      connectCard.style.display = "none";
+      waitingCard.style.display = "none";
+      gameCard.style.display = "block";
+      resultCard.style.display = "none";
+      votingCard.style.display = "none";
+
+      // Update name display
+      currentNameLabel.textContent = myName;
+      changeNameForm.style.display = "none";
+      changeNameError.textContent = "";
+
+      // Waiting view: instructions only, no card yet
+      instructionsBlock.style.display = "block";
+      locationSection.style.display = "none";
+
+      phaseLabel.textContent = "Lobby – waiting for host.";
+      infoMsg.textContent = "";
+
+      updateNameChangeUI();
+    });
+
+    // Overall phase + leaderboard
+    socket.on("playersState", (state) => {
+      const previousPhase = currentPhase;
+      currentPhase = state.phase || "lobby";
+      latestPlayers = state.leaderboard || [];
+      usePresetNames = !!state.usePresetNames;
+      presetNames = state.presetNames || [];
+      takenNames = state.takenNames || [];
+
+      const me = latestPlayers.find(p => p.id === playerId);
+      if (me) {
+        myScore = me.score ?? 0;
+        // Update name in case it changed
+        if (me.name) {
+          myName = me.name.toUpperCase();
+          currentNameLabel.textContent = myName;
+        }
+      }
+
+      // If transitioning from results/discussion/voting back to lobby, show the game card lobby view
+      if (currentPhase === "lobby" && previousPhase !== "lobby" && playerId) {
+        resultCard.style.display = "none";
+        votingCard.style.display = "none";
+        waitingCard.style.display = "none";
+        gameCard.style.display = "block";
+        instructionsBlock.style.display = "block";
+        locationSection.style.display = "none";
+        playerNameDisplay.style.display = "block";
+        changeNameForm.style.display = "none";
+      }
+
+      updateNameInputUI();
+      updatePhaseUI();
+    });
+
+    // Role assignment (game in session starts)
+    socket.on("roleAssigned", (payload) => {
+      myRole = payload.role; // "spy" or "citizen"
+      otherSpiesNames = payload.otherSpies || [];
+
+      resultCard.style.display = "none";
+      votingCard.style.display = "none";
+      waitingCard.style.display = "none";
+      gameCard.style.display = "block";
+
+      // Switch from waiting instructions to card view
+      instructionsBlock.style.display = "none";
+      locationSection.style.display = "block";
+
+      // Hide name change UI during game
+      playerNameDisplay.style.display = "none";
+      changeNameForm.style.display = "none";
+
+      infoMsg.textContent = "Discuss with the group out loud. Tap your card whenever you need a reminder.";
+      phaseLabel.textContent = "Discussion – talk out loud.";
+      hideLocation();
+    });
+
+    // Location reveal (citizens only; role on top, location on next line)
+    socket.on("locationReveal", ({ location }) => {
+      if (myRole !== "citizen") return;
+      const loc = location || "(unknown)";
+      const html =
+        '<div><span class="role-label role-citizen">CITIZEN</span></div>' +
+        '<div class="location-text">' + escapeHtml(loc) + '</div>';
+      showCardTemporarily(html, 5);
+    });
+
+    // Voting started (switch to voting-only view)
+    socket.on("votingStarted", (payload) => {
+      allowedTargets = payload.allowedTargets || [];
+      const voteDeadline = payload.deadline || null;
+      currentMaxVotes = payload.maxVotes || 1;
+
+      const allowedSet = new Set(allowedTargets);
+      const options = latestPlayers.filter(p => allowedSet.has(p.id) && p.id !== playerId);
+
+      voteOptionsContainer.innerHTML = "";
+      options.forEach(p => {
+        const div = document.createElement("div");
+        div.className = "vote-option";
+        div.dataset.playerId = p.id;
+        div.textContent = (p.name || "Player").toUpperCase();
+        div.addEventListener("click", () => {
+          const alreadySelected = div.classList.contains("selected");
+          if (alreadySelected) {
+            div.classList.remove("selected");
+            return;
+          }
+          const selectedCount = voteOptionsContainer.querySelectorAll(".vote-option.selected").length;
+          if (selectedCount >= currentMaxVotes) {
+            voteMsg.textContent = "You can select up to " + currentMaxVotes + " player(s).";
+            return;
+          }
+          div.classList.add("selected");
+        });
+        voteOptionsContainer.appendChild(div);
+      });
+
+      gameCard.style.display = "none";
+      resultCard.style.display = "none";
+      votingCard.style.display = "block";
+      voteMsg.textContent = "";
+      submitVoteBtn.disabled = false;
+
+      if (payload.voteTimeSeconds && payload.voteTimeSeconds > 0 && voteDeadline) {
+        startVoteCountdown(voteDeadline);
+      } else {
+        voteTimerLabel.textContent = "";
+        voteTimerLabel.classList.remove("timer-warning");
+      }
+    });
+
+    // Voting closed
+    socket.on("votingClosed", () => {
+      stopVoteCountdown();
+      submitVoteBtn.disabled = true;
+      voteMsg.textContent = "Voting closed. Waiting for results.";
+    });
+
+    // Round results
+    socket.on("roundResults", (payload) => {
+      const result = payload.result;
+      const location = payload.location;
+      const playersArr = payload.players || [];
+
+      const spies = result.spies || [];
+      const correctSpies = result.correctSpies || [];
+      const spyNames = spies.map(id => {
+        const p = playersArr.find(pl => pl.id === id);
+        return p ? (p.name || "").toUpperCase() : id;
+      });
+
+      const me = playersArr.find(p => p.id === playerId);
+      if (me) {
+        myScore = me.score ?? 0;
+      }
+
+      let msg = "";
+      if (myRole === "spy") {
+        if (correctSpies.includes(playerId)) {
+          msg = "You were the SPY and you were caught!";
+        } else {
+          msg = "You were the SPY and survived!";
+        }
+      } else {
+        if (correctSpies.length > 0) {
+          msg = "The group found at least one SPY!";
+        } else {
+          msg = "The group failed to find any spies.";
+        }
+      }
+
+      msg += "<br><br><strong>Spies:</strong> " + (spyNames.length ? spyNames.join(", ") : "NONE") +
+             "<br><strong>Location:</strong> " + (location || "(unknown)");
+
+      resultText.innerHTML = msg;
+      resultScore.textContent = "Your current score: " + myScore;
+
+      votingCard.style.display = "none";
+      gameCard.style.display = "none";
+      waitingCard.style.display = "none";
+      resultCard.style.display = "block";
+
+      myRole = null; // reset for next round
+      hideLocation();
+    });
+
+    // ---- User actions ----
+
+    revealBtn.addEventListener("click", () => {
+      if (!playerId) return;
+
+      if (myRole === "spy") {
+        // Spy sees role + "NO LOCATION" (two lines)
+        let html =
+          '<div><span class="role-label role-spy">SPY</span></div>' +
+          '<div class="location-text">NO LOCATION</div>';
+        if (otherSpiesNames && otherSpiesNames.length > 0) {
+          html += '<div class="small" style="margin-top:6px;">Other spies: ' +
+            escapeHtml(otherSpiesNames.join(", ")) + "</div>";
+        }
+        showCardTemporarily(html, 5);
+        return;
+      }
+
+      if (myRole === "citizen") {
+        socket.emit("requestLocationReveal", { playerId });
+      }
+    });
+
+    submitVoteBtn.addEventListener("click", () => {
+      if (!playerId) return;
+
+      const selected = Array.from(
+        voteOptionsContainer.querySelectorAll(".vote-option.selected")
+      ).map(div => div.dataset.playerId);
+
+      if (selected.length > currentMaxVotes) {
+        voteMsg.textContent = "You can select up to " + currentMaxVotes + " player(s).";
+        return;
+      }
+
+      socket.emit("submitVote", {
+        playerId,
+        targets: selected
+      });
+
+      voteMsg.textContent = "Vote submitted. You can change it until time is up, if allowed.";
+    });
+
+    // Quick overview buttons
+    function openOverview() {
+      overviewOverlay.style.display = "flex";
+    }
+    function closeOverview() {
+      overviewOverlay.style.display = "none";
+    }
+
+    quickOverviewBtn.addEventListener("click", openOverview);
+    quickOverviewBtnSession.addEventListener("click", openOverview);
+    quickOverviewBtnVote.addEventListener("click", openOverview);
+    quickOverviewBtnResults.addEventListener("click", openOverview);
+    quickOverviewBtnWaiting.addEventListener("click", openOverview);
+    overviewCloseBtn.addEventListener("click", closeOverview);
+
+    overviewOverlay.addEventListener("click", (e) => {
+      if (e.target === overviewOverlay) {
+        closeOverview();
+      }
+    });
+
+    // ---- Name change handlers ----
+
+    changeNameBtn.addEventListener("click", () => {
+      changeNameForm.style.display = "block";
+      changeNameError.textContent = "";
+      updateChangeNameFormUI();
+    });
+
+    cancelNameChangeBtn.addEventListener("click", () => {
+      changeNameForm.style.display = "none";
+      changeNameError.textContent = "";
+    });
+
+    confirmNameChangeBtn.addEventListener("click", () => {
+      let newName = "";
+
+      if (usePresetNames && presetNames.length > 0) {
+        newName = changeNameSelect.value;
+        if (!newName) {
+          changeNameError.textContent = "Please select a name from the list.";
+          return;
+        }
+      } else {
+        newName = (changeNameInput.value || "").trim();
+        if (!newName) {
+          changeNameError.textContent = "Please enter a valid name.";
+          return;
+        }
+      }
+
+      newName = newName.toUpperCase();
+      changeNameError.textContent = "";
+
+      socket.emit("changeName", {
+        playerId: playerId,
+        newName: newName
+      });
+    });
+
+    function updateChangeNameFormUI() {
+      if (usePresetNames && presetNames.length > 0) {
+        changeNameCustom.style.display = "none";
+        changeNamePreset.style.display = "block";
+
+        // Build dropdown options (exclude current name and taken names)
+        const takenNamesSet = new Set(takenNames.map(n => n.toUpperCase()));
+        let html = '<option value="">-- Select new name --</option>';
+
+        presetNames.forEach(name => {
+          const nameUpper = name.toUpperCase();
+          const isTaken = takenNamesSet.has(nameUpper);
+          const isCurrentName = nameUpper === myName;
+
+          if (isCurrentName) {
+            html += '<option value="' + escapeHtml(nameUpper) + '" disabled>' +
+              escapeHtml(nameUpper) + ' (current)</option>';
+          } else if (isTaken) {
+            html += '<option value="' + escapeHtml(nameUpper) + '" disabled>' +
+              escapeHtml(nameUpper) + ' (taken)</option>';
+          } else {
+            html += '<option value="' + escapeHtml(nameUpper) + '">' +
+              escapeHtml(nameUpper) + '</option>';
+          }
+        });
+
+        changeNameSelect.innerHTML = html;
+      } else {
+        changeNameCustom.style.display = "block";
+        changeNamePreset.style.display = "none";
+        changeNameInput.value = "";
+      }
+    }
+
+    function updateNameChangeUI() {
+      // Only show name change button in lobby phase
+      if (currentPhase === "lobby" && playerId) {
+        playerNameDisplay.style.display = "block";
+        changeNameBtn.style.display = "inline-block";
+      } else {
+        playerNameDisplay.style.display = currentPhase === "lobby" ? "block" : "none";
+        changeNameBtn.style.display = "none";
+        changeNameForm.style.display = "none";
+      }
+    }
+
+    // ---- Name input UI helper ----
+
+    function updateNameInputUI() {
+      // Only update if we're on the connect card (not yet registered)
+      if (connectCard.style.display === "none") return;
+
+      if (usePresetNames && presetNames.length > 0) {
+        // Show dropdown, hide text input
+        customNameSection.style.display = "none";
+        presetNameSection.style.display = "block";
+        joinInstruction.textContent = "Select your name from the list below. Keep this tab open while you play.";
+
+        // Build dropdown options
+        const takenNamesSet = new Set(takenNames.map(n => n.toUpperCase()));
+        const currentSelection = nameSelect.value;
+
+        let html = '<option value="">-- Select your name --</option>';
+        presetNames.forEach(name => {
+          const nameUpper = name.toUpperCase();
+          const isTaken = takenNamesSet.has(nameUpper);
+          const isSelected = currentSelection === nameUpper;
+
+          if (isTaken) {
+            html += '<option value="' + escapeHtml(nameUpper) + '" disabled>' +
+              escapeHtml(nameUpper) + ' (taken)</option>';
+          } else {
+            html += '<option value="' + escapeHtml(nameUpper) + '"' +
+              (isSelected ? ' selected' : '') + '>' +
+              escapeHtml(nameUpper) + '</option>';
+          }
+        });
+
+        nameSelect.innerHTML = html;
+      } else {
+        // Show text input, hide dropdown
+        customNameSection.style.display = "block";
+        presetNameSection.style.display = "none";
+        joinInstruction.textContent = "Enter your name to join. Keep this tab open while you play.";
+      }
+    }
+
+    // Force reselect handler (when host switches from custom to preset names)
+    socket.on("forceReselect", ({ reason }) => {
+      // Reset player to the connect screen
+      playerId = null;
+      myName = "";
+      StorageManager.removeItem("spyfall_player_id");
+
+      connectCard.style.display = "block";
+      gameCard.style.display = "none";
+      votingCard.style.display = "none";
+      resultCard.style.display = "none";
+
+      connectError.textContent = reason || "Please select a new name.";
+      connectError.style.color = "#ffab40";
+
+      updateNameInputUI();
+    });
+
+    // Kicked by host handler
+    socket.on("kicked", ({ message }) => {
+      // Reset player completely - they need to rejoin with a new name
+      playerId = null;
+      myName = "";
+      StorageManager.removeItem("spyfall_player_id");
+
+      connectCard.style.display = "block";
+      gameCard.style.display = "none";
+      votingCard.style.display = "none";
+      resultCard.style.display = "none";
+      waitingCard.style.display = "none";
+
+      connectError.textContent = message || "You have been removed from the game by the host.";
+      connectError.style.color = "#ff8a80";
+
+      updateNameInputUI();
+    });
+
+    // ---- Phase UI helper ----
+
+    function updatePhaseUI() {
+      switch (currentPhase) {
+        case "discussion":
+          phaseLabel.textContent = "Discussion – talk out loud.";
+          infoMsg.textContent = "Ask and answer questions about the location.";
+          break;
+        case "voting":
+          // handled by votingStarted
+          break;
+        case "results":
+          phaseLabel.textContent = "Round finished – waiting for host.";
+          break;
+        default:
+          phaseLabel.textContent = "Lobby – waiting for host.";
+          infoMsg.textContent = "";
+      }
+
+      // Update name change UI based on phase
+      updateNameChangeUI();
+    }
+
+    // ---- Card reveal timer (role + location text) ----
+
+    function showCardTemporarily(html, seconds) {
+      if (revealInterval) clearInterval(revealInterval);
+
+      locationDisplay.className = "";
+      locationDisplay.innerHTML = html;
+
+      const endTime = Date.now() + seconds * 1000;
+
+      const update = () => {
+        const now = Date.now();
+        const remaining = Math.max(0, Math.floor((endTime - now) / 1000));
+        locationTimer.textContent = "Hiding in " + remaining + "s";
+        if (remaining <= 0) {
+          clearInterval(revealInterval);
+          revealInterval = null;
+          hideLocation();
+        }
+      };
+
+      update();
+      revealInterval = setInterval(update, 250);
+    }
+
+    function hideLocation() {
+      locationDisplay.className = "location-hidden";
+      locationDisplay.textContent =
+        'Tap "REVEAL LOCATION AND ROLE" to briefly show your secret card.';
+      locationTimer.textContent = "";
+    }
+
+    // ---- Vote countdown ----
+
+    function startVoteCountdown(deadline) {
+      if (voteCountdown) clearInterval(voteCountdown);
+      voteTimerLabel.classList.remove("timer-warning");
+
+      const update = () => {
+        const now = Date.now();
+        const remaining = Math.max(0, Math.floor((deadline - now) / 1000));
+        if (remaining <= 0) {
+          voteTimerLabel.textContent = "Time is up.";
+          voteTimerLabel.classList.add("timer-warning");
+          clearInterval(voteCountdown);
+          voteCountdown = null;
+        } else {
+          voteTimerLabel.textContent = "Time left: " + remaining + "s";
+          if (remaining <= 10) {
+            voteTimerLabel.classList.add("timer-warning");
+          } else {
+            voteTimerLabel.classList.remove("timer-warning");
+          }
+        }
+      };
+
+      update();
+      voteCountdown = setInterval(update, 500);
+    }
+
+    function stopVoteCountdown() {
+      if (voteCountdown) {
+        clearInterval(voteCountdown);
+        voteCountdown = null;
+      }
+      voteTimerLabel.classList.remove("timer-warning");
+    }
+
+    // ---- Helpers ----
+
+    socket.on("connect_error", (err) => {
+      connectError.textContent = "Connection error: " + err.message;
+    });
+
+    function escapeHtml(str) {
+      if (str == null) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    // FIX 7: Return to launcher with acknowledgment for graceful shutdown
+    socket.on("returned_to_menu", (data) => {
+      if (data && data.shutdownId) {
+        socket.emit("player_ack_return_to_menu", { shutdownId: data.shutdownId });
+      }
+      // Small delay to ensure ack is sent before disconnect
+      setTimeout(() => {
+        socket.disconnect();
+        const masterUrl = window.location.protocol + "//" + window.location.host + "/players";
+        window.location.href = masterUrl;
+      }, 50);
+    });
+
+    // ---------- Intro Animation ----------
+    const introScreen = document.getElementById("introScreen");
+    let introTimers = [];
+
+    function clearIntroTimers() {
+      introTimers.forEach(id => clearTimeout(id));
+      introTimers = [];
+    }
+
+    socket.on("introPhase", (data) => {
+      // Clear any pending intro timers from previous intro/reconnect
+      clearIntroTimers();
+      // Hide other views
+      connectCard.style.display = "none";
+      gameCard.style.display = "none";
+      votingCard.style.display = "none";
+      resultCard.style.display = "none";
+      waitingCard.style.display = "none";
+
+      // Populate intro content
+      if (data.slides && data.slides.length >= 3) {
+        document.getElementById("introTitle1").textContent = data.slides[0].title || "How to Play";
+        document.getElementById("introContent1").textContent = data.slides[0].content || "";
+        document.getElementById("introTitle2").textContent = data.slides[1].title || "Asking Questions";
+        document.getElementById("introContent2").textContent = data.slides[1].content || "";
+        document.getElementById("introTitle3").textContent = data.slides[2].title || "Winning";
+        document.getElementById("introContent3").textContent = data.slides[2].content || "";
+      }
+
+      // Show intro screen
+      introScreen.classList.add("active");
+
+      // Animate cards sequentially (store timer IDs for cleanup)
+      introTimers.push(setTimeout(() => document.getElementById("introCard1").classList.add("visible"), 0));
+      introTimers.push(setTimeout(() => document.getElementById("introCard2").classList.add("visible"), 1000));
+      introTimers.push(setTimeout(() => document.getElementById("introCard3").classList.add("visible"), 2000));
+    });
+
+    socket.on("introEnded", () => {
+      // Clear any pending animation timers
+      clearIntroTimers();
+      // Hide intro and show game card
+      introScreen.classList.remove("active");
+      document.getElementById("introCard1").classList.remove("visible");
+      document.getElementById("introCard2").classList.remove("visible");
+      document.getElementById("introCard3").classList.remove("visible");
+
+      // Show appropriate view based on player registration status
+      if (playerId) {
+        gameCard.style.display = "block";
+      } else {
+        connectCard.style.display = "block";
+      }
+    });
+  })();
+</script>
+</body>
+</html>

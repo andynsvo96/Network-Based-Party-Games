@@ -1,0 +1,17 @@
+node_modules/
+npm-debug.log*
+
+test-results/
+playwright-report/
+
+checkpoints/
+
+.DS_Store
+**/.DS_Store
+Thumbs.db
+
+settings.json
+stats.json
+**/playerScores.json
+**/*_lifetime*.json
+**/*_lifetime_db.json

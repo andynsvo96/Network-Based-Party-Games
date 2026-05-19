@@ -1,0 +1,1346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Trivia Party - Player</title>
+  <style>
+    :root {
+      --bg-primary: #0a0e1a;
+      --bg-secondary: #111827;
+      --bg-tertiary: #1f2937;
+      --accent: #f59e0b;
+      --accent-hover: #fbbf24;
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --gold: #fbbf24;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .hidden { display: none !important; }
+
+    /* Header */
+    .header {
+      background: var(--bg-secondary);
+      padding: 16px;
+      text-align: center;
+      border-bottom: 1px solid var(--bg-tertiary);
+    }
+
+    .header h1 {
+      font-size: 1.25rem;
+      color: var(--accent);
+    }
+
+    .connection-status {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    .connection-status.connected { color: var(--success); }
+    .connection-status.disconnected { color: var(--danger); }
+
+    /* Main Content */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+      overflow-y: auto;
+    }
+
+    /* Join Screen */
+    #joinScreen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      text-align: center;
+    }
+
+    .join-title {
+      font-size: 1.5rem;
+      margin-bottom: 24px;
+      color: var(--accent-hover);
+    }
+
+    .join-input {
+      width: 100%;
+      max-width: 300px;
+      padding: 16px;
+      font-size: 1.25rem;
+      background: var(--bg-tertiary);
+      border: 2px solid var(--bg-tertiary);
+      border-radius: 12px;
+      color: var(--text-primary);
+      text-align: center;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .join-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .join-error {
+      color: var(--danger);
+      font-size: 0.9rem;
+      margin-bottom: 12px;
+      min-height: 20px;
+    }
+
+    /* Waiting Screen */
+    #waitingScreen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      text-align: center;
+    }
+
+    .waiting-text {
+      font-size: 1.25rem;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+    }
+
+    .player-name-display {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 24px;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid var(--bg-tertiary);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Game Screen */
+    #gameScreen {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+
+    .progress-bar {
+      background: var(--bg-tertiary);
+      height: 4px;
+      border-radius: 2px;
+      margin-bottom: 16px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-hover));
+      border-radius: 2px;
+      transition: width 0.3s;
+    }
+
+    .question-info {
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    .question-number {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .question-category {
+      font-size: 0.9rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .question-text {
+      font-size: 1.1rem;
+      font-weight: 500;
+      text-align: center;
+      margin-bottom: 24px;
+      line-height: 1.4;
+    }
+
+    .timer {
+      text-align: center;
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 16px;
+    }
+
+    .timer.warning { color: var(--warning); }
+    .timer.danger { color: var(--danger); animation: pulse 0.5s infinite; }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+
+    /* Answer Options */
+    .options-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .option-btn {
+      padding: 20px 16px;
+      font-size: 1rem;
+      font-weight: 600;
+      background: var(--bg-tertiary);
+      border: 2px solid var(--bg-tertiary);
+      border-radius: 12px;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+      word-wrap: break-word;
+    }
+
+    .option-btn:active {
+      transform: scale(0.98);
+    }
+
+    .option-btn:hover {
+      border-color: var(--accent);
+    }
+
+    .option-btn.selected {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    /* True/False buttons */
+    .tf-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .tf-btn {
+      padding: 32px 16px;
+      font-size: 1.5rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .tf-btn.true {
+      background: linear-gradient(135deg, var(--success), #16a34a);
+      color: white;
+    }
+
+    .tf-btn.false {
+      background: linear-gradient(135deg, var(--danger), #dc2626);
+      color: white;
+    }
+
+    .tf-btn:active {
+      transform: scale(0.98);
+    }
+
+    /* Input fields */
+    .input-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .answer-input {
+      width: 100%;
+      padding: 16px;
+      font-size: 1.25rem;
+      background: var(--bg-tertiary);
+      border: 2px solid var(--bg-tertiary);
+      border-radius: 12px;
+      color: var(--text-primary);
+      text-align: center;
+    }
+
+    .answer-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .answer-input[type="number"] {
+      -moz-appearance: textfield;
+    }
+
+    .answer-input::-webkit-outer-spin-button,
+    .answer-input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    /* Multiple correct checkboxes */
+    .checkbox-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px;
+      background: var(--bg-tertiary);
+      border: 2px solid var(--bg-tertiary);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .checkbox-item.selected {
+      border-color: var(--accent);
+      background: rgba(245, 158, 11, 0.2);
+    }
+
+    .checkbox-item input {
+      width: 24px;
+      height: 24px;
+      accent-color: var(--accent);
+    }
+
+    .checkbox-label {
+      flex: 1;
+      font-size: 1rem;
+    }
+
+    /* Submit Button */
+    .btn-primary {
+      width: 100%;
+      padding: 18px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      border: none;
+      border-radius: 12px;
+      color: #000;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-primary:active:not(:disabled) {
+      transform: scale(0.98);
+    }
+
+    /* Answer Submitted Screen */
+    #submittedScreen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      text-align: center;
+    }
+
+    .submitted-icon {
+      font-size: 4rem;
+      margin-bottom: 16px;
+    }
+
+    .submitted-text {
+      font-size: 1.25rem;
+      color: var(--success);
+      margin-bottom: 8px;
+    }
+
+    .submitted-waiting {
+      color: var(--text-secondary);
+    }
+
+    /* Result Screen */
+    #resultScreen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      text-align: center;
+    }
+
+    .result-icon {
+      font-size: 5rem;
+      margin-bottom: 16px;
+    }
+
+    .result-text {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .result-text.correct { color: var(--success); }
+    .result-text.incorrect { color: var(--danger); }
+
+    .result-answer {
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+    }
+
+    .result-points {
+      font-size: 2rem;
+      font-weight: 700;
+    }
+
+    .result-points.positive { color: var(--success); }
+    .result-points.negative { color: var(--danger); }
+    .result-points.neutral { color: var(--text-secondary); }
+
+    /* Stats Display */
+    .stats-display {
+      background: var(--bg-secondary);
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: auto;
+    }
+
+    .stats-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+    }
+
+    .stats-label { color: var(--text-secondary); }
+    .stats-value { font-weight: 600; }
+
+    /* Bonus Stage */
+    #bonusScreen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      text-align: center;
+      background: linear-gradient(135deg, #1a0a2e, #2d1b4e);
+      margin: -16px;
+      padding: 16px;
+    }
+
+    .bonus-title {
+      font-size: 1.5rem;
+      color: var(--danger);
+      text-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+      margin-bottom: 16px;
+      animation: flicker 1s infinite;
+    }
+
+    @keyframes flicker {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.8; }
+    }
+
+    .bonus-status {
+      font-size: 1.1rem;
+      color: var(--gold);
+      margin-bottom: 24px;
+    }
+
+    .eliminated-message {
+      font-size: 1.25rem;
+      color: var(--danger);
+      margin-bottom: 16px;
+    }
+
+    /* Game Over */
+    #gameOverScreen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      text-align: center;
+    }
+
+    .gameover-title {
+      font-size: 1.5rem;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .gameover-rank {
+      font-size: 3rem;
+      font-weight: 700;
+      color: var(--gold);
+      margin-bottom: 16px;
+    }
+
+    .gameover-score {
+      font-size: 1.25rem;
+      margin-bottom: 8px;
+    }
+
+    .gameover-stats {
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+    }
+
+    .winner-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, var(--gold), #f59e0b);
+      color: #000;
+      padding: 12px 24px;
+      border-radius: 24px;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    /* Kicked Screen */
+    #kickedScreen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      text-align: center;
+    }
+
+    .kicked-icon {
+      font-size: 4rem;
+      margin-bottom: 16px;
+    }
+
+    .kicked-text {
+      font-size: 1.25rem;
+      color: var(--danger);
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <h1>TRIVIA PARTY</h1>
+    <div class="connection-status" id="connectionStatus">Connecting...</div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main">
+    <!-- Join Screen -->
+    <div id="joinScreen">
+      <div class="join-title">Enter Your Name</div>
+      <input type="text" class="join-input" id="nameInput" placeholder="YOUR NAME" maxlength="15" autocomplete="off">
+      <div class="join-error" id="joinError"></div>
+      <button class="btn-primary" id="joinBtn">Join Game</button>
+    </div>
+
+    <!-- Waiting Screen -->
+    <div id="waitingScreen" class="hidden">
+      <div class="player-name-display" id="playerNameDisplay">PLAYER</div>
+      <div class="waiting-text">Waiting for host to start...</div>
+      <div class="spinner"></div>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="gameScreen" class="hidden">
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+      </div>
+
+      <div class="question-info">
+        <div class="question-number" id="questionNumber">Question 1 of 10</div>
+        <div class="question-category" id="questionCategory">Category</div>
+      </div>
+
+      <div class="question-text" id="questionText">Question goes here?</div>
+
+      <div class="timer hidden" id="timer">30</div>
+
+      <!-- Multiple Choice Options -->
+      <div class="options-grid" id="optionsGrid"></div>
+
+      <!-- True/False Options -->
+      <div class="tf-grid hidden" id="tfGrid">
+        <button class="tf-btn true" data-answer="true">TRUE</button>
+        <button class="tf-btn false" data-answer="false">FALSE</button>
+      </div>
+
+      <!-- Number Input -->
+      <div class="input-container hidden" id="numberInput">
+        <input type="number" class="answer-input" id="numberAnswer" placeholder="Enter a number">
+        <button class="btn-primary" id="submitNumber">Submit</button>
+      </div>
+
+      <!-- Text Input -->
+      <div class="input-container hidden" id="textInput">
+        <input type="text" class="answer-input" id="textAnswer" placeholder="Type your answer" autocomplete="off">
+        <button class="btn-primary" id="submitText">Submit</button>
+      </div>
+
+      <!-- Multiple Correct Checkboxes -->
+      <div class="checkbox-grid hidden" id="checkboxGrid"></div>
+      <button class="btn-primary hidden" id="submitCheckbox">Submit Selection</button>
+    </div>
+
+    <!-- Submitted Screen -->
+    <div id="submittedScreen" class="hidden">
+      <div class="submitted-icon">✓</div>
+      <div class="submitted-text">Answer Submitted!</div>
+      <div class="submitted-waiting">Waiting for other players...</div>
+    </div>
+
+    <!-- Result Screen -->
+    <div id="resultScreen" class="hidden">
+      <div class="result-icon" id="resultIcon">✓</div>
+      <div class="result-text" id="resultText">Correct!</div>
+      <div class="result-answer" id="resultAnswer">The answer was: Paris</div>
+      <div class="result-points" id="resultPoints">+1</div>
+    </div>
+
+    <!-- Bonus Screen -->
+    <div id="bonusScreen" class="hidden">
+      <div class="bonus-title">⚡ SUDDEN DEATH ⚡</div>
+      <div class="bonus-status" id="bonusStatus">You're still in!</div>
+
+      <div class="question-text" id="bonusQuestionText"></div>
+      <div class="timer hidden" id="bonusTimer">30</div>
+
+      <div class="options-grid" id="bonusOptionsGrid"></div>
+      <div class="tf-grid hidden" id="bonusTfGrid">
+        <button class="tf-btn true" data-answer="true">TRUE</button>
+        <button class="tf-btn false" data-answer="false">FALSE</button>
+      </div>
+      <div class="input-container hidden" id="bonusNumberInput">
+        <input type="number" class="answer-input" id="bonusNumberAnswer" placeholder="Enter a number">
+        <button class="btn-primary" id="bonusSubmitNumber">Submit</button>
+      </div>
+      <div class="input-container hidden" id="bonusTextInput">
+        <input type="text" class="answer-input" id="bonusTextAnswer" placeholder="Type your answer" autocomplete="off">
+        <button class="btn-primary" id="bonusSubmitText">Submit</button>
+      </div>
+      <div class="checkbox-grid hidden" id="bonusCheckboxGrid"></div>
+      <button class="btn-primary hidden" id="bonusSubmitCheckbox">Submit Selection</button>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="gameOverScreen" class="hidden">
+      <div id="winnerBadge" class="winner-badge hidden">👑 WINNER!</div>
+      <div class="gameover-title">Game Over</div>
+      <div class="gameover-rank" id="finalRank">#1</div>
+      <div class="gameover-score" id="finalScore">Score: 0</div>
+      <div class="gameover-stats" id="finalStats">0/0 correct</div>
+    </div>
+
+    <!-- Kicked Screen -->
+    <div id="kickedScreen" class="hidden">
+      <div class="kicked-icon">🚫</div>
+      <div class="kicked-text">You have been removed from the game.</div>
+    </div>
+  </main>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    // Storage Manager (handles private browsing)
+    const StorageManager = {
+      _memoryStore: {},
+      _useMemory: false,
+      init() {
+        try {
+          localStorage.setItem('_test', '1');
+          localStorage.removeItem('_test');
+          this._useMemory = false;
+        } catch (e) {
+          console.warn('localStorage unavailable, using memory storage');
+          this._useMemory = true;
+        }
+      },
+      setItem(key, value) {
+        if (this._useMemory) {
+          this._memoryStore[key] = value;
+        } else {
+          try { localStorage.setItem(key, value); }
+          catch (e) { this._memoryStore[key] = value; }
+        }
+      },
+      getItem(key) {
+        if (this._useMemory) {
+          return this._memoryStore[key] || null;
+        } else {
+          try { return localStorage.getItem(key); }
+          catch (e) { return this._memoryStore[key] || null; }
+        }
+      },
+      removeItem(key) {
+        if (this._useMemory) {
+          delete this._memoryStore[key];
+        } else {
+          try { localStorage.removeItem(key); }
+          catch (e) { delete this._memoryStore[key]; }
+        }
+      }
+    };
+    StorageManager.init();
+
+    // Constants
+    const LS_KEY = 'trivia_playerKey_v1';
+    const LS_NAME = 'trivia_playerName_v1';
+
+    // Get URL params (from launcher)
+    const urlParams = new URLSearchParams(window.location.search);
+    const launcherKey = urlParams.get('launcherKey');
+    const launcherName = urlParams.get('launcherName');
+
+    // State
+    let playerKey = launcherKey || StorageManager.getItem(LS_KEY) || generateKey();
+    let playerName = '';
+    let joined = false;
+    let currentQuestion = null;
+    let hasAnswered = false;
+    let myScore = 0;
+    let myCorrect = 0;
+    let myTotal = 0;
+    let inBonusStage = false;
+    let isEliminated = false;
+    let wasEverConnected = false;
+
+    StorageManager.setItem(LS_KEY, playerKey);
+
+    if (launcherName) {
+      StorageManager.setItem(LS_NAME, launcherName.toUpperCase());
+    }
+
+    function generateKey() {
+      return 'p_' + Math.random().toString(36).substr(2, 9);
+    }
+
+    // Connect to game namespace
+    const pathParts = window.location.pathname.split('/');
+    const gameId = pathParts[2]; // e.g., "trivia"
+    const socket = io(gameId ? `/game/${gameId}` : '/', {
+      transports: ["websocket", "polling"],
+      reconnection: true,
+      reconnectionAttempts: 3,
+      reconnectionDelay: 500,
+      reconnectionDelayMax: 1000
+    });
+
+    // Redirect to launcher if game server is unreachable after all reconnection attempts
+    socket.io.on("reconnect_failed", () => {
+      if (typeof toast === "function") {
+        toast("warn", "Game Ended", "Returning to lobby...");
+      }
+      setTimeout(() => {
+        const launcherUrl = window.location.protocol + "//" + window.location.host + "/players";
+        window.location.href = launcherUrl;
+      }, 1500);
+    });
+
+    // Immediate redirect if game server is unreachable on initial connection
+    socket.io.on("error", () => {
+      if (!wasEverConnected) {
+        console.log("Game server unreachable, returning to launcher...");
+        const launcherUrl = window.location.protocol + "//" + window.location.host + "/players";
+        window.location.href = launcherUrl;
+      }
+    });
+
+    // DOM Elements
+    const screens = {
+      join: document.getElementById('joinScreen'),
+      waiting: document.getElementById('waitingScreen'),
+      game: document.getElementById('gameScreen'),
+      submitted: document.getElementById('submittedScreen'),
+      result: document.getElementById('resultScreen'),
+      bonus: document.getElementById('bonusScreen'),
+      gameOver: document.getElementById('gameOverScreen'),
+      kicked: document.getElementById('kickedScreen')
+    };
+
+    // Show/hide screens
+    function showScreen(screenName) {
+      Object.values(screens).forEach(s => s.classList.add('hidden'));
+      if (screens[screenName]) {
+        screens[screenName].classList.remove('hidden');
+      }
+    }
+
+    // Connection handling
+    socket.on('connect', () => {
+      wasEverConnected = true;
+      document.getElementById('connectionStatus').textContent = 'Connected';
+      document.getElementById('connectionStatus').className = 'connection-status connected';
+      attemptAutoJoin();
+    });
+
+    socket.on('disconnect', () => {
+      document.getElementById('connectionStatus').textContent = 'Disconnected - Reconnecting...';
+      document.getElementById('connectionStatus').className = 'connection-status disconnected';
+    });
+
+    function attemptAutoJoin() {
+      const savedName = StorageManager.getItem(LS_NAME);
+      if (savedName) {
+        socket.emit('joinGame', { name: savedName, playerKey });
+      }
+    }
+
+    // Join handlers
+    socket.on('joinSuccess', (data) => {
+      playerName = data.name;
+      playerKey = data.playerKey;
+      joined = true;
+
+      StorageManager.setItem(LS_KEY, playerKey);
+      StorageManager.setItem(LS_NAME, playerName);
+
+      document.getElementById('playerNameDisplay').textContent = playerName;
+      showScreen('waiting');
+    });
+
+    socket.on('joinError', (msg) => {
+      document.getElementById('joinError').textContent = msg;
+    });
+
+    // Game state handlers
+    socket.on('gameStatus', (data) => {
+      if (data.phase === 'LOBBY' && joined) {
+        showScreen('waiting');
+      }
+    });
+
+    socket.on('introPhase', () => {
+      if (joined) showScreen('waiting');
+    });
+
+    socket.on('newQuestionPlayer', (data) => {
+      if (!joined) return;
+      currentQuestion = data.question;
+      hasAnswered = false;
+      renderQuestion(data);
+      showScreen('game');
+    });
+
+    socket.on('questionState', (data) => {
+      if (!joined) return;
+      currentQuestion = data.question;
+      hasAnswered = data.hasAnswered;
+
+      if (hasAnswered) {
+        showScreen('submitted');
+      } else {
+        renderQuestion(data);
+        showScreen('game');
+      }
+    });
+
+    socket.on('timerUpdate', (data) => {
+      updateTimer(data.remaining);
+    });
+
+    socket.on('answerAccepted', () => {
+      hasAnswered = true;
+      showScreen('submitted');
+    });
+
+    socket.on('answerError', (msg) => {
+      alert(msg);
+    });
+
+    socket.on('revealAnswer', (data) => {
+      if (!joined) return;
+      const myResult = data.results.find(r => r.playerKey === playerKey);
+      if (myResult) {
+        myScore += myResult.points;
+        myTotal++;
+        if (myResult.correct) myCorrect++;
+        renderResult(myResult, data.correctAnswer);
+      }
+      showScreen('result');
+    });
+
+    socket.on('revealState', (data) => {
+      if (!joined) return;
+      showScreen('result');
+    });
+
+    // Bonus stage
+    socket.on('bonusStageStart', (data) => {
+      if (!joined) return;
+      inBonusStage = data.players.some(p => p.key === playerKey);
+      isEliminated = false;
+
+      if (inBonusStage) {
+        document.getElementById('bonusStatus').textContent = "You're in the showdown!";
+        showScreen('bonus');
+      } else {
+        document.getElementById('bonusStatus').textContent = 'Watch the showdown!';
+        showScreen('bonus');
+      }
+    });
+
+    socket.on('bonusQuestion', (data) => {
+      if (!joined || !inBonusStage || isEliminated) return;
+      currentQuestion = data.question;
+      hasAnswered = false;
+      renderBonusQuestion(data);
+    });
+
+    socket.on('bonusStageState', (data) => {
+      if (!joined) return;
+      inBonusStage = data.active;
+      isEliminated = data.eliminated;
+
+      if (isEliminated) {
+        document.getElementById('bonusStatus').textContent = 'You have been eliminated!';
+        document.getElementById('bonusStatus').style.color = 'var(--danger)';
+      }
+    });
+
+    socket.on('bonusStageUpdate', (data) => {
+      if (!joined) return;
+      const myResult = data.results.find(r => r.playerKey === playerKey);
+      if (myResult && myResult.eliminated) {
+        isEliminated = true;
+        document.getElementById('bonusStatus').textContent = 'You have been eliminated!';
+        document.getElementById('bonusStatus').style.color = 'var(--danger)';
+        hideBonusControls();
+      }
+    });
+
+    // Game over
+    socket.on('gameOver', (data) => {
+      if (!joined) return;
+
+      const myStats = data.playerStats.find(p => p.key === playerKey);
+      const myRank = data.leaderboard.findIndex(p => p.key === playerKey) + 1;
+
+      const isWinner = data.isTie
+        ? data.winners.some(w => w.key === playerKey)
+        : data.winner?.key === playerKey;
+
+      document.getElementById('winnerBadge').classList.toggle('hidden', !isWinner);
+      document.getElementById('finalRank').textContent = `#${myRank}`;
+      document.getElementById('finalScore').textContent = `Score: ${myStats?.score || 0}`;
+      document.getElementById('finalStats').textContent = `${myStats?.correctAnswers || 0}/${myStats?.totalAnswered || 0} correct`;
+
+      showScreen('gameOver');
+    });
+
+    socket.on('gameResetKeepPlayer', () => {
+      if (joined) {
+        myScore = 0;
+        myCorrect = 0;
+        myTotal = 0;
+        inBonusStage = false;
+        isEliminated = false;
+        showScreen('waiting');
+      }
+    });
+
+    socket.on('kicked', () => {
+      joined = false;
+      StorageManager.removeItem(LS_NAME);
+      showScreen('kicked');
+    });
+
+    socket.on('returned_to_menu', (data) => {
+      // Send acknowledgment if shutdown ID provided
+      if (data && data.shutdownId) {
+        socket.emit('player_ack_return_to_menu', { shutdownId: data.shutdownId });
+      }
+      // Small delay to ensure ack is sent before disconnect
+      setTimeout(() => {
+        socket.disconnect();
+        let returnUrl = '/players';
+        if (launcherKey && launcherName) {
+          returnUrl += '?launcherKey=' + encodeURIComponent(launcherKey) + '&launcherName=' + encodeURIComponent(launcherName);
+        }
+        window.location.href = returnUrl;
+      }, 50);
+    });
+
+    socket.on('hostDisconnected', () => {
+      document.getElementById('connectionStatus').textContent = 'Host disconnected - waiting for reconnection...';
+      document.getElementById('connectionStatus').className = 'connection-status disconnected';
+    });
+
+    // Render functions
+    function renderQuestion(data) {
+      const q = data.question;
+
+      document.getElementById('questionNumber').textContent =
+        `Question ${data.questionIndex} of ${data.totalQuestions}`;
+      document.getElementById('progressFill').style.width =
+        `${(data.questionIndex / data.totalQuestions) * 100}%`;
+      document.getElementById('questionCategory').textContent = q.categoryName;
+      document.getElementById('questionText').textContent = q.text;
+
+      // Hide all control types first
+      document.getElementById('optionsGrid').classList.add('hidden');
+      document.getElementById('tfGrid').classList.add('hidden');
+      document.getElementById('numberInput').classList.add('hidden');
+      document.getElementById('textInput').classList.add('hidden');
+      document.getElementById('checkboxGrid').classList.add('hidden');
+      document.getElementById('submitCheckbox').classList.add('hidden');
+
+      // Timer
+      const timerEl = document.getElementById('timer');
+      if (data.timerEnabled) {
+        timerEl.classList.remove('hidden');
+        timerEl.textContent = data.timerSeconds || data.timerRemaining || 30;
+      } else {
+        timerEl.classList.add('hidden');
+      }
+
+      // Show appropriate controls
+      switch (q.type) {
+        case 'multiple_choice':
+        case 'opinion':
+          renderMultipleChoice(q.options);
+          break;
+        case 'true_false':
+          document.getElementById('tfGrid').classList.remove('hidden');
+          break;
+        case 'number_range':
+          document.getElementById('numberInput').classList.remove('hidden');
+          document.getElementById('numberAnswer').value = '';
+          break;
+        case 'text_input':
+          document.getElementById('textInput').classList.remove('hidden');
+          document.getElementById('textAnswer').value = '';
+          break;
+        case 'multiple_correct':
+          renderCheckboxes(q.options);
+          break;
+      }
+    }
+
+    function renderMultipleChoice(options) {
+      const grid = document.getElementById('optionsGrid');
+      grid.innerHTML = options.map(opt => `
+        <button class="option-btn" data-answer="${escapeAttr(opt.text)}">${escapeHtml(opt.text)}</button>
+      `).join('');
+      grid.classList.remove('hidden');
+
+      grid.querySelectorAll('.option-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (hasAnswered) return;
+          submitAnswer(btn.dataset.answer);
+        });
+      });
+    }
+
+    function renderCheckboxes(options) {
+      const grid = document.getElementById('checkboxGrid');
+      grid.innerHTML = options.map((opt, i) => `
+        <label class="checkbox-item" data-value="${escapeAttr(opt.text)}">
+          <input type="checkbox" id="check-${i}">
+          <span class="checkbox-label">${escapeHtml(opt.text)}</span>
+        </label>
+      `).join('');
+      grid.classList.remove('hidden');
+      document.getElementById('submitCheckbox').classList.remove('hidden');
+
+      grid.querySelectorAll('.checkbox-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+          if (e.target.tagName !== 'INPUT') {
+            const checkbox = item.querySelector('input');
+            checkbox.checked = !checkbox.checked;
+          }
+          item.classList.toggle('selected', item.querySelector('input').checked);
+        });
+      });
+    }
+
+    function renderBonusQuestion(data) {
+      const q = data.question;
+      document.getElementById('bonusQuestionText').textContent = q.text;
+
+      // Hide all
+      document.getElementById('bonusOptionsGrid').classList.add('hidden');
+      document.getElementById('bonusTfGrid').classList.add('hidden');
+      document.getElementById('bonusNumberInput').classList.add('hidden');
+      document.getElementById('bonusTextInput').classList.add('hidden');
+      document.getElementById('bonusCheckboxGrid').classList.add('hidden');
+      document.getElementById('bonusSubmitCheckbox').classList.add('hidden');
+
+      const timerEl = document.getElementById('bonusTimer');
+      if (data.timerEnabled) {
+        timerEl.classList.remove('hidden');
+      } else {
+        timerEl.classList.add('hidden');
+      }
+
+      switch (q.type) {
+        case 'multiple_choice':
+        case 'opinion':
+          const grid = document.getElementById('bonusOptionsGrid');
+          grid.innerHTML = q.options.map(opt => `
+            <button class="option-btn" data-answer="${escapeAttr(opt.text)}">${escapeHtml(opt.text)}</button>
+          `).join('');
+          grid.classList.remove('hidden');
+          grid.querySelectorAll('.option-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+              if (hasAnswered) return;
+              submitAnswer(btn.dataset.answer);
+            });
+          });
+          break;
+        case 'true_false':
+          document.getElementById('bonusTfGrid').classList.remove('hidden');
+          break;
+        case 'number_range':
+          document.getElementById('bonusNumberInput').classList.remove('hidden');
+          document.getElementById('bonusNumberAnswer').value = '';
+          break;
+        case 'text_input':
+          document.getElementById('bonusTextInput').classList.remove('hidden');
+          document.getElementById('bonusTextAnswer').value = '';
+          break;
+        case 'multiple_correct':
+          const checkGrid = document.getElementById('bonusCheckboxGrid');
+          checkGrid.innerHTML = q.options.map((opt, i) => `
+            <label class="checkbox-item" data-value="${escapeAttr(opt.text)}">
+              <input type="checkbox" id="bonus-check-${i}">
+              <span class="checkbox-label">${escapeHtml(opt.text)}</span>
+            </label>
+          `).join('');
+          checkGrid.classList.remove('hidden');
+          document.getElementById('bonusSubmitCheckbox').classList.remove('hidden');
+          checkGrid.querySelectorAll('.checkbox-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+              if (e.target.tagName !== 'INPUT') {
+                const checkbox = item.querySelector('input');
+                checkbox.checked = !checkbox.checked;
+              }
+              item.classList.toggle('selected', item.querySelector('input').checked);
+            });
+          });
+          break;
+      }
+    }
+
+    function hideBonusControls() {
+      document.getElementById('bonusOptionsGrid').classList.add('hidden');
+      document.getElementById('bonusTfGrid').classList.add('hidden');
+      document.getElementById('bonusNumberInput').classList.add('hidden');
+      document.getElementById('bonusTextInput').classList.add('hidden');
+      document.getElementById('bonusCheckboxGrid').classList.add('hidden');
+      document.getElementById('bonusSubmitCheckbox').classList.add('hidden');
+    }
+
+    function renderResult(result, correctAnswer) {
+      const icon = document.getElementById('resultIcon');
+      const text = document.getElementById('resultText');
+      const answer = document.getElementById('resultAnswer');
+      const points = document.getElementById('resultPoints');
+
+      if (result.timedOut) {
+        icon.textContent = '⏰';
+        text.textContent = 'Timed Out!';
+        text.className = 'result-text incorrect';
+      } else if (result.correct) {
+        icon.textContent = '✓';
+        text.textContent = 'Correct!';
+        text.className = 'result-text correct';
+      } else {
+        icon.textContent = '✕';
+        text.textContent = 'Incorrect';
+        text.className = 'result-text incorrect';
+      }
+
+      const answerText = Array.isArray(correctAnswer) ? correctAnswer.join(', ') : correctAnswer;
+      answer.textContent = `Correct answer: ${answerText}`;
+
+      if (result.points > 0) {
+        points.textContent = `+${result.points}`;
+        points.className = 'result-points positive';
+      } else if (result.points < 0) {
+        points.textContent = `${result.points}`;
+        points.className = 'result-points negative';
+      } else {
+        points.textContent = '+0';
+        points.className = 'result-points neutral';
+      }
+    }
+
+    function updateTimer(remaining) {
+      const timerEl = document.getElementById('timer');
+      const bonusTimerEl = document.getElementById('bonusTimer');
+
+      [timerEl, bonusTimerEl].forEach(el => {
+        el.textContent = remaining;
+        el.className = 'timer';
+        if (remaining <= 5) {
+          el.classList.add('danger');
+        } else if (remaining <= 10) {
+          el.classList.add('warning');
+        }
+      });
+    }
+
+    function submitAnswer(answer) {
+      if (hasAnswered) return;
+      socket.emit('submitAnswer', { answer });
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function escapeAttr(text) {
+      return String(text).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    // Event listeners
+    document.getElementById('joinBtn').addEventListener('click', () => {
+      const name = document.getElementById('nameInput').value.trim();
+      if (!name) {
+        document.getElementById('joinError').textContent = 'Please enter a name';
+        return;
+      }
+      document.getElementById('joinError').textContent = '';
+      socket.emit('joinGame', { name, playerKey });
+    });
+
+    document.getElementById('nameInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        document.getElementById('joinBtn').click();
+      }
+    });
+
+    // True/False buttons
+    document.querySelectorAll('.tf-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (hasAnswered) return;
+        submitAnswer(btn.dataset.answer);
+      });
+    });
+
+    // Bonus True/False buttons
+    document.querySelectorAll('#bonusTfGrid .tf-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (hasAnswered) return;
+        submitAnswer(btn.dataset.answer);
+      });
+    });
+
+    // Number input
+    document.getElementById('submitNumber').addEventListener('click', () => {
+      const value = document.getElementById('numberAnswer').value;
+      if (value === '') {
+        alert('Please enter a number');
+        return;
+      }
+      submitAnswer(value);
+    });
+
+    document.getElementById('bonusSubmitNumber').addEventListener('click', () => {
+      const value = document.getElementById('bonusNumberAnswer').value;
+      if (value === '') {
+        alert('Please enter a number');
+        return;
+      }
+      submitAnswer(value);
+    });
+
+    // Text input
+    document.getElementById('submitText').addEventListener('click', () => {
+      const value = document.getElementById('textAnswer').value.trim();
+      if (!value) {
+        alert('Please enter an answer');
+        return;
+      }
+      submitAnswer(value);
+    });
+
+    document.getElementById('bonusSubmitText').addEventListener('click', () => {
+      const value = document.getElementById('bonusTextAnswer').value.trim();
+      if (!value) {
+        alert('Please enter an answer');
+        return;
+      }
+      submitAnswer(value);
+    });
+
+    // Multiple correct checkbox
+    document.getElementById('submitCheckbox').addEventListener('click', () => {
+      const selected = Array.from(document.querySelectorAll('#checkboxGrid input:checked'))
+        .map(input => input.closest('.checkbox-item').dataset.value);
+      if (selected.length === 0) {
+        alert('Please select at least one answer');
+        return;
+      }
+      submitAnswer(selected);
+    });
+
+    // Bonus multiple correct checkbox
+    document.getElementById('bonusSubmitCheckbox').addEventListener('click', () => {
+      const selected = Array.from(document.querySelectorAll('#bonusCheckboxGrid input:checked'))
+        .map(input => input.closest('.checkbox-item').dataset.value);
+      if (selected.length === 0) {
+        alert('Please select at least one answer');
+        return;
+      }
+      submitAnswer(selected);
+    });
+
+    // Enter key for inputs
+    document.getElementById('numberAnswer').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') document.getElementById('submitNumber').click();
+    });
+
+    document.getElementById('textAnswer').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') document.getElementById('submitText').click();
+    });
+
+    document.getElementById('bonusNumberAnswer').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') document.getElementById('bonusSubmitNumber').click();
+    });
+
+    document.getElementById('bonusTextAnswer').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') document.getElementById('bonusSubmitText').click();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+{
+  "id": "mafia",
+  "name": "Mafia",
+  "minPlayers": 6,
+  "maxPlayers": 20,
+  "description": "Social deduction game - find the mafia before it's too late",
+  "icon": "icon.png"
+}

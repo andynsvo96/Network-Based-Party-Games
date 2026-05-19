@@ -1,0 +1,2540 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Mafia Party Game – Host</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --bg: #020617;
+      --bg-alt: #020617;
+      --card: #020617;
+      --accent: #f59e0b;
+      --danger: #ef4444;
+      --success: #22c55e;
+      --muted: #9ca3af;
+      --border-subtle: #1f2937;
+      --border-strong: #374151;
+      --text: #e5e7eb;
+      --text-soft: #9ca3af;
+      --radius-lg: 18px;
+      --radius-xl: 24px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at top, #111827 0, #020617 55%);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+        "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+      padding: 12px;
+    }
+
+    .frame {
+      width: 100%;
+      max-width: 1920px;
+      height: 100%;
+      max-height: 1080px;
+      border-radius: 32px;
+      border: 1px solid rgba(148, 163, 184, 0.24);
+      background: radial-gradient(circle at top, #020617 0, #020617 50%, #000 100%);
+      display: flex;
+      flex-direction: column;
+      padding: 12px 18px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(31, 41, 55, 0.95);
+    }
+
+    .header-left {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .title-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .title-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 16px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at 30% 0, #facc15, #f97316);
+      font-size: 22px;
+    }
+
+    .title-text-main {
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .title-sub {
+      font-size: 13px;
+      color: var(--text-soft);
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    .connection-instructions {
+      margin-top: 4px;
+      font-size: 15px;
+      color: #e5e7eb;
+    }
+
+    .connection-instructions span {
+      color: #facc15;
+      font-weight: 600;
+    }
+
+    .header-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+    }
+
+    .stat-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .badge {
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.8);
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(15, 23, 42, 0.96);
+      color: #e5e7eb;
+    }
+
+    .badge.phase {
+      border-color: rgba(245, 158, 11, 0.9);
+      color: #facc15;
+    }
+
+    .badge.counter {
+      border-color: rgba(96, 165, 250, 0.9);
+      color: #bfdbfe;
+    }
+
+    .pill {
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      font-size: 12px;
+      background: rgba(15, 23, 42, 0.96);
+      color: var(--text-soft);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .pill .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: #22c55e;
+    }
+
+    .top-buttons {
+      display: flex;
+      gap: 8px;
+    }
+
+    button {
+      border: none;
+      outline: none;
+      cursor: pointer;
+      border-radius: 999px;
+      padding: 9px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: rgba(15, 23, 42, 0.96);
+      color: #e5e7eb;
+      border: 1px solid rgba(55, 65, 81, 0.95);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      transition: background 0.12s ease, border-color 0.12s ease, opacity 0.12s ease;
+    }
+
+    button:hover:not(:disabled) {
+      background: rgba(31, 41, 55, 0.98);
+      border-color: rgba(148, 163, 184, 0.9);
+    }
+
+    button:active:not(:disabled) {
+      background: rgba(17, 24, 39, 0.98);
+    }
+
+    button.primary {
+      background: #facc15;
+      color: #111827;
+      border-color: #facc15;
+    }
+
+    button.primary:hover:not(:disabled) {
+      background: #fbbf24;
+      border-color: #fbbf24;
+    }
+
+    button.danger {
+      background: rgba(127, 29, 29, 0.95);
+      border-color: rgba(248, 113, 113, 0.9);
+      color: #fecaca;
+    }
+
+    button.small {
+      padding: 6px 10px;
+      font-size: 12px;
+    }
+
+    button:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+
+    main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 30% 40% 30%;
+      gap: 14px;
+      margin-top: 12px;
+    }
+
+    .intro-layout {
+      grid-template-columns: 100%;
+    }
+
+    /* INTRO: hide the Players (top) and Details/Vote Controls (bottom) sections */
+    .intro-layout>section:nth-child(1),
+    .intro-layout>section:nth-child(3) {
+      display: none;
+    }
+
+
+    .lobby-layout {
+      grid-template-columns: 58% 42%;
+    }
+
+    .results-layout {
+      grid-template-columns: 50% 50%;
+    }
+
+    /* Hide the right column in game results (2 columns only) */
+    .results-layout>section:nth-child(3) {
+      display: none;
+    }
+
+    /* Hide the center column in lobby */
+    .lobby-layout>section:nth-child(2) {
+      display: none;
+    }
+
+
+    .column {
+      height: 100%;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .column-body {
+      flex: 1;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .column-title {
+      font-size: 15px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--text-soft);
+    }
+
+    .card {
+      background: rgba(15, 23, 42, 0.98);
+      border-radius: var(--radius-xl);
+      border: 1px solid rgba(31, 41, 55, 0.96);
+      padding: 16px 16px 14px;
+    }
+
+    .card+.card {
+      margin-top: 10px;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .card-header-title {
+      font-size: 16px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .accent-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #facc15;
+    }
+
+    .small-text {
+      font-size: 13px;
+      color: var(--text-soft);
+    }
+
+    .players-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .player-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 9px;
+      border-radius: 12px;
+      background: rgba(15, 23, 42, 0.96);
+      border: 1px solid rgba(31, 41, 55, 0.96);
+      font-size: 14px;
+    }
+
+    /* Lobby players list with breakdown columns */
+    .players-list.points-breakdown {
+      gap: 4px;
+    }
+
+    .player-row.stats {
+      display: grid;
+      grid-template-columns: 1.6fr 0.65fr 0.65fr 0.65fr 0.65fr 0.65fr 0.9fr 1.0fr 0.8fr;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .kick-btn {
+      padding: 4px 8px;
+      font-size: 11px;
+      background: rgba(127, 29, 29, 0.95);
+      border-color: rgba(248, 113, 113, 0.9);
+      color: #fecaca;
+    }
+
+    .kick-btn:hover:not(:disabled) {
+      background: rgba(153, 27, 27, 0.95);
+    }
+
+    .player-row.stats.header {
+      background: transparent;
+      border: none;
+      padding: 0 9px 6px;
+      font-size: 12px;
+      color: var(--text-soft);
+    }
+
+    .player-cell {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .player-cell.num {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+
+    .player-row .name {
+      font-weight: 500;
+    }
+
+    .player-row.disconnected {
+      opacity: 0.5;
+    }
+
+    .player-row.player-never-joined {
+      display: none;
+    }
+
+    .player-tag {
+      font-size: 12px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.96);
+      border: 1px solid rgba(55, 65, 81, 0.96);
+      color: var(--text-soft);
+    }
+
+    .player-tag.connected {
+      border-color: rgba(34, 197, 94, 0.9);
+      color: #bbf7d0;
+    }
+
+    .player-tag.dead {
+      border-color: rgba(248, 113, 113, 0.9);
+      color: #fecaca;
+    }
+
+    .player-tag.pending {
+      border-color: rgba(234, 179, 8, 0.9);
+      color: #facc15;
+    }
+
+    .player-tag.done {
+      border-color: rgba(34, 197, 94, 0.9);
+      color: #bbf7d0;
+    }
+
+    .voted-for {
+      margin-left: 10px;
+      font-size: 13px;
+      color: var(--text-soft);
+    }
+
+    .roles-grid {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 8px 12px;
+      align-items: center;
+      margin-top: 6px;
+    }
+
+    .roles-grid label {
+      font-size: 14px;
+      color: #e5e7eb;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .role-pill {
+      font-size: 11px;
+      padding: 3px 7px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.96);
+      border: 1px solid rgba(55, 65, 81, 0.96);
+      color: var(--text-soft);
+    }
+
+    .role-pill.role-pill-mafia {
+      border-color: rgba(248, 113, 113, .9);
+      color: #fecaca;
+    }
+
+    .role-pill.role-pill-civilian {
+      border-color: rgba(234, 179, 8, .9);
+      color: #fde68a;
+    }
+
+    .role-pill.role-pill-doctor {
+      border-color: rgba(34, 197, 94, .9);
+      color: #bbf7d0;
+    }
+
+    .role-pill.role-pill-boxer {
+      border-color: rgba(168, 85, 247, .9);
+      color: #e9d5ff;
+    }
+
+    .role-pill.role-pill-detective {
+      border-color: rgba(96, 165, 250, .9);
+      color: #bfdbfe;
+    }
+
+
+    .roles-grid input[type="number"] {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border-strong);
+      background: rgba(15, 23, 42, 0.98);
+      color: #e5e7eb;
+      font-size: 14px;
+      outline: none;
+      text-align: center;
+    }
+
+    .roles-grid input[type="number"]:focus {
+      border-color: #f59e0b;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+
+    .summary-row span {
+      color: var(--text-soft);
+    }
+
+    .summary-row strong {
+      color: #e5e7eb;
+      font-weight: 600;
+    }
+
+    .chip {
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.96);
+      border: 1px solid rgba(55, 65, 81, 0.96);
+      color: var(--text-soft);
+    }
+
+    .join-url-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .join-url-box {
+      flex: 1;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(55, 65, 81, 0.96);
+      background: rgba(15, 23, 42, 0.98);
+      font-size: 14px;
+      color: #e5e7eb;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .hint {
+      margin-top: 8px;
+      font-size: 13px;
+      color: var(--text-soft);
+    }
+
+    .hint strong {
+      color: #e5e7eb;
+    }
+
+    .error-banner {
+      margin-top: 8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(248, 113, 113, 0.9);
+      background: rgba(127, 29, 29, 0.9);
+      color: #fecaca;
+      font-size: 13px;
+    }
+
+    .settings-toggle-row {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 6px;
+    }
+
+    .toggle-line {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
+      color: #e5e7eb;
+    }
+
+    .toggle-line small {
+      color: var(--text-soft);
+      font-size: 12px;
+    }
+
+    .toggle-line input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: #facc15;
+    }
+
+    .inline-input {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .inline-input input[type="number"] {
+      width: 90px;
+      padding: 6px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--border-strong);
+      background: rgba(15, 23, 42, 0.98);
+      color: #e5e7eb;
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .inline-input.disabled {
+      opacity: 0.45;
+    }
+
+    .inline-input input[type="number"]:focus {
+      border-color: #f59e0b;
+    }
+
+    /* Intro */
+
+    .intro-track {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      height: 100%;
+    }
+
+    .intro-card {
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .intro-card.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .intro-image {
+      width: 100%;
+      border-radius: 18px;
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      object-fit: cover;
+      margin-bottom: 4px;
+    }
+
+    .intro-footer {
+      position: absolute;
+      right: 24px;
+      bottom: 22px;
+      display: none;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .intro-step-indicators {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .intro-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(55, 65, 81, 0.98);
+      background: rgba(15, 23, 42, 0.98);
+    }
+
+    .intro-dot.active {
+      border-color: #fbbf24;
+      background: #fbbf24;
+    }
+
+    .intro-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    /* Settings overlay */
+    .overlay-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.82);
+      backdrop-filter: blur(10px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 30;
+    }
+
+    .overlay-backdrop.visible {
+      display: flex;
+    }
+
+    .overlay-panel {
+      width: 520px;
+      max-width: 90%;
+      max-height: 90%;
+      background: rgba(15, 23, 42, 0.98);
+      border-radius: 24px;
+      border: 1px solid rgba(55, 65, 81, 0.95);
+      padding: 18px 18px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .overlay-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .overlay-header h2 {
+      margin: 0;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .overlay-body {
+      flex: 1;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .overlay-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .overlay-section-title {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--text-soft);
+      margin-top: 8px;
+      margin-bottom: 4px;
+    }
+
+    /* Utility text colors */
+    .text-yellow {
+      color: #facc15;
+      font-weight: 700;
+    }
+
+    .text-red {
+      color: var(--danger);
+      font-weight: 700;
+    }
+
+    .text-green {
+      color: var(--success);
+      font-weight: 700;
+    }
+
+    .toggle-state {
+      font-weight: 700;
+    }
+
+    .toggle-state.on {
+      color: var(--success);
+    }
+
+    .toggle-state.off {
+      color: var(--danger);
+    }
+
+    /* Day summary readability (TV-friendly) */
+    .day-summary-card {
+      text-align: center;
+    }
+
+    .day-summary-text {
+      font-size: 22px;
+      line-height: 1.5;
+    }
+
+    .day-summary-text p {
+      margin: 10px 0;
+    }
+
+    .day-summary-text ul {
+      margin: 10px 0 0 0;
+      padding-left: 18px;
+      text-align: left;
+      display: inline-block;
+    }
+
+    .day-summary-text li {
+      margin: 8px 0;
+    }
+
+    /* Results highlights */
+    .results-name {
+      color: #facc15;
+      font-weight: 800;
+    }
+
+    .num-pos {
+      color: var(--success);
+      font-weight: 700;
+    }
+
+    .num-neg {
+      color: var(--danger);
+      font-weight: 700;
+    }
+
+
+    .alibi-notes {
+      margin-top: 6px;
+    }
+
+    .alibi-line {
+      margin: 6px 0;
+      font-size: 22px;
+      line-height: 1.25;
+    }
+
+    @keyframes dangerBlink {
+
+      0%,
+      49% {
+        color: var(--danger);
+      }
+
+      50%,
+      100% {
+        color: var(--text);
+      }
+    }
+
+    .timer-critical {
+      animation: dangerBlink 1s steps(1, end) infinite;
+    }
+
+    .playerStatusCircle {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+    .playerStatusCircle.online { background: #10b981; }
+    .playerStatusCircle.offline {
+      background: transparent;
+      border: 2px solid #6b7280;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="frame">
+    <header>
+      <div class="header-left">
+        <div class="title-row">
+          <div class="title-icon">🂡</div>
+          <div>
+            <div class="title-text-main">Mafia, the party game</div>
+            <div class="title-sub">Host Console</div>
+          </div>
+        </div>
+        <!-- Players join through the main launcher only -->
+        <span id="connectionUrlInline" style="display:none;"></span>
+      </div>
+      <div class="header-right">
+        <div class="stat-row">
+          <div class="badge phase" id="phaseBadge">LOBBY</div>
+          <div class="badge counter" id="dayNightBadge">Day 0 · Night 0</div>
+        </div>
+        <div class="stat-row">
+          <div class="pill">
+            <span class="dot"></span>
+            <span id="playerCountLabel">0 players connected</span>
+          </div>
+          <div class="top-buttons">
+            <button id="settingsBtn" class="small">Settings</button>
+            <button id="endGameBtn" class="small danger" style="display:none;">
+              End Game
+            </button>
+            <button id="returnToLauncherBtn" class="small" style="background:#ef4444;color:white;">Exit to Launcher</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main id="mainLayout">
+      <!-- Left column -->
+      <section class="column">
+        <div class="column-title">Players</div>
+        <div class="column-body" id="leftColumn"></div>
+      </section>
+
+      <!-- Center column -->
+      <section class="column">
+        <div class="column-title" id="centerTitle">Main Controls</div>
+        <div class="column-body" id="centerColumn"></div>
+      </section>
+
+      <!-- Right column -->
+      <section class="column">
+        <div class="column-title" id="rightTitle">Details</div>
+        <div class="column-body" id="rightColumn"></div>
+      </section>
+    </main>
+
+    <!-- Intro footer (bottom right) -->
+    <div class="intro-footer" id="introFooter">
+      <div class="intro-step-indicators">
+        <div class="intro-dot" id="introDot1"></div>
+        <div class="intro-dot" id="introDot2"></div>
+        <div class="intro-dot" id="introDot3"></div>
+      </div>
+      <div class="intro-actions">
+        <button id="introEndBtn" class="small danger">End Game</button>
+        <button id="introActionBtn" class="primary small">Start Game</button>
+      </div>
+    </div>
+
+    <!-- Settings overlay -->
+    <div class="overlay-backdrop" id="settingsOverlay">
+      <div class="overlay-panel">
+        <div class="overlay-header">
+          <h2><span class="accent-dot"></span>Game Settings</h2>
+          <button id="closeSettingsBtn" class="small">Close</button>
+        </div>
+        <div class="overlay-body" id="settingsContent"></div>
+        <div class="overlay-footer">
+          <span class="small-text">
+            Changes are applied immediately.
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const PHASES = {
+      LOBBY: "lobby",
+      INTRO: "intro",
+      NIGHT: "night",
+      DAY: "day",
+      VOTE: "vote",
+      RESULTS: "results",
+    };
+
+    const SKIP_VOTE = "SKIP_VOTE";
+
+    let socket = null;
+
+    let hostInfo = {
+      ip: null,
+      port: null,
+      joinUrl: "",
+    };
+
+    let phase = PHASES.LOBBY;
+    let day = 0;
+    let night = 0;
+
+    let settings = {
+      mafia: 1,
+      doctor: 1,
+      detective: 1,
+      boxer: 0,
+      civilian: 3,
+      anonymousVoting: false,
+      timedVote: false,
+      voteDurationSeconds: 60,
+      mafiaCanSkipKill: false,
+      detectiveRememberMafia: true,
+      allowMafiaVoteMafia: false,
+    };
+
+    let players = []; // {id, name, alive, disconnected, stats?}
+    let nightStatus = []; // {id, name, status:'pending/done/dead'}
+
+    let lastError = "";
+    let voteTimerEnd = null;
+    let voteTicker = null;
+
+    let lastNightInfo = null;
+    let lastVoteInfo = null;
+    let gameOverSummary = null;
+    let voteStatus = {};
+    let voteTargets = {}; // {playerId: true/false}
+
+    // Intro animation state
+    let introSlidesVisible = { 1: false, 2: false, 3: false };
+    let introTimers = [];
+
+    function $(id) {
+      return document.getElementById(id);
+    }
+
+    function titleCaseName(name) {
+      const s = (name || "").trim();
+      if (!s) return "(unnamed)";
+      return s
+        .split(/\s+/)
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+        .join(" ");
+    }
+
+    function formatOnOff(isOn) {
+      return `<span class="toggle-state ${isOn ? "on" : "off"}">${isOn ? "ON" : "OFF"}</span>`;
+    }
+
+
+    function updateVoteTimerDisplay() {
+      const el = document.getElementById("voteTimerValue");
+      if (!el) return;
+      if (!settings.timedVote || !voteTimerEnd) {
+        el.classList.remove("timer-critical");
+        return;
+      }
+      const now = Date.now();
+      const diff = Math.max(0, Math.floor((voteTimerEnd - now) / 1000));
+      el.textContent = String(diff);
+      if (diff <= 10) el.classList.add("timer-critical");
+      else el.classList.remove("timer-critical");
+    }
+
+    function syncVoteTicker() {
+      const shouldRun = (phase === PHASES.VOTE) && settings.timedVote && !!voteTimerEnd;
+      if (shouldRun && !voteTicker) {
+        // tick fast enough to feel responsive, but light enough to not spam layout
+        voteTicker = setInterval(updateVoteTimerDisplay, 250);
+      } else if (!shouldRun && voteTicker) {
+        clearInterval(voteTicker);
+        voteTicker = null;
+      }
+      // Always do an immediate paint if we're in vote.
+      if (phase === PHASES.VOTE) updateVoteTimerDisplay();
+    }
+
+
+
+    function getPointsDetail(p) {
+      return (p && p.pointsDetail) ? p.pointsDetail : {};
+    }
+
+    function getOverallPoints(p) {
+      const d = getPointsDetail(p);
+      if (typeof d.total === "number") return d.total;
+
+      // fallback if total isn't provided
+      const mafia = typeof d.mafia === "number" ? d.mafia : 0;
+      const civ = typeof d.civilian === "number" ? d.civilian : 0;
+      const det = typeof d.detective === "number" ? d.detective : 0;
+      const doc = typeof d.doctor === "number" ? d.doctor : 0;
+      const boxer = typeof d.boxer === "number" ? d.boxer : 0;
+      const lost = typeof d.lost === "number" ? d.lost : 0;
+      return mafia + civ + det + doc + boxer - lost;
+    }
+
+    function lobbyPlayersSorted() {
+      // tie-break: original array order (assumes server sends players in join order)
+      return (filteredPlayers() || [])
+        .map((p, idx) => ({ p, idx }))
+        .sort((a, b) => {
+          const diff = getOverallPoints(b.p) - getOverallPoints(a.p);
+          if (diff !== 0) return diff;
+          return a.idx - b.idx;
+        })
+        .map((x) => x.p);
+    }
+
+
+    function sumRoleCounts() {
+      return (
+        (settings.mafia || 0) +
+        (settings.doctor || 0) +
+        (settings.detective || 0) +
+        (settings.boxer || 0) +
+        (settings.civilian || 0)
+      );
+    }
+
+    function filteredPlayers() {
+      // Return ALL players (including disconnected) for display purposes
+      return players || [];
+    }
+
+    function connectedPlayers() {
+      // Return only connected players for game logic (role validation, game start)
+      return (players || []).filter((p) => !p.disconnected);
+    }
+
+    function formatPlayerCount() {
+      const all = (players || []).length;
+      const connected = connectedPlayers().length;
+      if (all === 0) return "No players";
+      if (connected === all) {
+        return connected === 1 ? "1 player connected" : connected + " players connected";
+      }
+      return `${connected}/${all} players connected`;
+    }
+
+    function formatJoinUrl() {
+      if (hostInfo.joinUrl) return hostInfo.joinUrl;
+      const loc = window.location;
+      return loc.protocol + "//" + loc.host + "/players";
+    }
+
+    function updateHeader() {
+      $("phaseBadge").textContent = phase.toUpperCase();
+      $("dayNightBadge").textContent = `Day ${day} · Night ${night}`;
+      $("playerCountLabel").textContent = formatPlayerCount();
+      $("connectionUrlInline").textContent = formatJoinUrl();
+
+      const inLobby = phase === PHASES.LOBBY;
+      const introPhase = phase === PHASES.INTRO;
+
+      if (introPhase || inLobby) {
+        $("endGameBtn").style.display = "none";
+      } else {
+        $("endGameBtn").style.display = "inline-flex";
+      }
+
+      const mainLayout = $("mainLayout");
+
+      // Intro layout
+      if (introPhase) {
+        mainLayout.classList.add("intro-layout");
+      } else {
+        mainLayout.classList.remove("intro-layout");
+      }
+
+      // Lobby layout (2 columns)
+      if (inLobby && !introPhase) {
+        mainLayout.classList.add("lobby-layout");
+      } else {
+        mainLayout.classList.remove("lobby-layout");
+      }
+
+      // Results layout (2 columns: Timeline + Final Outcome)
+      if (phase === PHASES.RESULTS) {
+        mainLayout.classList.add("results-layout");
+      } else {
+        mainLayout.classList.remove("results-layout");
+      }
+
+
+      $("introFooter").style.display = introPhase ? "flex" : "none";
+    }
+
+    function renderErrorBanner(container) {
+      if (!lastError) return;
+      const div = document.createElement("div");
+      div.className = "error-banner";
+      div.textContent = lastError;
+      container.appendChild(div);
+    }
+
+    // ===== LOBBY =====
+
+    function renderLobby() {
+      const left = $("leftColumn");
+      const center = $("centerColumn");
+      const right = $("rightColumn");
+
+      $("centerTitle").textContent = "Lobby & Roles";
+
+      left.innerHTML = "";
+      center.innerHTML = "";
+      right.innerHTML = "";
+
+      // Left: connected players with lifetime points
+      const playersCard = document.createElement("div");
+      playersCard.className = "card";
+
+      const header = document.createElement("div");
+      header.className = "card-header";
+      header.innerHTML = `
+        <div class="card-header-title">
+          <span class="accent-dot"></span>
+          Connected Players
+        </div>
+      `;
+      playersCard.appendChild(header);
+
+      const small = document.createElement("div");
+      small.className = "small-text";
+      small.textContent =
+        "Everyone must be on the same Wi-Fi and join with a unique name.";
+      playersCard.appendChild(small);
+
+      const list = document.createElement("div");
+      list.className = "players-list";
+      const current = lobbyPlayersSorted();
+      if (current.length === 0) {
+        const p = document.createElement("div");
+        p.className = "small-text";
+        p.textContent = "No players connected yet.";
+        list.appendChild(p);
+      } else {
+        list.classList.add("points-breakdown");
+
+        const headerRow = document.createElement("div");
+        headerRow.className = "player-row stats header";
+        headerRow.innerHTML = `
+    <span class="player-cell">Player</span>
+    <span class="player-cell num">Mafia</span>
+    <span class="player-cell num">Civilian</span>
+    <span class="player-cell num">Detective</span>
+    <span class="player-cell num">Doctor</span>
+    <span class="player-cell num">Boxer</span>
+    <span class="player-cell num">Lost</span>
+    <span class="player-cell num">Overall</span>
+    <span class="player-cell"></span>
+  `;
+        list.appendChild(headerRow);
+
+        current.forEach((p) => {
+          const d = getPointsDetail(p);
+
+          const mafia = typeof d.mafia === "number" ? d.mafia : 0;
+          const civ = typeof d.civilian === "number" ? d.civilian : 0;
+          const det = typeof d.detective === "number" ? d.detective : 0;
+          const doc = typeof d.doctor === "number" ? d.doctor : 0;
+          const lost = typeof d.lost === "number" ? d.lost : 0;
+          const boxer = typeof d.boxer === "number" ? d.boxer : 0;
+          const overall = getOverallPoints(p);
+
+          const row = document.createElement("div");
+          const neverJoinedClass = p.joinedSession === false ? " player-never-joined" : "";
+          row.className = "player-row stats" + (p.disconnected ? " disconnected" : "") + neverJoinedClass;
+
+          const connectionCircleClass = !p.disconnected ? 'online' : 'offline';
+          const connectionCircle = `<span class="playerStatusCircle ${connectionCircleClass}"></span>`;
+
+          row.innerHTML = `
+      <span class="player-cell">${connectionCircle}${titleCaseName(p.name)}</span>
+      <span class="player-cell num">${mafia}</span>
+      <span class="player-cell num">${civ}</span>
+      <span class="player-cell num">${det}</span>
+      <span class="player-cell num">${doc}</span>
+      <span class="player-cell num">${boxer}</span>
+      <span class="player-cell num">${lost}</span>
+      <span class="player-cell num">${overall}</span>
+      <span class="player-cell"></span>
+    `;
+
+          // Add kick button
+          const kickBtn = document.createElement("button");
+          kickBtn.className = "kick-btn";
+          kickBtn.textContent = "Kick";
+          kickBtn.onclick = () => kickPlayer(p.id, p.name);
+          row.querySelector(".player-cell:last-child").appendChild(kickBtn);
+
+          list.appendChild(row);
+        });
+      }
+
+      playersCard.appendChild(list);
+      left.appendChild(playersCard);
+
+      // Center: Roles & Counts editor + Start Game button
+      const rolesCard = document.createElement("div");
+      rolesCard.className = "card";
+
+      const rolesHeader = document.createElement("div");
+      rolesHeader.className = "card-header";
+      rolesHeader.innerHTML = `
+        <div class="card-header-title">
+          <span class="accent-dot"></span>
+          Lobby & Roles
+        </div>
+      `;
+      rolesCard.appendChild(rolesHeader);
+
+      const rolesSmall = document.createElement("div");
+      rolesSmall.className = "small-text";
+      rolesSmall.textContent =
+        "These numbers must add up to the number of connected players.";
+      rolesCard.appendChild(rolesSmall);
+
+      const grid = document.createElement("div");
+      grid.className = "roles-grid";
+
+      function addRoleRow(key, labelText, extra) {
+        const label = document.createElement("label");
+        label.innerHTML =
+          labelText +
+          (extra ? ` <span class="role-pill role-pill-${key}">${extra}</span>` : "");
+        const input = document.createElement("input");
+        input.type = "number";
+        input.id = "roles_" + key;
+        input.min = key === "mafia" || key === "civilian" ? 1 : 0;
+        input.value = settings[key] ?? 0;
+        input.onchange = () => {
+          const val = parseInt(input.value, 10);
+          const payload = {};
+          payload[key] = isNaN(val) ? 0 : val;
+          socket.emit("host_update_settings", payload);
+        };
+        grid.appendChild(label);
+        grid.appendChild(input);
+      }
+
+      addRoleRow("mafia", "Mafia", "Eliminates players");
+      addRoleRow("civilian", "Civilians", "Make alibi notes");
+      addRoleRow("doctor", "Doctor", "Protects players");
+      addRoleRow("detective", "Detective", "Investigates players");
+      addRoleRow("boxer", "Boxer", "Cancels actions");
+
+      rolesCard.appendChild(grid);
+
+      const summaryRow = document.createElement("div");
+      summaryRow.className = "summary-row";
+      const totalPlayers = (players || []).filter(p => p.joinedSession !== false).length;
+      const totalRoles = sumRoleCounts();
+      summaryRow.innerHTML = `
+        <span>Total roles: <strong>${totalRoles}</strong></span>
+        <span>Players: <strong>${totalPlayers}</strong></span>
+      `;
+      rolesCard.appendChild(summaryRow);
+
+      const btnRow = document.createElement("div");
+      btnRow.style.display = "flex";
+      btnRow.style.justifyContent = "space-between";
+      btnRow.style.alignItems = "center";
+      btnRow.style.marginTop = "12px";
+
+      const infoChip = document.createElement("div");
+      infoChip.className = "chip";
+      infoChip.textContent = "Minimum 6 players required";
+      btnRow.appendChild(infoChip);
+
+      const startBtn = document.createElement("button");
+      startBtn.className = "primary";
+      startBtn.textContent = "Start Game";
+      startBtn.onclick = () => {
+        // Safety – server also validates, but button will be disabled if invalid
+        socket.emit("host_start_game");
+      };
+
+      const belowMin = totalPlayers < 6;
+      const mismatch = totalPlayers !== totalRoles;
+
+      startBtn.disabled = belowMin || mismatch;
+
+      btnRow.appendChild(startBtn);
+      rolesCard.appendChild(btnRow);
+
+      if (belowMin) {
+        const err = document.createElement("div");
+        err.className = "error-banner";
+        err.textContent = "You need at least 6 players to start.";
+        rolesCard.appendChild(err);
+      } else if (mismatch) {
+        const err = document.createElement("div");
+        err.className = "error-banner";
+        err.textContent =
+          "Number of roles does not match current amount of players. Please adjust in the settings.";
+        rolesCard.appendChild(err);
+      }
+
+      // Also show any server error
+      renderErrorBanner(rolesCard);
+
+      // Right: join link + quick settings preview
+      const joinCard = document.createElement("div");
+      joinCard.className = "card";
+      joinCard.innerHTML = `
+        <div class="card-header">
+          <div class="card-header-title">
+            <span class="accent-dot"></span>
+            Player Join Link
+          </div>
+        </div>
+      `;
+
+      // Copy Link removed — players join through the main launcher only
+      const joinHint = document.createElement("div");
+      joinHint.className = "hint";
+      joinHint.textContent = "Players join through the main launcher.";
+      joinCard.appendChild(joinHint);
+
+      right.appendChild(joinCard);
+
+      const settingsCard = document.createElement("div");
+      settingsCard.className = "card";
+      settingsCard.innerHTML = `
+        <div class="card-header">
+          <div class="card-header-title">
+            <span class="accent-dot"></span>
+            Quick Options
+          </div>
+        </div>
+        <div class="small-text">
+                    <p>• Anonymous voting: ${formatOnOff(settings.anonymousVoting)}</p>
+          <p>• Timed voting: ${formatOnOff(settings.timedVote)}${settings.timedVote ? ` (${settings.voteDurationSeconds}s)` : ""}</p>
+          <p>• Mafia can skip kill: ${formatOnOff(settings.mafiaCanSkipKill)}</p>
+          <p>• Detective remembers Mafia: ${formatOnOff(settings.detectiveRememberMafia)}</p>
+          <p>• Allow Mafia to vote Mafia: ${formatOnOff(settings.allowMafiaVoteMafia)}</p>
+        </div>
+        <div class="hint">
+          Use <strong>Settings</strong> (top-right) for full controls and stats reset.
+        </div>
+      `;
+      right.appendChild(settingsCard);
+      right.appendChild(rolesCard);
+    }
+
+    // ===== INTRO =====
+
+    function clearIntroTimers() {
+      introTimers.forEach((t) => clearTimeout(t));
+      introTimers = [];
+    }
+
+    function startIntroAnimation() {
+      introSlidesVisible = { 1: false, 2: false, 3: false };
+      clearIntroTimers();
+
+      render(); // creates card1/card2/card3 with NO "visible" class
+
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        introSlidesVisible[1] = true;
+        applyIntroVisibility();
+      }));
+
+      introTimers.push(setTimeout(() => {
+        introSlidesVisible[2] = true;
+        applyIntroVisibility();
+      }, 1000));
+
+      introTimers.push(setTimeout(() => {
+        introSlidesVisible[3] = true;
+        applyIntroVisibility();
+      }, 2000));
+    }
+
+
+
+    function applyIntroVisibility() {
+      const c1 = $("introCard1");
+      const c2 = $("introCard2");
+      const c3 = $("introCard3");
+
+      if (c1) c1.classList.toggle("visible", !!introSlidesVisible[1]);
+      if (c2) c2.classList.toggle("visible", !!introSlidesVisible[2]);
+      if (c3) c3.classList.toggle("visible", !!introSlidesVisible[3]);
+
+      $("introDot1").classList.toggle("active", !!introSlidesVisible[1]);
+      $("introDot2").classList.toggle("active", !!introSlidesVisible[2]);
+      $("introDot3").classList.toggle("active", !!introSlidesVisible[3]);
+    }
+
+
+    function renderIntro() {
+      const left = $("leftColumn");
+      const center = $("centerColumn");
+      const right = $("rightColumn");
+
+      left.innerHTML = "";
+      right.innerHTML = "";
+
+      $("centerTitle").textContent = "Game Introduction";
+      center.innerHTML = "";
+
+      const track = document.createElement("div");
+      track.className = "intro-track";
+
+      // Slide 1 – Night Phase
+      const card1 = document.createElement("div");
+      card1.id = "introCard1";
+      card1.className =
+        "card intro-card" + (introSlidesVisible[1] ? " visible" : "");
+      card1.innerHTML = `
+        <div class="card-header">
+          <div class="card-header-title">
+            <span class="accent-dot"></span>
+            1. Night Phase
+          </div>
+        </div>
+      `;
+      const img1 = document.createElement("img");
+      img1.src = "night_phase.png";
+      img1.alt = "Night phase illustration";
+      img1.className = "intro-image";
+      card1.appendChild(img1);
+      const body1 = document.createElement("div");
+      body1.className = "small-text";
+      body1.style.fontSize = "18px";
+      body1.innerHTML = `
+        <p>Each night, every role perform an action:</p>
+        <ul>
+          <li><strong>Mafia</strong> choose a target to kill.</li>
+          <li><strong>Doctor</strong> pick a player to protect from mafia.</li>
+          <li><strong>Detective</strong> investigates someone to check if they're mafia.</li>
+          <li><strong>Boxer</strong> cancels a player's night action.</li>
+          <li><strong>Civilians</strong> submit anonymous alibi notes.</li>
+        </ul>
+      `;
+      card1.appendChild(body1);
+      track.appendChild(card1);
+
+      // Slide 2 – Day Phase
+      const card2 = document.createElement("div");
+      card2.id = "introCard2";
+      card2.className =
+        "card intro-card" + (introSlidesVisible[2] ? " visible" : "");
+      card2.innerHTML = `
+        <div class="card-header">
+          <div class="card-header-title">
+            <span class="accent-dot"></span>
+            2. Day Phase
+          </div>
+        </div>
+      `;
+      const img2 = document.createElement("img");
+      img2.src = "day_phase.png";
+      img2.alt = "Day phase illustration";
+      img2.className = "intro-image";
+      card2.appendChild(img2);
+      const body2 = document.createElement("div");
+      body2.className = "small-text";
+      body2.style.fontSize = "18px";
+      body2.innerHTML = `
+        <p>At dawn, you reveal what happened:</p>
+        <ul>
+          <li>Announce who was killed (if anyone).</li>
+          <li>Show the anonymous alibi notes made by civilians.</li>
+          <li>Everyone discusses who they think are the killer(s).</li>
+        </ul>
+      `;
+      card2.appendChild(body2);
+      track.appendChild(card2);
+
+      // Slide 3 – Voting Phase
+      const card3 = document.createElement("div");
+      card3.id = "introCard3";
+      card3.className =
+        "card intro-card" + (introSlidesVisible[3] ? " visible" : "");
+      card3.innerHTML = `
+        <div class="card-header">
+          <div class="card-header-title">
+            <span class="accent-dot"></span>
+            3. Voting Phase
+          </div>
+        </div>
+      `;
+      const img3 = document.createElement("img");
+      img3.src = "voting_phase.png";
+      img3.alt = "Voting phase illustration";
+      img3.className = "intro-image";
+      card3.appendChild(img3);
+      const body3 = document.createElement("div");
+      body3.className = "small-text";
+      body3.style.fontSize = "18px";
+      body3.innerHTML = `
+        <p>After discussion, everyone votes on their phone:</p>
+        <ul>
+          <li>Vote out a player or <strong>Skip</strong>.</li>
+          <li>The player with the most votes is eliminated, unless skip or tie.</li>
+          <li>Town wins when all Mafia are gone.</li>
+          <li>Mafia wins when they are as many as the remaining non-Mafia.</li>
+        </ul>
+      `;
+      card3.appendChild(body3);
+      track.appendChild(card3);
+
+      center.appendChild(track);
+
+      // Dots
+      $("introDot1").classList.toggle("active", introSlidesVisible[1]);
+      $("introDot2").classList.toggle("active", introSlidesVisible[2]);
+      $("introDot3").classList.toggle("active", introSlidesVisible[3]);
+
+      // Buttons wired in init
+      $("introActionBtn").textContent = "Start Game";
+    }
+
+    // ===== NIGHT / DAY / VOTE / RESULTS =====
+
+    function renderNight() {
+      const left = $("leftColumn");
+      const center = $("centerColumn");
+      const right = $("rightColumn");
+
+      $("centerTitle").textContent = "Night – Player Status";
+      left.innerHTML = "";
+      center.innerHTML = "";
+      right.innerHTML = "";
+
+      // Left: night status
+      const statusCard = document.createElement("div");
+      statusCard.className = "card";
+      statusCard.innerHTML = `
+        <div class="card-header">
+          <div class="card-header-title">
+            <span class="accent-dot"></span>
+            Night Actions
+          </div>
+        </div>
+        <div class="small-text">
+          Shows which players still need to finish their night actions.
+        </div>
+      `;
+      const list = document.createElement("div");
+      list.className = "players-list";
+
+      (nightStatus || []).forEach((p) => {
+        const row = document.createElement("div");
+        row.className = "player-row";
+
+        const nameSpan = document.createElement("span");
+        nameSpan.className = "name";
+        nameSpan.textContent = p.name;
+        row.appendChild(nameSpan);
+
+        const tag = document.createElement("span");
+        tag.className = "player-tag";
+        if (p.status === "dead") {
+          tag.classList.add("dead");
+          tag.textContent = "Dead";
+        } else if (p.status === "offline") {
+          tag.classList.add("pending");
+          tag.textContent = "Offline";
+          tag.style.background = "var(--accent-dim, #6b3a3a)";
+        } else if (p.status === "pending") {
+          tag.classList.add("pending");
+          tag.textContent = "Pending";
+        } else {
+          tag.classList.add("done");
+          tag.textContent = "Done";
+        }
+        row.appendChild(tag);
+
+        // Add skip button for offline players
+        if (p.disconnected && p.status !== "dead" && p.status !== "done") {
+          const skipBtn = document.createElement("button");
+          skipBtn.className = "btn btn-small";
+          skipBtn.textContent = "Skip";
+          skipBtn.style.marginLeft = "8px";
+          skipBtn.style.padding = "2px 10px";
+          skipBtn.style.fontSize = "0.8em";
+          skipBtn.onclick = () => {
+            socket.emit("host_skip_turn", { playerId: p.id });
+          };
+          row.appendChild(skipBtn);
+        }
+
+        list.appendChild(row);
+      });
+
+      statusCard.appendChild(list);
+      left.appendChild(statusCard);
+
+      // Center: explanation
+      const centerCard = document.createElement("div");
+      centerCard.className = "card";
+      centerCard.innerHTML = `
+        <div class="card-header">
+          <div class="card-header-title">
+            <span class="accent-dot"></span>
+            Night Phase
+          </div>
+        </div>
+        <div class="small-text">
+          <p>Players with special roles are making their choices now:</p>
+          <ul>
+            <li><strong>Mafia</strong> choose a target (or skip, if enabled).</li>
+            <li><strong>Doctor</strong> chooses who to save.</li>
+            <li><strong>Detective</strong> chooses who to investigate.</li>
+            <li><strong>Civilians</strong> submit anonymous alibi notes.</li>
+          </ul>
+          <p>When you're satisfied that everyone has finished, press <strong>Proceed to Day</strong> to resolve the night.</p>
+        </div>
+      `;
+      center.appendChild(centerCard);
+
+      // Right: controls
+      const rightCard = document.createElement("div");
+      rightCard.className = "card";
+      rightCard.innerHTML = `
+        <div class="card-header">
+          <div class="card-header-title">
+            <span class="accent-dot"></span>
+            Controls
+          </div>
+        </div>
+      `;
+      const btn = document.createElement("button");
+      btn.className = "primary";
+      btn.textContent = "Proceed to Day";
+      btn.onclick = () => {
+        socket.emit("host_proceed_day");
+      };
+      rightCard.appendChild(btn);
+      renderErrorBanner(rightCard);
+      right.appendChild(rightCard);
+    }
+
+    function renderDay() {
+      const left = $("leftColumn");
+      const center = $("centerColumn");
+      const right = $("rightColumn");
+
+      $("centerTitle").textContent = "Night Summary";
+      $("rightTitle").textContent = "Vote Controls";
+
+      left.innerHTML = "";
+      center.innerHTML = "";
+      right.innerHTML = "";
+
+      // Center: night summary (large, TV-friendly)
+      const summaryCard = document.createElement("div");
+      summaryCard.className = "card day-summary-card";
+      summaryCard.innerHTML = `
+        <div class="card-header">
+          <div class="card-header-title">
+            <span class="accent-dot"></span>
+            Night Summary
+          </div>
+        </div>
+      `;
+
+      const summaryBody = document.createElement("div");
+      summaryBody.className = "day-summary-text";
+
+      if (!lastNightInfo) {
+        summaryBody.textContent = "Night results will appear here after resolution.";
+      } else {
+        const d = lastNightInfo;
+        const killed = d.deathInfo && d.deathInfo.killedPlayer;
+
+        if (killed) {
+          summaryBody.innerHTML += `<p><span class="text-red"><strong>${killed.name}</strong> was killed by the Mafia.</span></p>`;
+        } else {
+          summaryBody.innerHTML += `<p><span class="text-green"><strong>No one died</strong> last night.</span></p>`;
+        }
+
+        if (d.deathInfo && d.deathInfo.notes && d.deathInfo.notes.length > 0) {
+          summaryBody.innerHTML += `<p><strong>Civilian alibi notes:</strong></p>`;
+          summaryBody.innerHTML += `<div class="alibi-notes">`;
+          d.deathInfo.notes.forEach((n) => {
+            summaryBody.innerHTML +=
+              `<div class="alibi-line">I think <span class="text-yellow"><strong>${n.suspectName}</strong></span> is <span class="text-red"><strong>Mafia</strong></span>, and I trust <span class="text-green"><strong>${n.trustName}</strong></span>.</div>`;
+          });
+          summaryBody.innerHTML += `</div>`;
+        }
+      }
+
+      summaryCard.appendChild(summaryBody);
+      center.appendChild(summaryCard);
+
+      // Right: begin vote
+      const rightCard = document.createElement("div");
+      rightCard.className = "card";
+      rightCard.innerHTML = `
+        <div class="card-header">
+          <div class="card-header-title">
+            <span class="accent-dot"></span>
+            Controls
+          </div>
+        </div>
+        <div class="small-text">
+          Press <strong>Begin Vote</strong> when you're ready to start the town vote.
+          <p>
+        </div>
+      `;
+
+      const btn = document.createElement("button");
+      btn.className = "primary";
+      btn.textContent = "Begin Vote";
+      btn.onclick = () => {
+        socket.emit("host_begin_vote");
+      };
+
+      rightCard.appendChild(btn);
+      renderErrorBanner(rightCard);
+      right.appendChild(rightCard);
+    }
+
+    function renderVote() {
+      const left = $("leftColumn");
+      const center = $("centerColumn");
+      const right = $("rightColumn");
+
+      $("centerTitle").textContent = "Vote – Tracking";
+      $("rightTitle").textContent = "Results";
+
+      left.innerHTML = "";
+      center.innerHTML = "";
+      right.innerHTML = "";
+
+      // Left: alive players + voted tracking
+      const leftCard = document.createElement("div");
+      leftCard.className = "card";
+      leftCard.innerHTML = `
+        <div class="card-header">
+          <div class="card-header-title">
+            <span class="accent-dot"></span>
+            Voting Players
+          </div>
+        </div>
+      `;
+      const list = document.createElement("div");
+      list.className = "players-list";
+      filteredPlayers()
+        .forEach((p) => {
+          const row = document.createElement("div");
+          row.className = "player-row";
+          const nameSpan = document.createElement("span");
+          nameSpan.className = "name";
+          nameSpan.textContent = p.name;
+          row.appendChild(nameSpan);
+
+          const isDead = (p.alive === false) || (p.status === "dead") || (p.dead === true);
+          const voted = !!(voteStatus && voteStatus[p.id]);
+
+          // If anonymous voting is OFF, show who they voted for
+          if (!isDead && voted && !settings.anonymousVoting && voteTargets && voteTargets[p.id]) {
+            const targetId = voteTargets[p.id];
+            const votedFor = document.createElement("span");
+            votedFor.className = "voted-for";
+            let targetName = "Unknown";
+            if (targetId === SKIP_VOTE) {
+              targetName = "Skip Vote";
+            } else {
+              const target = (players || []).find((x) => x.id === targetId);
+              if (target && target.name) targetName = target.name;
+            }
+            votedFor.textContent = `has voted ${targetName},`;
+            row.appendChild(votedFor);
+          }
+
+          const tag = document.createElement("span");
+          tag.className = "player-tag";
+          if (isDead) {
+            tag.classList.add("dead");
+            tag.textContent = "DEAD";
+          } else if (voted) {
+            tag.classList.add("done");
+            tag.textContent = "VOTED";
+          } else {
+            tag.classList.add("pending");
+            tag.textContent = "VOTING";
+          }
+          row.appendChild(tag);
+
+          list.appendChild(row);
+        });
+      leftCard.appendChild(list);
+      left.appendChild(leftCard);
+
+      // Center: timer + info
+      const centerCard = document.createElement("div");
+      centerCard.className = "card";
+
+      let timerText = "";
+      if (settings.timedVote && voteTimerEnd) {
+        const now = Date.now();
+        const diff = Math.max(0, Math.floor((voteTimerEnd - now) / 1000));
+        timerText = `<p>Timed voting is ${formatOnOff(true)}. Remaining time: <strong><span id="voteTimerValue">${diff}</span>s</strong>.</p>`;
+      } else {
+        timerText = `<p>Timed voting is ${formatOnOff(false)}.</p>`;
+      }
+
+      centerCard.innerHTML = `
+        <div class="card-header">
+          <div class="card-header-title">
+            <span class="accent-dot"></span>
+            Voting In Progress
+          </div>
+        </div>
+        <div class="small-text">
+          ${timerText}
+          <p>Players are voting on their phones. When everyone has voted (or the timer ends), you can reveal the result.</p>
+        </div>
+      `;
+
+      const revealBtn = document.createElement("button");
+      revealBtn.className = "primary";
+      revealBtn.textContent = "Reveal Vote Result";
+      revealBtn.onclick = () => {
+        socket.emit("host_resolve_vote");
+      };
+
+      centerCard.appendChild(revealBtn);
+      renderErrorBanner(centerCard);
+      center.appendChild(centerCard);
+
+      // Right: last vote result (if available)
+      const rightCard = document.createElement("div");
+      rightCard.className = "card";
+      rightCard.innerHTML = `
+        <div class="card-header">
+          <div class="card-header-title">
+            <span class="accent-dot"></span>
+            Latest Result
+          </div>
+        </div>
+      `;
+
+      const rb = document.createElement("div");
+      rb.className = "small-text";
+      if (!lastVoteInfo) {
+        rb.textContent = "No vote result revealed yet.";
+      } else {
+        const r = lastVoteInfo;
+        if (r.eliminatedPlayer) {
+          rb.innerHTML = `<p><strong>${r.eliminatedPlayer.name}</strong> was eliminated.</p>`;
+        } else {
+          rb.innerHTML = `<p>No one was eliminated.</p>`;
+        }
+      }
+      rightCard.appendChild(rb);
+      right.appendChild(rightCard);
+    }
+
+    function renderResults() {
+      const left = $("leftColumn");
+      const center = $("centerColumn");
+      const right = $("rightColumn");
+
+      $("centerTitle").textContent = "Game Results";
+      $("rightTitle").textContent = "";
+      left.innerHTML = "";
+      center.innerHTML = "";
+      right.innerHTML = "";
+
+      // Center: outcome + points breakdown
+      const centerCard = document.createElement("div");
+      centerCard.className = "card";
+      centerCard.innerHTML = `
+        <div class="card-header">
+          <div class="card-header-title">
+            <span class="accent-dot"></span>
+            Final Outcome
+          </div>
+        </div>
+      `;
+      const body = document.createElement("div");
+      body.className = "small-text";
+
+      if (!gameOverSummary) {
+        body.textContent = "Game over – final summary not available.";
+      } else {
+        const winner = gameOverSummary.winner;
+        if (winner === "town") {
+          body.innerHTML = `<p><strong>Town (<span class="text-green">Civilians</span>, Doctor, Detective) have won!</strong></p>`;
+        } else if (winner === "mafia") {
+          body.innerHTML = `<p><strong><span class="text-red">Mafia</span> have won!</strong></p>`;
+        } else {
+          body.innerHTML = `<p>The game has ended.</p>`;
+        }
+
+        body.innerHTML += `<p>Days played: <strong>${gameOverSummary.dayCount}</strong>, Nights: <strong>${gameOverSummary.nightCount}</strong>.</p>`;
+
+        body.innerHTML += `<p><strong>Round points (this game):</strong></p><ul>`;
+        const fmtDelta = (n) => {
+          if (n > 0) return `<span class="num-pos">+${n}</span>`;
+          if (n < 0) return `<span class="num-neg">${n}</span>`;
+          return `<span>0</span>`;
+        };
+        (gameOverSummary.players || []).forEach((p) => {
+          const delta = (p && typeof p.roundDelta === "number") ? p.roundDelta : 0;
+          const role = p && p.role ? p.role : "";
+          body.innerHTML += `<li><span class="results-name">${p.name}</span>${role ? ` <span class="text-soft">(${role})</span>` : ""}: ${fmtDelta(delta)}</li>`;
+        });
+        body.innerHTML += `</ul>`;
+      }
+
+      centerCard.appendChild(body);
+      center.appendChild(centerCard);
+
+      // Left: timeline
+      const leftCard = document.createElement("div");
+      leftCard.className = "card";
+      leftCard.innerHTML = `
+        <div class="card-header">
+          <div class="card-header-title">
+            <span class="accent-dot"></span>
+            Timeline
+          </div>
+        </div>
+      `;
+      const leftBody = document.createElement("div");
+      leftBody.className = "small-text";
+
+      if (gameOverSummary && gameOverSummary.timeline.length > 0) {
+        leftBody.innerHTML = "<ul>";
+        gameOverSummary.timeline.forEach((entry) => {
+          if (entry.type === "night") {
+            if (entry.info && entry.info.killedId) {
+              const victim =
+                (gameOverSummary.players || []).find(
+                  (p) => p.id === entry.info.killedId
+                ) || {};
+              leftBody.innerHTML += `<li>Night ${entry.night}: ${victim.name} was killed by Mafia.</li>`;
+            } else {
+              leftBody.innerHTML += `<li>Night ${entry.night}: No one died.</li>`;
+            }
+          } else if (entry.type === "vote") {
+            if (entry.info && entry.info.skipped) {
+              leftBody.innerHTML += `<li>Day ${entry.day}: Vote skipped.</li>`;
+            } else if (entry.info && entry.info.eliminatedId) {
+              const victim =
+                (gameOverSummary.players || []).find(
+                  (p) => p.id === entry.info.eliminatedId
+                ) || {};
+              leftBody.innerHTML += `<li>Day ${entry.day}: ${victim.name} was voted out.</li>`;
+            }
+          }
+        });
+        leftBody.innerHTML += "</ul>";
+      } else {
+        leftBody.textContent = "Timeline will appear here after a full game.";
+      }
+
+      leftCard.appendChild(leftBody);
+      left.appendChild(leftCard);
+    }
+
+    // ===== SETTINGS OVERLAY =====
+
+    function renderSettingsOverlay() {
+      const c = $("settingsContent");
+      c.innerHTML = "";
+
+      const sectionOptions = document.createElement("div");
+      sectionOptions.className = "overlay-section-title";
+      sectionOptions.textContent = "Options";
+      c.appendChild(sectionOptions);
+
+      const toggles = document.createElement("div");
+      toggles.className = "settings-toggle-row";
+
+      function addToggle(key, label, description) {
+        const line = document.createElement("div");
+        line.className = "toggle-line";
+        const text = document.createElement("div");
+        text.innerHTML = `<div>${label}</div>${description ? `<small>${description}</small>` : ""
+          }`;
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = !!settings[key];
+        checkbox.onchange = () => {
+          // Update local state immediately for responsive UI
+          settings[key] = checkbox.checked;
+
+          const payload = {};
+          payload[key] = checkbox.checked;
+          socket.emit("host_update_settings", payload);
+
+          // Timed voting: enable/disable the seconds input immediately (no need to reopen Settings)
+          if (key === "timedVote") {
+            const vdInput = document.getElementById("voteDurationSecondsInput");
+            if (vdInput) {
+              vdInput.disabled = !checkbox.checked;
+              const row = vdInput.closest(".inline-input");
+              if (row) row.classList.toggle("disabled", !checkbox.checked);
+            }
+          }
+        };
+
+        line.appendChild(text);
+        line.appendChild(checkbox);
+        toggles.appendChild(line);
+      }
+      addToggle(
+        "anonymousVoting",
+        "Anonymous voting",
+        "If on, individual votes are hidden from the host summary."
+      );
+      addToggle(
+        "timedVote",
+        "Timed voting",
+        "If on, a countdown will auto-resolve the vote."
+      );
+      addToggle(
+        "mafiaCanSkipKill",
+        "Mafia can skip kill",
+        "If on, Mafia may skip killing to confuse the town."
+      );
+      addToggle(
+        "detectiveRememberMafia",
+        "Detective remembers investigations",
+        "If on, the detective sees a history list of checked players."
+      );
+      addToggle(
+        "allowMafiaVoteMafia",
+        "Allow Mafia to vote Mafia",
+        "If on, Mafia players can vote to eliminate other Mafia during the Voting phase."
+      );
+      addToggle(
+        "usePresetNames",
+        "Use preset names only",
+        "If on, players can only choose from host-defined preset names."
+      );
+
+
+      c.appendChild(toggles);
+
+      // Vote timer (always visible; enabled only when Timed voting is ON)
+      const sectionTimer = document.createElement("div");
+      sectionTimer.className = "overlay-section-title";
+      sectionTimer.textContent = "Vote Timer";
+      c.appendChild(sectionTimer);
+
+      const timerRow = document.createElement("div");
+      timerRow.className = "inline-input";
+      timerRow.innerHTML = `<span class="small-text">Vote duration (seconds):</span>`;
+      const input = document.createElement("input");
+      input.id = "voteDurationSecondsInput";
+      input.type = "number";
+      input.min = 10;
+      input.value = settings.voteDurationSeconds || 60;
+
+      input.onchange = () => {
+        const v = parseInt(input.value, 10);
+        const payload = {};
+        payload.voteDurationSeconds = isNaN(v) ? 60 : v;
+        socket.emit("host_update_settings", payload);
+      };
+      timerRow.appendChild(input);
+      c.appendChild(timerRow);
+
+      input.disabled = !settings.timedVote;
+      timerRow.classList.toggle("disabled", !settings.timedVote);
+
+      const sectionPreset = document.createElement("div");
+      sectionPreset.className = "overlay-section-title";
+      sectionPreset.textContent = "Preset Names";
+      c.appendChild(sectionPreset);
+
+      const presetInfo = document.createElement("div");
+      presetInfo.className = "small-text";
+      presetInfo.style.marginBottom = "8px";
+      presetInfo.textContent = "Add preset names for players to choose from. Names must be unique.";
+      c.appendChild(presetInfo);
+
+      const presetInputRow = document.createElement("div");
+      presetInputRow.className = "inline-input";
+      presetInputRow.style.marginBottom = "8px";
+      presetInputRow.innerHTML = `<input type="text" id="presetNameInput" placeholder="Enter a name" style="flex: 1; padding: 8px 10px; border-radius: 999px; border: 1px solid var(--border-strong); background: rgba(15, 23, 42, 0.98); color: #e5e7eb; font-size: 14px;" />`;
+      const addBtn = document.createElement("button");
+      addBtn.className = "small";
+      addBtn.textContent = "Add";
+      presetInputRow.appendChild(addBtn);
+      c.appendChild(presetInputRow);
+
+      // Error message div
+      const presetError = document.createElement("div");
+      presetError.id = "presetNamesError";
+      presetError.className = "small-text";
+      presetError.style.color = "#ef4444";
+      presetError.style.marginBottom = "8px";
+      presetError.style.minHeight = "16px";
+      c.appendChild(presetError);
+
+      const presetList = document.createElement("div");
+      presetList.id = "presetNamesList";
+      presetList.style.display = "flex";
+      presetList.style.flexDirection = "column";
+      presetList.style.gap = "4px";
+      presetList.style.marginTop = "4px";
+      c.appendChild(presetList);
+
+      // Function to render the preset names list
+      function renderPresetNamesList() {
+        const listEl = document.getElementById("presetNamesList");
+        if (!listEl) return;
+
+        listEl.innerHTML = "";
+
+        if (!settings.presetNames || settings.presetNames.length === 0) {
+          const emptyMsg = document.createElement("div");
+          emptyMsg.className = "small-text";
+          emptyMsg.textContent = "No preset names added yet.";
+          listEl.appendChild(emptyMsg);
+          return;
+        }
+
+        settings.presetNames.forEach((name, idx) => {
+          const nameRow = document.createElement("div");
+          nameRow.style.display = "flex";
+          nameRow.style.justifyContent = "space-between";
+          nameRow.style.alignItems = "center";
+          nameRow.style.padding = "6px 10px";
+          nameRow.style.borderRadius = "999px";
+          nameRow.style.border = "1px solid rgba(55, 65, 81, 0.96)";
+          nameRow.style.background = "rgba(15, 23, 42, 0.98)";
+          nameRow.style.fontSize = "14px";
+
+          const nameText = document.createElement("span");
+          nameText.textContent = name;
+          nameRow.appendChild(nameText);
+
+          const removeBtn = document.createElement("button");
+          removeBtn.className = "small danger";
+          removeBtn.textContent = "Remove";
+          removeBtn.onclick = () => {
+            settings.presetNames.splice(idx, 1);
+            socket.emit("host_update_settings", { presetNames: settings.presetNames });
+            renderPresetNamesList();
+            const errorEl = document.getElementById("presetNamesError");
+            if (errorEl) errorEl.textContent = "";
+          };
+          nameRow.appendChild(removeBtn);
+
+          listEl.appendChild(nameRow);
+        });
+      }
+
+      // Function to add a preset name
+      function addPresetName() {
+        const input = document.getElementById("presetNameInput");
+        const errorEl = document.getElementById("presetNamesError");
+        const rawName = (input.value || "").trim();
+
+        if (!rawName) {
+          if (errorEl) errorEl.textContent = "";
+          return;
+        }
+
+        // Normalize the name (Title Case like server does)
+        function normalizeDisplayName(str) {
+          return str.trim().split(/\s+/).map(w =>
+            w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()
+          ).join(" ");
+        }
+
+        const name = normalizeDisplayName(rawName);
+
+        // Check for duplicates (case-insensitive)
+        const lower = name.toLowerCase();
+        const isDuplicate = settings.presetNames.some(n => normalizeDisplayName(n).toLowerCase() === lower);
+
+        if (isDuplicate) {
+          if (errorEl) errorEl.textContent = "This name is already in the preset list.";
+          return;
+        }
+
+        settings.presetNames.push(name);
+        socket.emit("host_update_settings", { presetNames: settings.presetNames });
+        input.value = "";
+        if (errorEl) errorEl.textContent = "";
+        renderPresetNamesList();
+      }
+
+      // Initial render
+      renderPresetNamesList();
+
+      // Add button click handler
+      addBtn.onclick = addPresetName;
+
+      // Enter key handler
+      const presetNameInput = document.getElementById("presetNameInput");
+      if (presetNameInput) {
+        presetNameInput.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            addPresetName();
+          }
+        });
+      }
+
+      const sectionPoints = document.createElement("div");
+      sectionPoints.className = "overlay-section-title";
+      sectionPoints.textContent = "Lifetime Points";
+      c.appendChild(sectionPoints);
+
+      const pointsRow = document.createElement("div");
+      pointsRow.className = "settings-toggle-row";
+      const info = document.createElement("div");
+      info.className = "small-text";
+      info.textContent =
+        "Reset all players’ lifetime points and role-based stats.";
+      const btnReset = document.createElement("button");
+      btnReset.className = "small danger";
+      btnReset.textContent = "Reset lifetime scores";
+      btnReset.onclick = () => {
+        socket.emit("host_reset_points");
+      };
+      pointsRow.appendChild(info);
+      pointsRow.appendChild(btnReset);
+      c.appendChild(pointsRow);
+    }
+
+    // ===== RENDER ROUTER =====
+
+    function render() {
+      updateHeader();
+
+      if (phase === PHASES.LOBBY) {
+        renderLobby();
+      } else if (phase === PHASES.INTRO) {
+        renderIntro();
+      } else if (phase === PHASES.NIGHT) {
+        renderNight();
+      } else if (phase === PHASES.DAY) {
+        renderDay();
+      } else if (phase === PHASES.VOTE) {
+        renderVote();
+      } else if (phase === PHASES.RESULTS) {
+        renderResults();
+      } else {
+        renderLobby();
+      }
+
+      syncVoteTicker();
+    }
+
+    // ===== KICK PLAYER =====
+
+    function kickPlayer(playerId, playerName) {
+      if (!confirm(`Are you sure you want to kick ${playerName}?`)) return;
+      socket.emit("kickPlayer", { playerId });
+    }
+
+    // ===== SOCKET SETUP =====
+
+    function setupSocket() {
+      // Connect to game namespace
+      const pathParts = window.location.pathname.split('/');
+      const gameId = pathParts[2]; // e.g., "mafia"
+      socket = io(gameId ? `/game/${gameId}` : '/');
+
+      function registerHost() {
+        socket.emit("host_join");
+      }
+
+      socket.on("connect", registerHost);
+
+      if (socket.connected) {
+        registerHost();
+      }
+
+      socket.on("lobby_update", (data) => {
+        phase = data.phase || PHASES.LOBBY;
+        players = data.players || [];
+        settings = Object.assign(settings, data.settings || {});
+        if (phase === PHASES.LOBBY) {
+          day = 0;
+          night = 0;
+          lastNightInfo = null;
+          lastVoteInfo = null;
+          gameOverSummary = null;
+          voteTimerEnd = null;
+          lastError = "";
+          clearIntroTimers();
+        }
+        render();
+      });
+
+      socket.on("host_error", (data) => {
+        lastError =
+          (data && data.message) || "Something went wrong on the host.";
+        render();
+      });
+
+      socket.on("intro_phase_host", (data) => {
+        phase = PHASES.INTRO;
+        day = data.day || 0;
+        night = data.night || 0;
+        lastError = "";
+        startIntroAnimation();
+      });
+
+      socket.on("night_phase_host", (data) => {
+        phase = PHASES.NIGHT;
+        if (data && Array.isArray(data.players)) players = data.players;
+        day = data.day || day;
+        night = data.night || night;
+        settings = Object.assign(settings, data.settings || {});
+        nightStatus = data.nightStatus || [];
+        lastError = "";
+        clearIntroTimers();
+        render();
+      });
+
+      socket.on("night_status_update", (data) => {
+        nightStatus = data.nightStatus || nightStatus;
+        if (phase === PHASES.NIGHT) {
+          render();
+        }
+      });
+
+      socket.on("waiting_for_offline_player", (data) => {
+        // Show notification banner for offline player
+        if (phase === PHASES.NIGHT) {
+          render(); // re-render to show skip buttons
+        }
+      });
+
+      socket.on("host_notification", (data) => {
+        if (data && data.message) {
+          const banner = document.createElement("div");
+          banner.className = "notification-banner";
+          banner.style.cssText = "position:fixed;top:20px;right:20px;padding:12px 20px;border-radius:8px;z-index:9999;font-size:0.9em;opacity:1;transition:opacity 0.5s;";
+          banner.style.background = data.type === "warning" ? "#a85d00" : "#2a6a3a";
+          banner.style.color = "#fff";
+          banner.textContent = data.message;
+          document.body.appendChild(banner);
+          setTimeout(() => { banner.style.opacity = "0"; }, 3000);
+          setTimeout(() => { banner.remove(); }, 3500);
+        }
+      });
+
+      socket.on("night_resolved_for_host", (data) => {
+        lastNightInfo = data;
+      });
+
+      socket.on("day_phase", (data) => {
+        phase = PHASES.DAY;
+        if (data && Array.isArray(data.players)) players = data.players;
+        day = data.day || day;
+        night = data.night || night;
+        lastError = "";
+        render();
+      });
+
+      socket.on("vote_phase_host", (data) => {
+        phase = PHASES.VOTE;
+        // Keep player list (incl. alive/dead) in sync during the game
+        if (data && Array.isArray(data.players)) players = data.players;
+        day = data.day || day;
+        night = data.night || night;
+        settings = Object.assign(settings, data.settings || {});
+        voteTimerEnd = data.voteTimerEnd || null;
+        voteStatus = {};
+        voteTargets = {};
+        lastError = "";
+        render();
+      });
+
+      socket.on("vote_status_update", (data) => {
+        // server sends { voteStatus: {...} }
+        voteStatus = (data && data.voteStatus) ? data.voteStatus : (data || {});
+        voteTargets = (data && data.voteTargets) ? data.voteTargets : {};
+        if (phase === PHASES.VOTE) {
+          render();
+        }
+      });
+
+      socket.on("vote_timer_started", (data) => {
+        voteTimerEnd = data.voteTimerEnd || null;
+        if (phase === PHASES.VOTE) {
+          render();
+        }
+      });
+
+      socket.on("vote_resolved_for_host", (data) => {
+        lastVoteInfo = data;
+      });
+
+      socket.on("game_over", (summary) => {
+        phase = PHASES.RESULTS;
+        gameOverSummary = summary;
+        lastError = "";
+        render();
+      });
+    }
+
+    // ===== HOST INFO (JOIN URL) =====
+
+    async function fetchHostInfo() {
+      try {
+        const res = await fetch("/host-info");
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const json = await res.json();
+        hostInfo.ip = json.ip || null;
+        hostInfo.port = json.port || null;
+        hostInfo.joinUrl =
+          (json.ip && json.port
+            ? `${json.ip}:${json.port}${json.joinPath || "/players"}`
+            : "") || "";
+      } catch (e) {
+        hostInfo.joinUrl = "";
+      } finally {
+        render();
+      }
+    }
+
+    // ===== EVENT HOOKS =====
+
+    $("settingsBtn").onclick = () => {
+      $("settingsOverlay").classList.add("visible");
+      renderSettingsOverlay();
+    };
+
+    $("closeSettingsBtn").onclick = () => {
+      $("settingsOverlay").classList.remove("visible");
+    };
+
+    $("endGameBtn").onclick = () => {
+      socket.emit("host_reset_game");
+    };
+
+    $("introActionBtn").onclick = () => {
+      socket.emit("host_skip_intro"); // "Start Game" -> Night 1
+    };
+
+    $("introEndBtn").onclick = () => {
+      socket.emit("host_reset_game");
+    };
+
+    $("returnToLauncherBtn").onclick = () => {
+      $("returnToLauncherBtn").disabled = true;
+      socket.emit("host_return_to_menu");
+      const masterUrl = window.location.protocol + "//" + window.location.host + "/";
+      setTimeout(() => { window.location.href = masterUrl; }, 100);
+    };
+
+    // ===== INIT =====
+
+    fetchHostInfo();
+    setupSocket();
+    render();
+  </script>
+</body>
+
+</html>

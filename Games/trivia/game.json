@@ -1,0 +1,8 @@
+{
+  "id": "trivia",
+  "name": "Trivia Party",
+  "minPlayers": 2,
+  "maxPlayers": 20,
+  "description": "Test your knowledge with multiple question types! Answer correctly to earn points and compete for the crown.",
+  "icon": "icon.png"
+}

@@ -1,0 +1,15 @@
+{
+  "name": "mafia-party-game",
+  "version": "1.0.0",
+  "description": "Local multiplayer Mafia social deduction game (host + players) using Socket.IO.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.19.2",
+    "socket.io": "^4.8.1"
+  }
+}

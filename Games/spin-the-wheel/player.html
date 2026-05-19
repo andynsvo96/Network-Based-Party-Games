@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>SPIN THE WHEEL - Player</title>
+  <style>
+    :root {
+      --accent: #fbbf24;
+      --accent-hover: #f59e0b;
+      --accent-glow: rgba(251, 191, 36, 0.4);
+      --bg-primary: #0a0e1a;
+      --bg-secondary: #111827;
+      --bg-tertiary: #1f2937;
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --text-gold: #fbbf24;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --border-subtle: rgba(55, 65, 81, 0.5);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      min-height: -webkit-fill-available;
+      min-height: 100dvh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 24px;
+      overflow-y: auto;
+    }
+
+    .screen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 24px;
+    }
+
+    .screen.active {
+      display: flex;
+    }
+
+    .game-title {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .join-input {
+      width: 100%;
+      max-width: 300px;
+      padding: 16px;
+      font-size: 1.25rem;
+      background: var(--bg-tertiary);
+      border: 2px solid var(--border-subtle);
+      border-radius: 12px;
+      color: var(--text-primary);
+      text-align: center;
+      text-transform: uppercase;
+    }
+
+    .join-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .btn {
+      padding: 16px 32px;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.25rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+      color: #000;
+      box-shadow: 0 4px 12px var(--accent-glow);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px var(--accent-glow);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-spin {
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+      border: 6px solid var(--bg-primary);
+      color: var(--bg-primary);
+      font-size: 2rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 0 40px var(--accent-glow);
+      transition: all 0.3s;
+    }
+
+    .btn-spin:hover:not(:disabled) {
+      transform: scale(1.05);
+      box-shadow: 0 0 50px var(--accent-glow);
+    }
+
+    .btn-spin:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .error-message {
+      padding: 12px 20px;
+      background: rgba(239, 68, 68, 0.2);
+      border: 2px solid var(--danger);
+      border-radius: 8px;
+      color: var(--danger);
+    }
+
+    .player-name-display {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    .player-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-width: 300px;
+      width: 100%;
+    }
+
+    .player-item {
+      padding: 12px;
+      background: var(--bg-tertiary);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .player-status {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+    }
+
+    .player-status.offline {
+      background: var(--danger);
+    }
+
+    .status-text {
+      font-size: 1.25rem;
+      color: var(--text-secondary);
+    }
+
+    .current-word {
+      font-size: 3rem;
+      font-weight: 700;
+      color: var(--text-gold);
+      text-shadow: 0 0 20px var(--accent-glow);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.8; }
+    }
+
+    .wheel-icon {
+      font-size: 8rem;
+      animation: spin 3s linear infinite;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .turn-indicator {
+      padding: 16px 24px;
+      background: var(--bg-secondary);
+      border: 2px solid var(--border-subtle);
+      border-radius: 12px;
+    }
+
+    .turn-indicator.your-turn {
+      border-color: var(--accent);
+      animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    /* Choose Next Spinner Modal */
+    .choose-spinner-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+      padding: 24px;
+    }
+
+    .choose-spinner-overlay.active {
+      display: flex;
+    }
+
+    .choose-spinner-modal {
+      background: var(--bg-secondary);
+      border: 2px solid var(--accent);
+      border-radius: 16px;
+      padding: 24px;
+      max-width: 320px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .choose-spinner-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 16px;
+    }
+
+    .choose-spinner-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .choose-spinner-btn {
+      width: 100%;
+      padding: 14px;
+      background: var(--bg-tertiary);
+      border: 2px solid transparent;
+      border-radius: 10px;
+      color: var(--text-primary);
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .choose-spinner-btn:hover {
+      border-color: var(--accent);
+      background: rgba(251, 191, 36, 0.1);
+    }
+
+    .intro-card {
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+      background: var(--bg-secondary);
+      border: 2px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 32px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 16px;
+      max-width: 400px;
+    }
+
+    .intro-card.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .intro-icon {
+      font-size: 4rem;
+    }
+
+    .intro-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .intro-text {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Join Screen -->
+    <div class="screen active" id="joinScreen">
+      <div class="game-title">🎡 SPIN THE WHEEL</div>
+      <input type="text" class="join-input" id="nameInput" placeholder="Enter your name" maxlength="15">
+      <div id="joinError" class="error-message" style="display: none;"></div>
+      <button class="btn btn-primary" id="joinBtn">JOIN GAME</button>
+    </div>
+
+    <!-- Waiting Screen -->
+    <div class="screen" id="waitingScreen">
+      <div class="game-title">🎡 SPIN THE WHEEL</div>
+      <div class="player-name-display" id="playerNameDisplay">-</div>
+      <div class="status-text">Waiting for host to start...</div>
+
+      <div class="player-list" id="playerList"></div>
+
+      <div class="status-text" id="presetInfo" style="margin-top: 16px;">-</div>
+    </div>
+
+    <!-- Intro Screen -->
+    <div class="screen" id="introScreen">
+      <div class="intro-card visible">
+        <div class="intro-icon">🎡</div>
+        <div class="intro-title">SPIN THE WHEEL</div>
+        <div class="intro-text">Get ready to spin! The wheel will select random words based on their weighted probabilities.</div>
+      </div>
+    </div>
+
+    <!-- Main Game Screen (Not Your Turn) -->
+    <div class="screen" id="gameScreen">
+      <div class="game-title">🎡</div>
+      <div class="current-word" id="currentWord">-</div>
+      <div class="wheel-icon">🎡</div>
+      <div class="turn-indicator" id="turnIndicator">
+        <div class="status-text" id="turnStatus">Waiting...</div>
+      </div>
+      <div class="status-text" id="remainingWords">-</div>
+    </div>
+
+    <!-- Your Turn Screen -->
+    <div class="screen" id="yourTurnScreen">
+      <div class="game-title">YOUR TURN!</div>
+      <div class="current-word" id="yourTurnWord">-</div>
+      <button class="btn-spin" id="playerSpinBtn">SPIN</button>
+      <div class="status-text" id="yourTurnRemaining">-</div>
+    </div>
+  </div>
+
+  <!-- Choose Next Spinner Overlay -->
+  <div class="choose-spinner-overlay" id="chooseSpinnerOverlay">
+    <div class="choose-spinner-modal">
+      <div class="choose-spinner-title">Choose Next Spinner</div>
+      <ul class="choose-spinner-list" id="chooseSpinnerList"></ul>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const pathParts = window.location.pathname.split('/');
+    const gameId = pathParts[2];
+    const socket = io(gameId ? `/game/${gameId}` : '/');
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const launcherKey = urlParams.get('launcherKey');
+    const launcherName = urlParams.get('launcherName');
+
+    let playerKey = launcherKey || localStorage.getItem('spin-wheel-player-key') || `player_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    localStorage.setItem('spin-wheel-player-key', playerKey);
+
+    let playerName = launcherName || '';
+    let gamePhase = 'LOBBY';
+    let isMyTurn = false;
+    let currentTurnKey = null;
+
+    // Pre-fill name from launcher
+    if (launcherName) {
+      document.getElementById('nameInput').value = launcherName;
+    }
+
+    // Auto-join if we have credentials from launcher
+    socket.on('connect', () => {
+      if (playerKey && playerName) {
+        socket.emit('joinGame', { playerKey, name: playerName });
+      }
+    });
+
+    // Show screen
+    function showScreen(screenName) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(screenName + 'Screen').classList.add('active');
+    }
+
+    // Join button
+    document.getElementById('joinBtn').addEventListener('click', () => {
+      const name = document.getElementById('nameInput').value.trim();
+      if (!name) {
+        document.getElementById('joinError').textContent = 'Please enter your name';
+        document.getElementById('joinError').style.display = 'block';
+        return;
+      }
+
+      socket.emit('joinGame', { playerKey, name });
+    });
+
+    // Allow enter key to join
+    document.getElementById('nameInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        document.getElementById('joinBtn').click();
+      }
+    });
+
+    // Player spin button
+    document.getElementById('playerSpinBtn').addEventListener('click', () => {
+      socket.emit('requestSpin', { playerKey });
+    });
+
+    // Socket events
+    socket.on('joinSuccess', (data) => {
+      playerName = data.name;
+      document.getElementById('playerNameDisplay').textContent = playerName;
+      showScreen('waiting');
+    });
+
+    socket.on('joinError', (message) => {
+      document.getElementById('joinError').textContent = message;
+      document.getElementById('joinError').style.display = 'block';
+    });
+
+    socket.on('kicked', (data) => {
+      // Clear localStorage
+      localStorage.removeItem('spin-wheel-player-key');
+      localStorage.removeItem('spin-wheel-player-name');
+
+      // Show error and reset to join screen
+      const errorEl = document.getElementById('joinError');
+      errorEl.textContent = data.message || 'You have been removed from the game by the host.';
+      errorEl.style.display = 'block';
+      errorEl.style.color = '#ff5555';
+
+      // Reset state
+      playerName = '';
+
+      // Show join screen
+      showScreen('join');
+    });
+
+    socket.on('playerListUpdate', (players) => {
+      const listEl = document.getElementById('playerList');
+      if (!players || players.length === 0) {
+        listEl.innerHTML = '';
+        return;
+      }
+
+      listEl.innerHTML = players.map(p => `
+        <li class="player-item">
+          <span class="player-status ${p.connected ? '' : 'offline'}"></span>
+          <span>${p.name}</span>
+        </li>
+      `).join('');
+    });
+
+    socket.on('gameState', (state) => {
+      gamePhase = state.phase;
+      currentTurnKey = state.currentTurnKey;
+
+      if (state.currentPreset) {
+        document.getElementById('presetInfo').textContent =
+          `Preset: ${state.currentPreset.title} (${state.currentPreset.words.length} words)`;
+      }
+
+      // Check if it's my turn
+      isMyTurn = (currentTurnKey === playerKey);
+    });
+
+    socket.on('presetLoaded', (data) => {
+      document.getElementById('presetInfo').textContent =
+        `Preset: ${data.preset.title} (${data.preset.words.length} words)`;
+    });
+
+    socket.on('introPhase', () => {
+      showScreen('intro');
+      setTimeout(() => {
+        // Auto-advance after intro
+      }, 3000);
+    });
+
+    socket.on('mainGamePhase', (data) => {
+      gamePhase = 'MAIN_GAME';
+      currentTurnKey = data.currentTurnKey;
+      isMyTurn = (currentTurnKey === playerKey);
+
+      if (isMyTurn) {
+        showScreen('yourTurn');
+        updateYourTurnScreen(data);
+      } else {
+        showScreen('game');
+        updateGameScreen(data);
+      }
+    });
+
+    socket.on('turnChange', (data) => {
+      currentTurnKey = data.currentTurnKey;
+      isMyTurn = (currentTurnKey === playerKey);
+
+      // Dismiss choose-spinner popup if open
+      document.getElementById('chooseSpinnerOverlay').classList.remove('active');
+
+      if (isMyTurn) {
+        showScreen('yourTurn');
+      } else {
+        showScreen('game');
+        document.getElementById('turnStatus').textContent =
+          `${data.playerName} is spinning...`;
+      }
+    });
+
+    socket.on('yourTurn', (data) => {
+      isMyTurn = true;
+      showScreen('yourTurn');
+    });
+
+    socket.on('waitingForPlayer', (data) => {
+      if (!isMyTurn) {
+        document.getElementById('turnStatus').textContent =
+          `Waiting for ${data.playerName}...`;
+      }
+    });
+
+    socket.on('spinStart', (data) => {
+      document.getElementById('currentWord').textContent = '...';
+      document.getElementById('yourTurnWord').textContent = '...';
+      document.getElementById('playerSpinBtn').disabled = true;
+    });
+
+    socket.on('spinResult', (data) => {
+      const word = data.word.text;
+      document.getElementById('currentWord').textContent = word;
+      document.getElementById('yourTurnWord').textContent = word;
+
+      const remaining = data.remainingWords;
+      const remainingText = `Remaining: ${remaining} word${remaining !== 1 ? 's' : ''}`;
+      document.getElementById('remainingWords').textContent = remainingText;
+      document.getElementById('yourTurnRemaining').textContent = remainingText;
+      document.getElementById('playerSpinBtn').disabled = false;
+    });
+
+    socket.on('gameOver', (data) => {
+      alert(`Game Over! Last word: ${data.lastWord?.text || '-'}`);
+    });
+
+    socket.on('lobbyPhase', () => {
+      gamePhase = 'LOBBY';
+      document.getElementById('chooseSpinnerOverlay').classList.remove('active');
+      showScreen('waiting');
+    });
+
+    socket.on('chooseNextSpinner', (data) => {
+      // Only show the popup if this player is the chooser
+      if (data.chooserKey === playerKey) {
+        const listEl = document.getElementById('chooseSpinnerList');
+        listEl.innerHTML = data.eligiblePlayers.map(p => `
+          <li><button class="choose-spinner-btn" data-key="${p.key}">${p.name}</button></li>
+        `).join('');
+        document.getElementById('chooseSpinnerOverlay').classList.add('active');
+      }
+    });
+
+    document.getElementById('chooseSpinnerList').addEventListener('click', (e) => {
+      const btn = e.target.closest('.choose-spinner-btn');
+      if (btn && btn.dataset.key) {
+        socket.emit('selectNextSpinner', { selectedPlayerKey: btn.dataset.key });
+        document.getElementById('chooseSpinnerOverlay').classList.remove('active');
+      }
+    });
+
+    socket.on('spinError', (message) => {
+      alert(message);
+    });
+
+    socket.on('returned_to_menu', (data) => {
+      if (data && data.shutdownId) {
+        socket.emit('player_ack_return_to_menu', { shutdownId: data.shutdownId });
+      }
+      setTimeout(() => {
+        socket.disconnect();
+        const masterUrl = window.location.protocol + "//" + window.location.host + "/players";
+        window.location.href = masterUrl;
+      }, 50);
+    });
+
+    socket.on('hostDisconnected', () => {
+      document.getElementById('turnStatus').textContent = 'Host disconnected - waiting...';
+    });
+
+    function updateGameScreen(data) {
+      const remaining = data.availableWords?.length || 0;
+      document.getElementById('remainingWords').textContent =
+        `Remaining: ${remaining} word${remaining !== 1 ? 's' : ''}`;
+    }
+
+    function updateYourTurnScreen(data) {
+      const remaining = data.availableWords?.length || 0;
+      document.getElementById('yourTurnRemaining').textContent =
+        `Remaining: ${remaining} word${remaining !== 1 ? 's' : ''}`;
+    }
+  </script>
+</body>
+</html>

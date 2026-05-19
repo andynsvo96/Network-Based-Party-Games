@@ -1,0 +1,1831 @@
+<!-- player.html (PLAYER) - Poker Betting (no cards) -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Poker Betting Player</title>
+  <style>
+    :root{
+      --bg:#0b0f14;
+      --panel:#111826;
+      --panel2:#0f1623;
+      --border:rgba(255,255,255,.10);
+      --muted:rgba(255,255,255,.70);
+      --muted2:rgba(255,255,255,.55);
+      --text:#eaf0ff;
+      --accent:#4ea1ff;
+      --good:#39d98a;
+      --warn:#ffcc66;
+      --bad:#ff5c7a;
+      --shadow: 0 12px 40px rgba(0,0,0,.45);
+      --radius:16px;
+      --radius2:22px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      background:
+        radial-gradient(1000px 600px at 15% 10%, rgba(78,161,255,.18), transparent 60%),
+        radial-gradient(900px 550px at 80% 15%, rgba(57,217,138,.10), transparent 60%),
+        radial-gradient(900px 550px at 55% 110%, rgba(255,92,122,.10), transparent 60%),
+        var(--bg);
+      color:var(--text);
+      min-height:100vh;
+    }
+    .wrap{max-width:1100px;margin:0 auto;padding:18px 18px 28px}
+    .mono{font-family:var(--mono)}
+    a{color:inherit}
+
+    header{
+      display:flex;gap:12px;align-items:flex-start;justify-content:space-between;
+      padding:14px 14px;
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      box-shadow: var(--shadow);
+    }
+    .titleRow{display:flex;flex-direction:column;gap:8px}
+    .title{
+      display:flex;align-items:center;gap:10px;
+      font-size:18px;font-weight:900;letter-spacing:.2px;
+    }
+    .pill{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:6px 10px;border-radius:999px;
+      border:1px solid var(--border);
+      background:rgba(0,0,0,.25);
+      font-size:12px;color:var(--muted);
+      width:fit-content;
+    }
+    .dot{width:9px;height:9px;border-radius:99px;display:inline-block;background:rgba(255,255,255,.35)}
+    .dot.good{background:var(--good)}
+    .dot.bad{background:var(--bad)}
+    .dot.warn{background:var(--warn)}
+
+    button{
+      font-family:inherit;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.06);
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:12px;
+      cursor:pointer;
+      transition: transform .05s ease, background .15s ease, border-color .15s ease;
+      user-select:none;
+    }
+    button:hover{background:rgba(255,255,255,.10)}
+    button:active{transform:translateY(1px)}
+    button.primary{
+      background:linear-gradient(180deg, rgba(78,161,255,.95), rgba(78,161,255,.72));
+      border-color:rgba(78,161,255,.65);
+      color:#06111f;
+      font-weight:900;
+    }
+    button.danger{
+      background:linear-gradient(180deg, rgba(255,92,122,.95), rgba(255,92,122,.70));
+      border-color:rgba(255,92,122,.60);
+      color:#21040b;
+      font-weight:900;
+    }
+    button.good{
+      background:linear-gradient(180deg, rgba(57,217,138,.95), rgba(57,217,138,.70));
+      border-color:rgba(57,217,138,.60);
+      color:#061a12;
+      font-weight:900;
+    }
+    button:disabled{opacity:.45;cursor:not-allowed}
+    input, select{
+      font-family:inherit;
+      padding:10px 10px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(0,0,0,.25);
+      color:var(--text);
+      outline:none;
+    }
+    input:focus, select:focus{border-color:rgba(78,161,255,.60)}
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap:14px;
+      margin-top:14px;
+    }
+    @media (max-width: 980px){
+      .grid{grid-template-columns:1fr}
+    }
+
+    .card{
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .cardHeader{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:12px 14px;
+      border-bottom:1px solid var(--border);
+      background:rgba(0,0,0,.16);
+      gap:10px;
+    }
+    .cardHeader h2{margin:0;font-size:14px;letter-spacing:.2px}
+    .cardBody{padding:14px}
+    .hint{color:var(--muted2);font-size:12px;line-height:1.35}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .sep{height:1px;background:rgba(255,255,255,.10);margin:12px 0}
+
+    .kpiRow{display:flex;gap:10px;flex-wrap:wrap}
+    .kpi{
+      flex:1;
+      min-width:160px;
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:14px;
+      background:rgba(0,0,0,.20);
+      padding:10px 10px;
+    }
+    .kpi .label{font-size:11px;color:var(--muted2)}
+    .kpi .value{font-size:16px;font-weight:900;margin-top:4px}
+    .kpi .sub{font-size:12px;color:var(--muted);margin-top:6px}
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+      font-size:13px;
+    }
+    th, td{
+      text-align:left;
+      padding:10px 10px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      vertical-align:middle;
+    }
+    th{color:var(--muted);font-size:12px;font-weight:700}
+
+    .tag{
+      display:inline-flex;align-items:center;gap:6px;
+      padding:4px 8px;border-radius:999px;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(0,0,0,.22);
+      color:var(--muted);
+      font-size:12px;
+      white-space:nowrap;
+    }
+    #posTag{
+      font-weight:800;
+      font-size:13px;
+      padding:6px 12px;
+      border:1px solid rgba(255,204,102,.30);
+      background:rgba(255,204,102,.12);
+      color:rgba(255,204,102,.98);
+    }
+    .badge{
+      display:inline-flex;align-items:center;justify-content:center;
+      padding:3px 8px;border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.06);
+      font-size:12px;color:var(--muted);
+    }
+    .badge.d{color:rgba(255,204,102,.95);border-color:rgba(255,204,102,.25)}
+    .badge.sb{color:rgba(57,217,138,.95);border-color:rgba(57,217,138,.25)}
+    .badge.bb{color:rgba(78,161,255,.95);border-color:rgba(78,161,255,.25)}
+    .badge.turn{color:rgba(78,161,255,.95);border-color:rgba(78,161,255,.30)}
+
+    .playerStatusCircle{
+      width:10px;height:10px;border-radius:50%;
+      display:inline-block;margin-right:8px;
+      vertical-align:middle;
+    }
+    .playerStatusCircle.online{background:#10b981}
+    .playerStatusCircle.offline{
+      background:transparent;
+      border:2px solid #6b7280;
+    }
+
+    .streetBar{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin: 6px 0 12px 0;
+    }
+    .streetStep{
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(0,0,0,.18);
+      color:var(--muted2);
+      font-size:12px;
+      font-weight:800;
+      letter-spacing:.2px;
+      user-select:none;
+    }
+    .streetStep.active{
+      border-color:rgba(255,204,102,.35);
+      background:rgba(255,204,102,.10);
+      color:var(--warn);
+    }
+
+    .moneyIn{ color:var(--good); font-weight:800; }
+    .moneyOut{ color:var(--bad);  font-weight:800; }
+
+    .nameRow{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .posBadges{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+
+
+    .actionGrid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
+    @media (max-width: 520px){
+      .actionGrid{grid-template-columns:1fr}
+    }
+
+    .raiseBox{
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:14px;
+      background:rgba(0,0,0,.20);
+      padding:12px 12px;
+    }
+    .sliderRow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    input[type="range"]{width:100%}
+    .small{font-size:12px;color:var(--muted)}
+    .warnBox{
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid rgba(255,204,102,.25);
+      background:rgba(255,204,102,.10);
+      color:rgba(255,255,255,.85);
+      font-size:12px;
+      line-height:1.35;
+      margin:10px 0;
+    }
+    .badBox{
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid rgba(255,92,122,.28);
+      background:rgba(255,92,122,.10);
+      color:rgba(255,255,255,.88);
+      font-size:12px;
+      line-height:1.35;
+      margin:10px 0;
+    }
+
+    .scroll{
+      max-height:240px;
+      overflow:auto;
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:12px;
+      background:rgba(0,0,0,.20);
+      padding:10px 10px;
+    }
+    .logItem{
+      font-size:12px;color:var(--muted);
+      padding:8px 8px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      line-height:1.25;
+    }
+    .logItem:last-child{border-bottom:none}
+    .logItem strong{color:var(--text)}
+
+    /* Views */
+    #joinView, #waitView, #playView{display:none}
+    .active{display:block !important}
+
+    /* Modal */
+    .modalBackdrop{
+      position:fixed;inset:0;background:rgba(0,0,0,.55);
+      display:none;align-items:center;justify-content:center;
+      padding:18px;
+      z-index:999;
+    }
+    .modalBackdrop.show{display:flex}
+    .modal{
+      width:min(620px, 96vw);
+      max-height:92vh;
+      overflow:auto;
+      border:1px solid rgba(255,255,255,.14);
+      border-radius:var(--radius2);
+      background:linear-gradient(180deg, rgba(17,24,38,.98), rgba(10,14,20,.98));
+      box-shadow: 0 24px 80px rgba(0,0,0,.65);
+    }
+    .modalHeader{
+      padding:14px 16px;
+      border-bottom:1px solid rgba(255,255,255,.12);
+      display:flex;align-items:center;justify-content:space-between;gap:10px;
+    }
+    .modalHeader h3{margin:0;font-size:14px;letter-spacing:.2px}
+    .modalBody{padding:14px 16px}
+    .modalFooter{
+      padding:14px 16px;border-top:1px solid rgba(255,255,255,.12);
+      display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;
+    }
+
+    /* Toast */
+    .toastWrap{
+      position:fixed;
+      right:16px;
+      bottom:16px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      z-index:1200;
+      pointer-events:none;
+    }
+    .toast{
+      pointer-events:auto;
+      width:min(380px, 92vw);
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(0,0,0,.65);
+      box-shadow: 0 18px 50px rgba(0,0,0,.55);
+      padding:10px 12px;
+      color:rgba(255,255,255,.90);
+      font-size:12px;
+      line-height:1.3;
+    }
+    .toast .t{font-weight:900;margin-bottom:4px}
+    .toast.good{border-color:rgba(57,217,138,.28)}
+    .toast.bad{border-color:rgba(255,92,122,.28)}
+    .toast.warn{border-color:rgba(255,204,102,.28)}
+  
+    
+    /* Action timer warning */
+    .timerWarnFlash{
+      border-color: rgba(255,92,122,.55) !important;
+      background: rgba(255,92,122,.12) !important;
+      animation: timerFlash 1s ease-in-out infinite;
+    }
+    @keyframes timerFlash{
+      0%,100%{ filter:none; }
+      50%{ filter: brightness(1.1); }
+    }
+/* Disable/blur Table section during between-hands (cash) and showdown */
+    .tableCard{ position:relative; }
+    .tableCard.disabled #tableBlurTarget{
+      filter: blur(6px);
+      pointer-events:none;
+      user-select:none;
+    }
+    .tableOverlay{
+      position:absolute;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:14px;
+      background:rgba(0,0,0,.55);
+      backdrop-filter: blur(2px);
+    }
+    .overlayInner{
+      max-width: 360px;
+      width: 100%;
+      border:1px solid rgba(255,255,255,.14);
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
+      box-shadow: var(--shadow);
+      padding: 14px;
+      text-align:center;
+    }
+    .overlayTitle{
+      font-weight: 950;
+      letter-spacing: .3px;
+      margin-bottom: 6px;
+      font-size: 14px;
+    }
+    .overlayBody{
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+      margin-bottom: 10px;
+    }
+    .overlayTimer{
+      font-size: 34px;
+      font-weight: 950;
+      letter-spacing: .6px;
+    }
+    .overlayTimer.pulse{
+      animation: pulse 1s ease-in-out infinite;
+    }
+    @keyframes pulse{
+      0%,100%{ transform: scale(1); opacity: 1; }
+      50%{ transform: scale(1.05); opacity: .85; }
+    }
+
+    /* Preset name dropdown styling */
+    #presetNameSel,
+    #renamePresetSel {
+      font-size: 15px;
+      font-weight: 600;
+      padding: 12px 14px;
+      background: #1a1f2e;
+      color: #fff;
+      border: 1px solid rgba(78, 161, 255, .40);
+    }
+
+    #presetNameSel option,
+    #renamePresetSel option {
+      background: #1a1f2e;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      padding: 10px 12px;
+    }
+
+    #presetNameSel option.taken,
+    #renamePresetSel option.taken {
+      color: rgba(255,255,255,.40);
+    }
+
+    #presetNameSel option:disabled,
+    #renamePresetSel option:disabled {
+      color: rgba(255,255,255,.40);
+    }
+
+    .forceReselectBox {
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 204, 102, .35);
+      background: rgba(255, 204, 102, .12);
+      color: rgba(255, 255, 255, .90);
+      font-size: 13px;
+      line-height: 1.4;
+      margin-bottom: 12px;
+    }
+
+    /* Intro animation styles */
+    #introScreen {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 2000;
+      overflow: hidden;
+    }
+    #introScreen.active { display: flex; align-items: center; justify-content: center; }
+    .intro-track {
+      display: flex;
+      gap: 32px;
+      padding: 24px;
+      max-width: 1200px;
+    }
+    .intro-card {
+      flex: 1;
+      min-width: 280px;
+      max-width: 360px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      box-shadow: var(--shadow);
+      padding: 24px;
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .intro-card.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .intro-card h3 {
+      margin: 0 0 12px 0;
+      font-size: 18px;
+      color: var(--accent);
+    }
+    .intro-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    @media (max-width: 900px) {
+      .intro-track {
+        flex-direction: column;
+        align-items: center;
+      }
+      .intro-card {
+        max-width: 400px;
+        width: 100%;
+      }
+    }
+
+</style>
+</head>
+
+<body>
+  <!-- INTRO SCREEN -->
+  <section id="introScreen">
+    <div class="intro-track">
+      <div class="intro-card" id="introCard1">
+        <h3 id="introTitle1">How to Play</h3>
+        <p id="introContent1">Loading...</p>
+      </div>
+      <div class="intro-card" id="introCard2">
+        <h3 id="introTitle2">Betting</h3>
+        <p id="introContent2">Loading...</p>
+      </div>
+      <div class="intro-card" id="introCard3">
+        <h3 id="introTitle3">Winning</h3>
+        <p id="introContent3">Loading...</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap">
+    <header>
+      <div class="titleRow">
+        <div class="title">
+          Poker Betting (Player)
+          <span class="pill"><span class="dot" id="connDot"></span><span id="connText">Connecting…</span></span>
+        </div>
+        <div class="row">
+          <span class="pill">You are: <strong id="youName">—</strong></span>
+          <span class="pill">Mode: <strong id="modePill">—</strong></span>
+          <span class="pill">Street: <strong id="streetPill">—</strong></span>
+          <span class="pill" id="turnPill" style="display:none"><span class="dot good"></span>Your turn</span>
+          <span class="pill" id="timerPill" style="display:none">Timer: <strong id="timerText">—</strong></span>
+        </div>
+        <div class="hint" id="topHint">Enter your name to join.</div>
+      </div>
+
+      <div class="row" style="justify-content:flex-end;align-items:flex-start">
+        <button id="renameBtn">Rename</button>
+        <button id="cashoutBtn" class="danger" style="display:none">Cash Out</button>
+      </div>
+    </header>
+
+    <!-- JOIN VIEW -->
+    <section id="joinView" class="active" style="margin-top:14px">
+      <div class="card">
+        <div class="cardHeader">
+          <h2>Join Game</h2>
+          <span class="tag">2–8 players</span>
+        </div>
+        <div class="cardBody">
+          <div style="text-align:center;padding:16px 0;">
+            <p class="hint" style="margin-bottom:12px;">Players must join through the main launcher.</p>
+            <a href="/" class="primary" style="display:inline-block;padding:10px 24px;text-decoration:none;border-radius:6px;">Go to Launcher</a>
+          </div>
+          <!-- Hidden elements kept for auto-reconnect JS compatibility -->
+          <div id="customNameSection" style="display:none;">
+            <input id="nameInp" type="hidden" />
+            <button id="joinBtn" style="display:none;">Join</button>
+          </div>
+          <div id="presetNameSection" style="display:none;">
+            <select id="presetNameSel" style="display:none;">
+              <option value="">Choose a name...</option>
+            </select>
+            <button id="joinPresetBtn" style="display:none;">Join</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- WAIT VIEW -->
+    <section id="waitView" style="margin-top:14px">
+      <div class="card">
+        <div class="cardHeader">
+          <h2>Waiting for Host</h2>
+          <span class="tag" id="waitTag">Lobby</span>
+        </div>
+        <div class="cardBody">
+          <div class="hint" id="waitHint">
+            Game hasn’t started yet. Stay on this screen until the host starts.
+          </div>
+          <div class="sep"></div>
+          <div class="hint" style="margin-bottom:8px">Recent actions</div>
+          <div class="scroll" id="waitFeed"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PLAY VIEW -->
+    <section id="playView" style="margin-top:14px">
+      <div class="grid">
+        <!-- LEFT: Gameplay -->
+        <div class="card">
+          <div class="cardHeader">
+            <h2>Actions</h2>
+            <span class="tag" id="actionStateTag">—</span>
+          </div>
+          <div class="cardBody">
+            <div class="streetBar" id="streetBar" aria-label="Hand stage">
+              <span class="streetStep" data-street="preflop">Pre-flop</span>
+              <span class="streetStep" data-street="flop">Flop</span>
+              <span class="streetStep" data-street="turn">Turn</span>
+              <span class="streetStep" data-street="river">River</span>
+              <span class="streetStep" data-street="showdown">Showdown</span>
+            </div>
+            <div class="kpiRow">
+              <div class="kpi">
+                <div class="label">Your Stack</div>
+                <div class="value mono" id="stackKpi">—</div>
+                <div class="sub" id="netKpi">Hand net: —</div>
+              </div>
+              <div class="kpi">
+                <div class="label">To Call</div>
+                <div class="value mono" id="toCallKpi">—</div>
+                <div class="sub" id="minRaiseKpi">Min raise: —</div>
+              </div>
+              <div class="kpi">
+                <div class="label">Pots</div>
+                <div class="value mono" id="potsKpi">—</div>
+                <div class="sub" id="blindsKpi">Blinds: —</div>
+              </div>
+            </div>
+
+            <div id="bustBox" class="badBox" style="display:none">
+              You are out of money for this game.
+            </div>
+
+            <div id="resultBox" class="warnBox" style="display:none">
+              <div style="font-weight:900;margin-bottom:6px">Hand Result</div>
+              <div id="resultText"></div>
+            </div>
+
+            <div class="sep"></div>
+
+            <div class="actionGrid">
+              <button id="foldBtn" class="danger" disabled>Fold</button>
+              <button id="callBtn" class="good" disabled>Call</button>
+              <button id="raiseBtn" class="primary" disabled>Raise</button>
+              <button id="allinBtn" disabled>All-in</button>
+            </div>
+
+            <div class="sep"></div>
+
+
+            <div class="raiseBox">
+              
+              <div class="row" style="justify-content:space-between;align-items:end">
+                <div style="flex:1;min-width:180px">
+                  <div class="hint">Bet amount</div>
+                  <input id="raiseExactInp" inputmode="decimal" placeholder="e.g. 12.00" />
+                </div>
+                <span class="tag">Selected: <strong class="mono" id="raiseSelected">—</strong></span>
+              </div>
+
+              <div style="margin-top:10px">
+                <input id="raiseSlider" type="range" min="0" max="0" step="0.01" value="0" disabled />
+              </div>
+</div>
+          </div>
+        </div>
+
+        <!-- RIGHT: Table info -->
+        <div class="card tableCard" id="tableCard">
+          <div id="tableBlurTarget">
+          <div class="cardHeader">
+            <h2>Table</h2>
+            <span class="tag" id="posTag">—</span>
+          </div>
+          <div class="cardBody">
+            <div class="hint" style="margin-bottom:8px">Players</div>
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:34%">Name</th>
+                  <th style="width:18%">Role</th>
+                  <th style="width:24%">Stack</th>
+                  <th style="width:24%">Bet</th>
+                </tr>
+              </thead>
+              <tbody id="tableTbody"></tbody>
+            </table>
+
+            <div class="sep"></div>
+
+            <div class="hint" style="margin-bottom:8px">Compact action feed</div>
+            <div class="scroll" id="actionFeed"></div>
+          </div>
+          </div>
+          <div id="tableOverlay" class="tableOverlay" style="display:none" aria-hidden="true">
+            <div class="overlayInner">
+              <div class="overlayTitle" id="tableOverlayTitle">—</div>
+              <div class="overlayBody" id="tableOverlayBody">—</div>
+              <div class="overlayTimer" id="tableOverlayTimer">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- CASHOUT CONFIRM MODAL -->
+  <div class="modalBackdrop" id="cashoutModal">
+    <div class="modal">
+      <div class="modalHeader">
+        <h3>Cash Out</h3>
+        <button id="closeCashoutBtn">Close</button>
+      </div>
+      <div class="modalBody">
+        <div class="warnBox">
+          Cash out now? You <strong>cannot return</strong> until the game ends.
+          Cash out is only allowed <strong>between hands</strong>.
+        </div>
+        <div class="hint">
+          Your current stack will be recorded for lifetime stats as your final cash-out value for this game.
+        </div>
+      </div>
+      <div class="modalFooter">
+        <button id="confirmCashoutBtn" class="danger">Yes, Cash Out</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RENAME MODAL (simple prompt) -->
+  <div class="modalBackdrop" id="renameModal">
+    <div class="modal">
+      <div class="modalHeader">
+        <h3>Rename</h3>
+        <button id="closeRenameBtn">Close</button>
+      </div>
+      <div class="modalBody">
+        <!-- Custom name input -->
+        <div id="renameCustomSection">
+          <div class="hint" style="margin-bottom:6px">New name</div>
+          <input id="renameInp" maxlength="24" placeholder="Enter name" />
+        </div>
+
+        <!-- Preset name dropdown -->
+        <div id="renamePresetSection" style="display:none">
+          <div class="hint" style="margin-bottom:6px">Select a new name</div>
+          <select id="renamePresetSel" style="width:100%">
+            <option value="">Choose a name...</option>
+          </select>
+        </div>
+
+        <div class="hint" style="margin-top:10px">
+          This updates your display name for the session.
+        </div>
+      </div>
+      <div class="modalFooter">
+        <button id="saveRenameBtn" class="primary">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOASTS -->
+  <div class="toastWrap" id="toastWrap"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    // ---------- Utilities ----------
+    const $ = (id) => document.getElementById(id);
+
+    function fmtMoney(n){
+      const v = Number(n);
+      if (!Number.isFinite(v)) return "—";
+      return v.toLocaleString(undefined, { style:"currency", currency:"USD", minimumFractionDigits:2, maximumFractionDigits:2 });
+    }
+    function safeNum(v){
+      if (typeof v === "number") return v;
+      if (typeof v !== "string") return NaN;
+      const x = Number(v.replace(/[^0-9.\-]/g,""));
+      return x;
+    }
+    function toast(type, title, msg){
+      const wrap = $("toastWrap");
+      const el = document.createElement("div");
+      el.className = "toast " + (type || "");
+      el.innerHTML = `<div class="t">${escapeHtml(title)}</div><div>${escapeHtml(msg)}</div>`;
+      wrap.appendChild(el);
+      setTimeout(() => el.remove(), 4200);
+    }
+    function escapeHtml(s){
+      return String(s ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    // ---------- Storage Manager (Private Browsing Support) ----------
+    const StorageManager = {
+      _memoryStore: {},
+      _useMemory: false,
+
+      init() {
+        try {
+          localStorage.setItem('_test', '1');
+          localStorage.removeItem('_test');
+          this._useMemory = false;
+        } catch (e) {
+          console.warn('localStorage unavailable (private browsing?), using in-memory storage');
+          this._useMemory = true;
+        }
+      },
+
+      setItem(key, value) {
+        if (this._useMemory) {
+          this._memoryStore[key] = value;
+        } else {
+          try {
+            localStorage.setItem(key, value);
+          } catch (e) {
+            this._memoryStore[key] = value;
+          }
+        }
+      },
+
+      getItem(key) {
+        if (this._useMemory) {
+          return this._memoryStore[key] || null;
+        } else {
+          try {
+            return localStorage.getItem(key);
+          } catch (e) {
+            return this._memoryStore[key] || null;
+          }
+        }
+      },
+
+      removeItem(key) {
+        if (this._useMemory) {
+          delete this._memoryStore[key];
+        } else {
+          try {
+            localStorage.removeItem(key);
+          } catch (e) {
+            delete this._memoryStore[key];
+          }
+        }
+      }
+    };
+
+    StorageManager.init();
+
+    // ---------- Local identity ----------
+    const LS_ID = "poker_player_id";
+    const LS_NAME = "poker_player_name";
+
+    // Check for launcher credentials in URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    const launcherKey = urlParams.get("launcherKey");
+    const launcherName = urlParams.get("launcherName");
+
+    // If coming from launcher, store credentials for auto-join
+    if (launcherKey) {
+      StorageManager.setItem(LS_ID, launcherKey);
+    }
+    if (launcherName) {
+      StorageManager.setItem(LS_NAME, launcherName.toUpperCase());
+    }
+
+    function getLocalId(){ return StorageManager.getItem(LS_ID) || ""; }
+    function setLocalId(id){ if (id) StorageManager.setItem(LS_ID, id); }
+    function getLocalName(){ return StorageManager.getItem(LS_NAME) || ""; }
+    function setLocalName(n){ if (n) StorageManager.setItem(LS_NAME, n); }
+
+    // ---------- State ----------
+    let wasEverConnected = false;
+
+    // Extract game ID from URL path: /game/poker/players
+    const pathParts = window.location.pathname.split('/');
+    const gameId = pathParts[2]; // "poker"
+    const socketPath = `/game/${gameId}`;
+
+    const socket = io(socketPath, {
+      transports: ["websocket", "polling"],
+      reconnection: true,
+      reconnectionAttempts: 3,
+      reconnectionDelay: 500,
+      reconnectionDelayMax: 1000
+    });
+
+    // Redirect to launcher if game server is unreachable after all reconnection attempts
+    socket.io.on("reconnect_failed", () => {
+      if (typeof toast === "function") {
+        toast("warn", "Game Ended", "Returning to lobby...");
+      }
+      setTimeout(() => {
+        const launcherUrl = window.location.protocol + "//" + window.location.hostname + ":3000/players";
+        window.location.href = launcherUrl;
+      }, 1500);
+    });
+
+    // Immediate redirect if game server is unreachable on initial connection
+    socket.io.on("error", () => {
+      if (!wasEverConnected) {
+        console.log("Game server unreachable, returning to launcher...");
+        const launcherUrl = window.location.protocol + "//" + window.location.hostname + ":3000/players";
+        window.location.href = launcherUrl;
+      }
+    });
+
+    let state = {
+      phase: "lobby",
+      players: [],
+      settings: null,
+      game: null,
+      you: { id:null, name:null }
+    };
+
+    // Derived UI state for actions
+    let actionModel = {
+      enabled: false,
+      isTurn: false,
+      canAct: false,
+      canCheck: false,
+      toCall: 0,
+      minRaiseTo: null,
+      maxRaiseTo: null,
+      suggestedRaiseTo: null
+    };
+
+    // ---------- Connection ----------
+    function setConnectionStatus(connected){
+      const dot = $("connDot");
+      const txt = $("connText");
+      if (connected){
+        dot.className = "dot good";
+        txt.textContent = "Connected";
+      } else {
+        dot.className = "dot bad";
+        txt.textContent = "Disconnected";
+      }
+    }
+
+    socket.on("connect", () => {
+      wasEverConnected = true;
+      setConnectionStatus(true);
+
+      const rememberedName = getLocalName();
+      if (rememberedName) {
+        $("nameInp").value = rememberedName;
+      }
+
+      // Attempt auto-join if we have a name
+      if (rememberedName){
+        const isFromLauncher = launcherKey && launcherName;
+        $("topHint").textContent = isFromLauncher ? "Joining game..." : "Reconnecting...";
+        joinWithName(rememberedName);
+      } else {
+        showView("join");
+      }
+    });
+
+    socket.on("disconnect", () => {
+      setConnectionStatus(false);
+    });
+
+    // Error handlers for name validation (consistent with Mafia)
+    socket.on("player_error", (msg) => {
+      toast("bad", "Error", msg || "An error occurred.");
+    });
+
+    socket.on("join_rejected", (data) => {
+      toast("bad", "Cannot join", data?.reason || "Join was rejected.");
+      showView("join");
+    });
+
+    socket.on("toast", (t) => {
+      if (!t) return;
+      toast(t.type || "warn", t.title || "Notice", t.message || "");
+    });
+
+    // Server can confirm identity
+    socket.on("you", (payload) => {
+      // expected: { id, name }
+      if (!payload) return;
+      if (!state.you) state.you = { id: null, name: null };
+      if (payload.id) { state.you.id = payload.id; setLocalId(payload.id); }
+      if (payload.name) { state.you.name = payload.name; setLocalName(payload.name); }
+      $("youName").textContent = state.you.name || "—";
+      $("renameInp").value = state.you.name || "";
+    });
+
+    // Force reselect when host switches to preset mode
+    socket.on("forceReselect", (data) => {
+      // Clear stored name so player can pick a new one
+      StorageManager.removeItem(LS_NAME);
+      if (!state.you) state.you = { id: null, name: null };
+      state.you.id = null;
+      state.you.name = null;
+      toast("warn", "Name change required", data?.reason || "Please select a name from the preset list.");
+      showView("join");
+      updateJoinViewMode();
+    });
+
+    // ---------- Join / Rename / Cashout ----------
+    function capitalizeName(str) {
+      // Convert to ALL UPPERCASE
+      return String(str || '').toUpperCase();
+    }
+
+    function joinWithName(name, skipCapitalize = false){
+      let clean = String(name||"").trim().slice(0,24);
+      if (!clean){
+        toast("bad","Name required","Enter a name to join.");
+        showView("join");
+        return;
+      }
+      // Auto-capitalize custom names (skip for preset names which are already capitalized)
+      if (!skipCapitalize) {
+        clean = capitalizeName(clean);
+      }
+      setLocalName(clean);
+
+      socket.emit("join", {
+        role: "player",
+        name: clean,
+        playerId: getLocalId() || null
+      });
+      $("topHint").textContent = "Joining…";
+      showView("wait");
+    }
+
+    $("joinBtn").addEventListener("click", () => {
+      joinWithName($("nameInp").value);
+    });
+
+    $("nameInp").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") joinWithName($("nameInp").value);
+    });
+
+    // Preset name join
+    $("joinPresetBtn").addEventListener("click", () => {
+      const name = $("presetNameSel").value;
+      if (!name) {
+        toast("bad", "Select a name", "Please choose a name from the list.");
+        return;
+      }
+      joinWithName(name, true); // skip capitalize - preset names are already capitalized
+    });
+
+    $("presetNameSel").addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && $("presetNameSel").value) {
+        joinWithName($("presetNameSel").value, true); // skip capitalize - preset names are already capitalized
+      }
+    });
+
+    $("renameBtn").addEventListener("click", () => {
+      const usePreset = lobbyState.usePresetNames && lobbyState.presetNames.length > 0;
+
+      if (usePreset) {
+        $("renameCustomSection").style.display = "none";
+        $("renamePresetSection").style.display = "block";
+        populateRenamePresetDropdown();
+      } else {
+        $("renameCustomSection").style.display = "block";
+        $("renamePresetSection").style.display = "none";
+        $("renameInp").value = state.you?.name || getLocalName() || "";
+      }
+
+      $("renameModal").classList.add("show");
+    });
+    $("closeRenameBtn").addEventListener("click", () => $("renameModal").classList.remove("show"));
+    $("saveRenameBtn").addEventListener("click", () => {
+      const usePreset = lobbyState.usePresetNames && lobbyState.presetNames.length > 0;
+      let newName;
+
+      if (usePreset) {
+        newName = $("renamePresetSel").value;
+        if (!newName) {
+          toast("bad", "Select a name", "Please choose a name from the list.");
+          return;
+        }
+        // Preset names are already capitalized by host
+      } else {
+        newName = String($("renameInp").value||"").trim().slice(0,24);
+        if (!newName){
+          toast("bad","Invalid name","Name cannot be empty.");
+          return;
+        }
+        // Auto-capitalize custom names
+        newName = capitalizeName(newName);
+      }
+
+      socket.emit("player_rename", { name: newName });
+      setLocalName(newName);
+      $("renameModal").classList.remove("show");
+    });
+
+    function populateRenamePresetDropdown() {
+      const sel = $("renamePresetSel");
+      const currentName = (state.you?.name || getLocalName() || "").toLowerCase();
+
+      // Get list of taken names (connected players), excluding current player
+      const takenNames = new Set(
+        (state.players || [])
+          .filter(p => p.connected && p.name.toLowerCase() !== currentName)
+          .map(p => p.name.toLowerCase())
+      );
+
+      // Clear and repopulate
+      sel.innerHTML = `<option value="">Choose a name...</option>`;
+
+      for (const name of lobbyState.presetNames) {
+        const isTaken = takenNames.has(name.toLowerCase());
+        const isCurrent = name.toLowerCase() === currentName;
+        const opt = document.createElement("option");
+        opt.value = name;
+
+        if (isCurrent) {
+          opt.textContent = `${name} (current)`;
+          opt.selected = true;
+        } else if (isTaken) {
+          opt.textContent = `${name} (taken)`;
+          opt.disabled = true;
+          opt.className = "taken";
+        } else {
+          opt.textContent = name;
+        }
+
+        sel.appendChild(opt);
+      }
+    }
+
+    $("cashoutBtn").addEventListener("click", () => {
+      $("cashoutModal").classList.add("show");
+    });
+    $("closeCashoutBtn").addEventListener("click", () => $("cashoutModal").classList.remove("show"));
+    $("confirmCashoutBtn").addEventListener("click", () => {
+      socket.emit("player_cashout");
+      $("cashoutModal").classList.remove("show");
+    });
+
+    // ---------- Actions ----------
+    $("foldBtn").addEventListener("click", () => sendAction({ type:"fold" }));
+    $("callBtn").addEventListener("click", () => {
+      // server will treat as check/call based on toCall
+      sendAction({ type:"check_call" });
+    });
+    $("raiseBtn").addEventListener("click", () => {
+      const amt = safeNum($("raiseExactInp").value);
+      let raiseTo = Number.isFinite(amt) ? amt : actionModel.suggestedRaiseTo;
+      if (!Number.isFinite(raiseTo)) raiseTo = actionModel.minRaiseTo;
+
+      sendAction({ type:"bet_raise", raiseTo });
+    });
+    $("allinBtn").addEventListener("click", () => sendAction({ type:"allin" }));
+
+    function sendAction(payload){
+      if (!actionModel.canAct){
+        toast("warn","Not your turn","Wait until it’s your turn to act.");
+        return;
+      }
+      socket.emit("player_action", { handId: state.game?.handId, ...payload });
+    }
+
+    // Raise controls (Bet amount)
+    let isBetEditing = false;
+    let isSliderDragging = false;
+
+
+    let sliderDragTimer = null;
+    function setSliderDragging(on){
+      isSliderDragging = !!on;
+      if (!on && sliderDragTimer){
+        clearTimeout(sliderDragTimer);
+        sliderDragTimer = null;
+      }
+    }
+    function bumpSliderDragging(){
+      // Some browsers don’t fire pointerdown reliably for <input type="range">.
+      // Use input activity as a fallback so action-timer re-renders don't “fight” the drag.
+      setSliderDragging(true);
+      if (sliderDragTimer) clearTimeout(sliderDragTimer);
+      sliderDragTimer = setTimeout(() => setSliderDragging(false), 250);
+    }
+    $("raiseExactInp").addEventListener("focus", () => { isBetEditing = true; });
+    $("raiseExactInp").addEventListener("blur", () => {
+      isBetEditing = false;
+      const v = safeNum($("raiseExactInp").value);
+      const clamped = clampBetAmount(v);
+      if (clamped != null) $("raiseExactInp").value = clamped.toFixed(2);
+    });
+
+    $("raiseSlider").addEventListener("pointerdown", () => setSliderDragging(true));
+    $("raiseSlider").addEventListener("mousedown", () => setSliderDragging(true));
+    $("raiseSlider").addEventListener("touchstart", () => setSliderDragging(true), { passive:true });
+
+    window.addEventListener("pointerup", () => setSliderDragging(false));
+    window.addEventListener("mouseup", () => setSliderDragging(false));
+    window.addEventListener("touchend", () => setSliderDragging(false));
+    window.addEventListener("touchcancel", () => setSliderDragging(false));
+
+    function clampBetAmount(v){
+      const min = actionModel.minRaiseTo;
+      const max = actionModel.maxRaiseTo;
+      if (!Number.isFinite(v)) return null;
+      let x = v;
+      if (Number.isFinite(min)) x = Math.max(min, x);
+      if (Number.isFinite(max)) x = Math.min(max, x);
+      x = Math.round(x * 100) / 100;
+      return x;
+    }
+
+    function applyBetAmount(v, { writeInput=true, writeSlider=true } = {}){
+      if (!Number.isFinite(v)) return;
+      $("raiseSelected").textContent = fmtMoney(v);
+      actionModel.suggestedRaiseTo = v;
+      if (writeInput) $("raiseExactInp").value = v.toFixed(2);
+      if (writeSlider) $("raiseSlider").value = String(v);
+    }
+
+    $("raiseSlider").addEventListener("input", () => {
+      bumpSliderDragging();
+      const v = clampBetAmount(Number($("raiseSlider").value));
+      if (v == null) return;
+      // When timer updates cause re-renders, keep user control smooth.
+      applyBetAmount(v, { writeInput:true, writeSlider:true });
+    });
+
+    $("raiseExactInp").addEventListener("input", () => {
+      const v = safeNum($("raiseExactInp").value);
+      const clamped = clampBetAmount(v);
+      if (clamped == null) return;
+      // Don't fight the user's typing by rewriting the input on every keystroke.
+      $("raiseSelected").textContent = fmtMoney(clamped);
+      actionModel.suggestedRaiseTo = clamped;
+      if (!isSliderDragging) $("raiseSlider").value = String(clamped);
+    });
+
+
+    // ---------- Views ----------
+    function showView(which){
+      $("joinView").classList.remove("active");
+      $("waitView").classList.remove("active");
+      $("playView").classList.remove("active");
+      if (which === "join") $("joinView").classList.add("active");
+      if (which === "wait") $("waitView").classList.add("active");
+      if (which === "play") $("playView").classList.add("active");
+    }
+
+    // ---------- Render ----------
+    function render(){
+      const phase = state.phase || "lobby";
+
+      // header pills
+      $("modePill").textContent = state.settings?.mode ? (state.settings.mode === "cash" ? "Cash Game" : "Tournament") : "—";
+      $("streetPill").textContent = state.game?.streetLabel || (phase === "lobby" ? "Lobby" : "—");
+
+      // cashout button visibility
+      const cashMode = state.settings?.mode === "cash";
+      const betweenHands = !!state.game?.betweenHands; // server should set true only when safe to cash out
+      $("cashoutBtn").style.display = (cashMode && phase === "game") ? "inline-flex" : "none";
+      $("cashoutBtn").disabled = !(cashMode && betweenHands);
+
+      if (phase === "lobby"){
+        $("topHint").textContent = "Waiting for host to start the game…";
+        $("waitTag").textContent = "Lobby";
+        renderFeed("waitFeed");
+        showView("wait");
+        return;
+      }
+
+      // phase game
+      if (phase === "game"){
+        showView("play");
+        renderPlay();
+        return;
+      }
+
+      // fallback
+      showView("wait");
+    }
+
+    function streetKeyFromGame(g){
+      const raw = (g?.street || g?.streetKey || g?.streetName || g?.streetLabel || "").toString().toLowerCase();
+      if (!raw) return null;
+      if (raw.includes("pre")) return "preflop";
+      if (raw.includes("flop") || raw.includes("flip")) return "flop";
+      if (raw.includes("turn")) return "turn";
+      if (raw.includes("river")) return "river";
+      if (raw.includes("show")) return "showdown";
+      return null;
+    }
+
+    function updateStreetBar(){
+      const key = streetKeyFromGame(state.game || {});
+      const steps = document.querySelectorAll("#streetBar .streetStep");
+      steps.forEach(el => el.classList.toggle("active", !!key && el.dataset.street === key));
+    }
+    let tableOverlayTick = null;
+    let betweenHandsStartMs = null;
+
+    function setTextIfChanged(el, text) {
+      if (el && el.textContent !== text) el.textContent = text;
+    }
+
+    function toggleClassIfChanged(el, className, shouldHaveClass) {
+      if (el && el.classList.contains(className) !== shouldHaveClass) {
+        el.classList.toggle(className, shouldHaveClass);
+      }
+    }
+
+    function getBetweenHandsMs(){
+      // Server may provide a concrete deadline; otherwise we use the host setting (cash mode only).
+      const sec = Number(state.settings?.betweenHandsDelaySec ?? state.settings?.betweenHandsSeconds ?? state.settings?.betweenHandsDelay ?? NaN);
+      if (Number.isFinite(sec) && sec > 0) return Math.round(sec * 1000);
+      return 15000;
+    }
+
+    function stopTableOverlayTick(){
+      if (tableOverlayTick){
+        clearInterval(tableOverlayTick);
+        tableOverlayTick = null;
+      }
+    }
+
+    function showTableOverlay({ title, body, untilMs }){
+      const card = $("tableCard");
+      const overlay = $("tableOverlay");
+      if (!card || !overlay) return;
+
+      setTextIfChanged($("tableOverlayTitle"), title || "—");
+      setTextIfChanged($("tableOverlayBody"), body || "");
+
+      const timerEl = $("tableOverlayTimer");
+
+      const update = () => {
+        if (Number.isFinite(untilMs)){
+          const left = Math.max(0, Math.ceil((untilMs - Date.now()) / 1000));
+          setTextIfChanged(timerEl, left > 0 ? `${left}s` : "Starting…");
+          toggleClassIfChanged(timerEl, "pulse", left <= 3);
+        } else {
+          setTextIfChanged(timerEl, "");
+          toggleClassIfChanged(timerEl, "pulse", false);
+        }
+      };
+
+      update();
+      stopTableOverlayTick();
+      if (Number.isFinite(untilMs)){
+        tableOverlayTick = setInterval(update, 250);
+      }
+
+      overlay.style.display = "flex";
+      overlay.setAttribute("aria-hidden", "false");
+      card.classList.add("disabled");
+    }
+
+    function hideTableOverlay(){
+      const card = $("tableCard");
+      const overlay = $("tableOverlay");
+      if (!card || !overlay) return;
+      stopTableOverlayTick();
+      overlay.style.display = "none";
+      overlay.setAttribute("aria-hidden", "true");
+      card.classList.remove("disabled");
+    }
+
+    function updateTableOverlay(){
+      const phase = state.phase || "lobby";
+      const g = state.game || {};
+      const cashMode = state.settings?.mode === "cash";
+
+      // Phase transitions (flop/turn/river) - highest priority
+      if (phase === "game" && g.phaseTransition){
+        betweenHandsStartMs = null;
+        showTableOverlay({
+          title: g.phaseTransition.title,
+          body: g.phaseTransition.body,
+          untilMs: g.phaseTransition.untilMs
+        });
+        return;
+      }
+
+      // Showdown / resolution (server sets awaitingResolution when river is complete)
+      if (phase === "game" && g.awaitingResolution){
+        betweenHandsStartMs = null;
+        showTableOverlay({
+          title: "SHOWDOWN",
+          body: "Waiting for the host to resolve the hand…",
+          untilMs: null
+        });
+        return;
+      }
+
+      // Cash game between-hands window
+      if (phase === "game" && cashMode && g.betweenHands){
+        if (!Number.isFinite(betweenHandsStartMs)) betweenHandsStartMs = Date.now();
+        showTableOverlay({
+          title: "Next hand starting",
+          body: "Cash-out is available until the next hand begins.",
+          untilMs: (Number.isFinite(g.betweenHandsUntilMs) ? g.betweenHandsUntilMs : (betweenHandsStartMs + getBetweenHandsMs()))
+        });
+        return;
+      }
+
+      // reset local timer anchor
+      betweenHandsStartMs = null;
+      hideTableOverlay();
+    }
+
+
+    function renderPlay(){
+      const g = state.game || {};
+      updateStreetBar();
+      const youId = state.you?.id || getLocalId();
+      const my = g.me || {}; // server should include g.me tailored for the player (recommended)
+      // If server doesn't include g.me, try to infer from seats
+      const seats = Array.isArray(g.seats) ? g.seats : [];
+      const seat = seats.find(s => s.playerId === youId) || my;
+
+      // KPIs
+      $("stackKpi").textContent = fmtMoney(seat.stack);
+      $("toCallKpi").textContent = fmtMoney(g.toCallForYou ?? g.toCall ?? 0);
+      $("netKpi").textContent = (my.handNet != null) ? `Hand net: ${fmtMoney(my.handNet)}` : "Hand net: —";
+
+      const pots = Array.isArray(g.pots) ? g.pots : [];
+      const totalPot = pots.reduce((a,p)=>a + (Number(p.amount)||0), 0);
+      $("potsKpi").textContent = pots.length ? fmtMoney(totalPot) : fmtMoney(0);
+
+      const sb = g.blinds?.sb, bb = g.blinds?.bb;
+      $("blindsKpi").textContent = (sb!=null && bb!=null) ? `Blinds: ${fmtMoney(sb)} / ${fmtMoney(bb)}` : "Blinds: —";
+
+      // position pill (D/SB/BB)
+      const posBits = [];
+      if (seat.isDealer) posBits.push("D");
+      if (seat.isSB) posBits.push("SB");
+      if (seat.isBB) posBits.push("BB");
+      $("posTag").textContent = posBits.length ? posBits.join(" • ") : "—";
+
+      // turn + timer
+      const isTurn = !!seat.isTurn;
+      $("turnPill").style.display = isTurn ? "inline-flex" : "none";
+
+      const timerEnabled = !!state.settings?.timer?.enabled;
+      const secondsLeft = g.turnTimerSecondsLeft;
+      $("timerPill").style.display = (timerEnabled && Number.isFinite(secondsLeft) && isTurn) ? "inline-flex" : "none";
+      $("timerText").textContent = Number.isFinite(secondsLeft) ? `${Math.max(0, Math.floor(secondsLeft))}s` : "—";
+      $("timerPill").classList.toggle("timerWarnFlash", !!(timerEnabled && Number.isFinite(secondsLeft) && isTurn && secondsLeft <= 10));
+
+      // busted
+      const busted = (seat.status === "out") || (Number(seat.stack) <= 0 && state.settings?.mode === "tournament");
+      $("bustBox").style.display = busted ? "block" : "none";
+
+      // result banner (server supplies last hand result)
+      const lr = g.lastResultForYou;
+      if (lr && (lr.text || lr.lines)){
+        const txt = lr.text ? String(lr.text) : (Array.isArray(lr.lines) ? lr.lines.join("<br/>") : "");
+        $("resultText").innerHTML = txt;
+        $("resultBox").style.display = "block";
+      } else {
+        $("resultBox").style.display = "none";
+      }
+
+      // action feed + players table
+      renderFeed("actionFeed");
+      renderPlayersTable();
+
+      // action model (server should supply)
+      const toCall = Number(g.toCallForYou ?? g.toCall ?? 0);
+      const canCheck = (toCall <= 0.000001);
+      const minRaiseTo = Number(my.minRaiseTo ?? g.minRaiseToForYou);
+      const maxRaiseTo = Number(my.maxRaiseTo ?? g.maxRaiseToForYou);
+
+      const canAct = !!my.canAct || (!!isTurn && !g.awaitingResolution && seat.status !== "folded" && seat.status !== "out");
+      const awaitingRes = !!g.awaitingResolution;
+
+      actionModel = {
+        enabled: !awaitingRes,
+        isTurn,
+        canAct: canAct && !awaitingRes && !busted,
+        canCheck,
+        toCall,
+        minRaiseTo: Number.isFinite(minRaiseTo) ? minRaiseTo : null,
+        maxRaiseTo: Number.isFinite(maxRaiseTo) ? maxRaiseTo : null,
+        suggestedRaiseTo: actionModel.suggestedRaiseTo
+      };
+
+      // Clamp suggested raise to current legal range (prevents min-raise errors after blind increases)
+      if (Number.isFinite(actionModel.minRaiseTo) && Number.isFinite(actionModel.maxRaiseTo) && actionModel.maxRaiseTo >= actionModel.minRaiseTo){
+        if (!Number.isFinite(actionModel.suggestedRaiseTo)) actionModel.suggestedRaiseTo = actionModel.minRaiseTo;
+        actionModel.suggestedRaiseTo = Math.max(actionModel.minRaiseTo, Math.min(actionModel.maxRaiseTo, actionModel.suggestedRaiseTo));
+      }
+
+      // Buttons
+      $("foldBtn").disabled = !actionModel.canAct;
+      $("callBtn").disabled = !actionModel.canAct;
+      $("raiseBtn").disabled = !actionModel.canAct || !(Number.isFinite(actionModel.minRaiseTo) && Number.isFinite(actionModel.maxRaiseTo) && actionModel.maxRaiseTo >= actionModel.minRaiseTo);
+$("allinBtn").disabled = !actionModel.canAct;      // Label call/check
+      $("callBtn").textContent = actionModel.canCheck ? "Check" : `Call ${fmtMoney(actionModel.toCall)}`;
+
+      // Label raise/bet
+      if (actionModel.canCheck) $("raiseBtn").textContent = "Bet";
+      else $("raiseBtn").textContent = "Raise";
+
+      // Action state tag
+      let st = awaitingRes ? "Awaiting host resolution" : (isTurn ? "Your turn" : "Waiting");
+      if (seat.status === "folded") st = "You folded";
+      if (seat.status === "out") st = "Out";
+      $("actionStateTag").textContent = st;
+
+      // Bet amount UI (slider + input)
+      const rs = $("raiseSlider");
+      const re = $("raiseExactInp");
+
+      const canBetRaise =
+        Number.isFinite(actionModel.minRaiseTo) &&
+        Number.isFinite(actionModel.maxRaiseTo) &&
+        actionModel.maxRaiseTo >= actionModel.minRaiseTo;
+
+      if (canBetRaise){
+        rs.disabled = !actionModel.canAct;
+        re.disabled = !actionModel.canAct;
+
+        // Configure slider to represent the actual bet/raise-to value.
+        rs.min = String(actionModel.minRaiseTo);
+        rs.max = String(actionModel.maxRaiseTo);
+        rs.step = "0.01";
+
+        if (!Number.isFinite(actionModel.suggestedRaiseTo)){
+          actionModel.suggestedRaiseTo = actionModel.minRaiseTo;
+        }
+        actionModel.suggestedRaiseTo = Math.max(
+          actionModel.minRaiseTo,
+          Math.min(actionModel.maxRaiseTo, actionModel.suggestedRaiseTo)
+        );
+
+        const v = actionModel.suggestedRaiseTo;
+
+        // Don't override while the user is dragging/typing (important when action timer ticks every second).
+        if (!isBetEditing && !isSliderDragging){
+          applyBetAmount(v, { writeInput:true, writeSlider:true });
+        } else {
+          $("raiseSelected").textContent = fmtMoney(v);
+        }
+      } else {
+        rs.disabled = true;
+        re.disabled = true;
+        rs.min = "0";
+        rs.max = "0";
+        rs.value = "0";
+        $("raiseSelected").textContent = "—";
+      }
+
+      // Table overlay logic (between hands / showdown)
+      updateTableOverlay();
+
+    }
+
+    function renderPlayersTable(){
+      const tb = $("tableTbody");
+      tb.innerHTML = "";
+
+      const g = state.game || {};
+      updateStreetBar();
+      const seats = Array.isArray(g.seats) ? g.seats : [];
+      if (!seats.length){
+        tb.innerHTML = `<tr><td colspan="4" class="hint">No table yet.</td></tr>`;
+        return;
+      }
+
+      // show seat order as-is
+      for (const s of seats){
+        const p = state.players.find(x => x.id === s.playerId) || {};
+        const posBadges = [];
+        if (s.isDealer) posBadges.push(`<span class="badge d">D</span>`);
+        if (s.isSB) posBadges.push(`<span class="badge sb">SB</span>`);
+        if (s.isBB) posBadges.push(`<span class="badge bb">BB</span>`);
+
+        const roleBadges = [];
+        if (s.isTurn) roleBadges.push(`<span class="badge turn">TURN</span>`);
+
+        // Player name with connection status circle
+        let connectionCircle = p.connected !== false
+          ? '<span class="playerStatusCircle online"></span>'
+          : '<span class="playerStatusCircle offline"></span>';
+        let nameCell = `${connectionCircle}<strong>${escapeHtml(p.name || "—")}</strong>`;
+        if (s.status === "folded") nameCell += ` <span class="tag">fold</span>`;
+        if (s.status === "allin") nameCell += ` <span class="tag">all-in</span>`;
+        if (s.status === "out") nameCell += ` <span class="tag">out</span>`;
+
+        nameCell = `<div class="nameRow"><div class="nameLeft">${nameCell}</div><div class="posBadges">${posBadges.join(" ")}</div></div>`;
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${nameCell}</td>
+          <td>${roleBadges.join(" ") || "—"}</td>
+          <td class="mono">${fmtMoney(s.stack)}</td>
+          <td class="mono">${fmtMoney(s.betStreet)}</td>
+        `;
+        tb.appendChild(tr);
+      }
+    }
+
+    function formatFeedText(raw){
+      const s = escapeHtml(raw == null ? "" : String(raw));
+      // Color money:
+      // - -$X.XX => red (loss)
+      // - +$X.XX or $X.XX => green (money in pot / win)
+      return s.replace(/([+-]?)(\$\d[\d,]*(?:\.\d{2})?)/g, (m, sign, amt) => {
+        const cls = (sign === "-") ? "moneyOut" : "moneyIn";
+        return `<span class="${cls}">${sign}${amt}</span>`;
+      });
+    }
+
+    function renderFeed(targetId){
+      const box = $(targetId);
+      box.innerHTML = "";
+      const feed = state.game?.actionFeed || state.game?.publicFeed || [];
+      if (!feed.length){
+        box.innerHTML = `<div class="hint">No recent actions.</div>`;
+        return;
+      }
+      for (const item of feed.slice(-8).reverse()){
+        const div = document.createElement("div");
+        div.className = "logItem";
+        div.innerHTML = formatFeedText(item.text || String(item));
+        box.appendChild(div);
+      }
+    }
+
+    // ---------- Preset Names Logic ----------
+    let lobbyState = {
+      usePresetNames: false,
+      presetNames: [],
+    };
+
+    let forceReselectShown = false;
+
+    function updateJoinViewMode() {
+      const usePreset = lobbyState.usePresetNames && lobbyState.presetNames.length > 0;
+
+      $("customNameSection").style.display = usePreset ? "none" : "flex";
+      $("presetNameSection").style.display = usePreset ? "flex" : "none";
+
+      if (usePreset) {
+        populatePresetDropdown();
+      }
+    }
+
+    function populatePresetDropdown() {
+      const sel = $("presetNameSel");
+      const currentValue = sel.value;
+
+      // Get list of taken names (connected players)
+      const takenNames = new Set(
+        (state.players || [])
+          .filter(p => p.connected)
+          .map(p => p.name.toLowerCase())
+      );
+
+      // Clear and repopulate
+      sel.innerHTML = `<option value="">Choose a name...</option>`;
+
+      for (const name of lobbyState.presetNames) {
+        const isTaken = takenNames.has(name.toLowerCase());
+        const opt = document.createElement("option");
+        opt.value = name;
+        opt.textContent = isTaken ? `${name} (taken)` : name;
+        opt.disabled = isTaken;
+        if (isTaken) opt.className = "taken";
+        sel.appendChild(opt);
+      }
+
+      // Restore selection if still valid
+      if (currentValue && !takenNames.has(currentValue.toLowerCase())) {
+        sel.value = currentValue;
+      }
+    }
+
+    function checkForceReselect() {
+      // If player is in wait view (already joined) but host switched to preset mode
+      // and player's current name is not in the preset list, show warning and force re-join
+      const youName = state.you?.name || getLocalName();
+      if (!youName) return;
+
+      const usePreset = lobbyState.usePresetNames && lobbyState.presetNames.length > 0;
+
+      if (usePreset && state.phase === "lobby") {
+        // Check if current name is valid
+        const isValidName = lobbyState.presetNames.some(
+          n => n.toLowerCase() === youName.toLowerCase()
+        );
+
+        if (!isValidName && !forceReselectShown) {
+          forceReselectShown = true;
+          toast("warn", "Name change required", "The host has switched to preset names. Please select a new name.");
+          // Force back to join view
+          showView("join");
+          // Clear local name so they must re-select
+          StorageManager.removeItem(LS_NAME);
+          state.you = { id: state.you?.id, name: null };
+          $("youName").textContent = "—";
+        }
+      } else {
+        forceReselectShown = false;
+      }
+    }
+
+    // Hook into sync to update lobby state
+    socket.on("sync", (snapshot) => {
+      if (!snapshot || typeof snapshot !== "object") return;
+
+      // Update lobby state
+      lobbyState = {
+        usePresetNames: !!snapshot.lobby?.usePresetNames,
+        presetNames: Array.isArray(snapshot.lobby?.presetNames) ? snapshot.lobby.presetNames : [],
+      };
+
+      // Update main state
+      state = snapshot;
+
+      // Ensure we have local identity
+      if (state.you?.id) setLocalId(state.you.id);
+      if (state.you?.name) setLocalName(state.you.name);
+      $("youName").textContent = state.you?.name || getLocalName() || "—";
+
+      // Check if we need to force player to re-select name
+      checkForceReselect();
+
+      // Update join view mode (custom vs preset)
+      updateJoinViewMode();
+
+      render();
+    });
+
+    // ---------- Boot helpers ----------
+    // initial view
+    setConnectionStatus(false);
+    $("youName").textContent = getLocalName() || "—";
+    $("renameInp").value = getLocalName() || "";
+
+    // If no remembered name, stay on join
+    if (!getLocalName()){
+      showView("join");
+    }
+
+    // Top hint
+    $("topHint").textContent = getLocalName() ? "Connecting…" : "Enter your name to join.";
+
+    // Kicked by host handler
+    socket.on("kicked", ({ message }) => {
+      // Reset player completely
+      StorageManager.removeItem(LS_ID);
+      StorageManager.removeItem(LS_NAME);
+      showView("join");
+      $("topHint").textContent = message || "You have been removed from the game by the host.";
+      $("topHint").style.color = "#ff8a80";
+    });
+
+    // FIX 7: Return to launcher with acknowledgment for graceful shutdown
+    socket.on("returned_to_menu", (data) => {
+      if (data && data.shutdownId) {
+        socket.emit("player_ack_return_to_menu", { shutdownId: data.shutdownId });
+      }
+      // Small delay to ensure ack is sent before disconnect
+      setTimeout(() => {
+        socket.disconnect();
+        const masterUrl = window.location.protocol + "//" + window.location.host + "/players";
+        window.location.href = masterUrl;
+      }, 50);
+    });
+
+    // ---------- Intro Animation ----------
+    const introScreen = $("introScreen");
+
+    socket.on("introPhase", (data) => {
+      // Hide other views
+      $("joinView").classList.remove("active");
+      $("waitView").classList.remove("active");
+      $("playView").classList.remove("active");
+
+      // Populate intro content
+      if (data.slides && data.slides.length >= 3) {
+        $("introTitle1").textContent = data.slides[0].title || "How to Play";
+        $("introContent1").textContent = data.slides[0].content || "";
+        $("introTitle2").textContent = data.slides[1].title || "Betting";
+        $("introContent2").textContent = data.slides[1].content || "";
+        $("introTitle3").textContent = data.slides[2].title || "Winning";
+        $("introContent3").textContent = data.slides[2].content || "";
+      }
+
+      // Show intro screen
+      introScreen.classList.add("active");
+
+      // Animate cards sequentially
+      setTimeout(() => $("introCard1").classList.add("visible"), 0);
+      setTimeout(() => $("introCard2").classList.add("visible"), 1000);
+      setTimeout(() => $("introCard3").classList.add("visible"), 2000);
+    });
+
+    socket.on("introEnded", () => {
+      // Hide intro and show wait view
+      introScreen.classList.remove("active");
+      $("introCard1").classList.remove("visible");
+      $("introCard2").classList.remove("visible");
+      $("introCard3").classList.remove("visible");
+      showView("wait");
+    });
+  </script>
+</body>
+</html>
